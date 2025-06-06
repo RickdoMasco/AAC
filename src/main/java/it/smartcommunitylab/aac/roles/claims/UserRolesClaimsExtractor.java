@@ -76,11 +76,13 @@ public class UserRolesClaimsExtractor implements ScopeClaimsExtractor {
         // convert to a claims list flattening roles
         List<Claim> claims = new ArrayList<>();
 
+        //roles are realm scoped, export without namespace
         SerializableClaim realmRolesClaim = new SerializableClaim("roles");
-        List<String> realmRolesClaims = realmRoles.stream().map(r -> r.getAuthority()).collect(Collectors.toList());
+        List<String> realmRolesClaims = realmRoles.stream().map(r -> r.getRole()).collect(Collectors.toList());
         realmRolesClaim.setValue(new ArrayList<>(realmRolesClaims));
         claims.add(realmRolesClaim);
 
+        //authorities are global, export with namespace
         SerializableClaim authClaim = new SerializableClaim("authorities");
         List<String> authsClaims = authorities.stream().map(r -> r.getAuthority()).collect(Collectors.toList());
         authClaim.setValue(new ArrayList<>(authsClaims));
@@ -89,7 +91,7 @@ public class UserRolesClaimsExtractor implements ScopeClaimsExtractor {
         SerializableClaim spaceRolesClaim = new SerializableClaim("spaceRoles");
         List<String> spaceRolesClaims = spaceRoles.stream().map(r -> r.getAuthority()).collect(Collectors.toList());
         // merge realm roles in space roles claims under realms/
-        realmRolesClaims.forEach(a -> {
+        realmRoles.stream().map(r -> r.getRole()).forEach(a -> {
             spaceRolesClaims.add("realms/" + a);
         });
         spaceRolesClaim.setValue(new ArrayList<>(spaceRolesClaims));
