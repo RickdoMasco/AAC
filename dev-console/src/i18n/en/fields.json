@@ -111,8 +111,8 @@
         "name": "Slug",
         "helperText": "Path-style (unique) identifier"
     },
-    "public": {
-        "name": "Public",
+    "isPublic": {
+        "name": "Public listing",
         "helperText": "Toggle for public/private visibility"
     },
     "languages": {

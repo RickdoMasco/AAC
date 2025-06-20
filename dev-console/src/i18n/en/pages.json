@@ -293,6 +293,12 @@
                 "subtitle": "Configure ToS usage",
                 "title": "Terms of service"
             }
+        },
+        "logo": {
+            "header": {
+                "subtitle": "Manage realm logo and branding",
+                "title": "Logo and branding"
+            }
         }
     },
     "realms": {
