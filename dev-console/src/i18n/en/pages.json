@@ -303,7 +303,7 @@
     },
     "realms": {
         "list": {
-            "subtitle": "Create and manage realms",
+            "subtitle": "Manage my realms",
             "title": "Realms"
         }
     },

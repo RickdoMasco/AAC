@@ -17,6 +17,7 @@
 package it.smartcommunitylab.aac.realms.persistence;
 
 import it.smartcommunitylab.aac.repository.CustomJpaRepository;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -36,4 +37,11 @@ public interface RealmEntityRepository extends CustomJpaRepository<RealmEntity, 
         "select r from RealmEntity r where lower(r.slug) like lower(concat('%', ?1,'%')) or LOWER(r.name) like lower(concat('%', ?1,'%'))"
     )
     Page<RealmEntity> findByKeywords(String keywords, Pageable pageRequest);
+
+    Page<RealmEntity> findBySlugIn(Collection<String> values, Pageable pageRequest);
+    Page<RealmEntity> findBySlugInAndSlugContainingIgnoreCase(
+        Collection<String> values,
+        String keywords,
+        Pageable pageRequest
+    );
 }

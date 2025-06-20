@@ -335,6 +335,14 @@ public class RealmManager {
         return realmService.searchRealms(query, pageRequest);
     }
 
+    @Transactional(readOnly = true)
+    public Page<Realm> searchRealms(String keywords, Collection<String> slugs, Pageable pageRequest) {
+        String query = StringUtils.trimAllWhitespace(keywords);
+        logger.debug("search realms with query {}", String.valueOf(query));
+
+        return realmService.searchRealms(query, slugs, pageRequest);
+    }
+
     @Transactional(readOnly = false)
     public void deleteRealm(String slug, boolean cleanup) throws NoSuchRealmException {
         logger.debug("delete realm {}", StringUtils.trimAllWhitespace(slug));

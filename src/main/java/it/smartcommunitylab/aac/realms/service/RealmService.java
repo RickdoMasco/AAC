@@ -29,6 +29,7 @@ import it.smartcommunitylab.aac.templates.model.LocalizationConfigurationMap;
 import it.smartcommunitylab.aac.templates.model.TemplatesConfigurationMap;
 import it.smartcommunitylab.aac.tos.TosConfigurationMap;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -250,6 +251,21 @@ public class RealmService implements InitializingBean {
         );
     }
 
+    @Transactional(readOnly = true)
+    public Page<Realm> searchRealms(String keywords, Collection<String> ids, Pageable pageRequest) {
+        if (ids == null || ids.isEmpty()) {
+            return PageableExecutionUtils.getPage(List.of(), pageRequest, () -> 0L);
+        }
+        Page<RealmEntity> page = StringUtils.hasText(keywords)
+            ? realmRepository.findBySlugInAndSlugContainingIgnoreCase(ids, keywords, pageRequest)
+            : realmRepository.findBySlugIn(ids, pageRequest);
+        return PageableExecutionUtils.getPage(
+            page.getContent().stream().map(r -> toRealm(r)).collect(Collectors.toList()),
+            pageRequest,
+            () -> page.getTotalElements()
+        );
+    }
+
     /*
      * Helpers
      */
@@ -282,7 +298,7 @@ public class RealmService implements InitializingBean {
         if (re.getTemplatesConfigurationMap() != null) {
             templatesConfigMap.setConfiguration(re.getTemplatesConfigurationMap());
         }
-        r.setTemplatesConfiguration(templatesConfigMap);        
+        r.setTemplatesConfiguration(templatesConfigMap);
 
         return r;
     }

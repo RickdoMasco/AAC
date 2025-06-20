@@ -32,7 +32,7 @@ import attributeSetDefinition from './attributeset';
 import scopesDefinition from './scopes';
 import templatesDefinition from './templates';
 
-import { RealmSelectorList } from './myrealms/RealmList';
+import { RealmList } from './myrealms/RealmList';
 
 //config
 const CONTEXT_PATH: string =
@@ -94,7 +94,7 @@ const InitialWrapper = () => {
     return (
         <RootSelectorInitialWrapper
             resource={myrealmsDefinition.name}
-            selector={<RealmSelectorList />}
+            selector={<RealmList />}
         >
             <Admin
                 layout={AppLayout}
