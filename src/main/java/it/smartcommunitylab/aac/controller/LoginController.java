@@ -29,8 +29,6 @@ import it.smartcommunitylab.aac.identity.service.IdentityServiceAuthorityService
 import it.smartcommunitylab.aac.model.Realm;
 import it.smartcommunitylab.aac.oauth.store.AuthorizationRequestStore;
 import it.smartcommunitylab.aac.realms.RealmManager;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -38,33 +36,23 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.InputStreamResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.http.CacheControl;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.provider.AuthorizationRequest;
 import org.springframework.security.web.WebAttributes;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.util.DigestUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 
 @Controller
 @RequestMapping
@@ -74,9 +62,6 @@ public class LoginController {
 
     @Autowired
     private ApplicationProperties appProps;
-
-    @Autowired
-    private ResourceLoader resourceLoader;
 
     @Autowired
     private IdentityProviderAuthorityService identityProviderAuthorityService;
@@ -222,17 +207,15 @@ public class LoginController {
             // check realm and providers
             // TODO evaluate enforcing realm (or common) match
             if (clientDetails.getRealm().equals(realm)) {
-                providers =
-                    providers
-                        .stream()
-                        .filter(p -> clientProviders.contains(p.getProvider()))
-                        .collect(Collectors.toList());
+                providers = providers
+                    .stream()
+                    .filter(p -> clientProviders.contains(p.getProvider()))
+                    .collect(Collectors.toList());
 
-                services =
-                    services
-                        .stream()
-                        .filter(p -> clientProviders.contains(p.getProvider()))
-                        .collect(Collectors.toList());
+                services = services
+                    .stream()
+                    .filter(p -> clientProviders.contains(p.getProvider()))
+                    .collect(Collectors.toList());
             }
         }
 
@@ -247,8 +230,8 @@ public class LoginController {
                     authorities.add(a);
                 }
             } catch (RuntimeException e) {
-                //skip problematic provider 
-                logger.error("error with login provider {}: {}",idp.getProvider(), e.getMessage());
+                //skip problematic provider
+                logger.error("error with login provider {}: {}", idp.getProvider(), e.getMessage());
             }
         }
 
@@ -323,55 +306,5 @@ public class LoginController {
         }
 
         return "redirect:/";
-    }
-
-    private String logoEtagValue = null;
-
-    @RequestMapping(value = "/logo", method = RequestMethod.GET)
-    @ResponseBody
-    public ResponseEntity<InputStreamResource> logo() throws IOException {
-        // read resource as is
-        Resource resource = resourceLoader.getResource(appProps.getLogo());
-        if (resource == null) {
-            throw new IOException();
-        }
-
-        // guess mimeType
-        String contentType = "image/png";
-        String fileName = resource.getFilename();
-        if (fileName != null) {
-            MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
-            contentType = fileTypeMap.getContentType(fileName);
-        }
-
-        if (logoEtagValue == null) {
-            // read fully and build etag once, this can change only on restart
-            logoEtagValue = computeWeakEtag(resource.getInputStream());
-        }
-
-        return ResponseEntity
-            .ok()
-            .contentLength(resource.contentLength())
-            .contentType(MediaType.parseMediaType(contentType))
-            .cacheControl(CacheControl.maxAge(3600, TimeUnit.SECONDS))
-            .eTag(logoEtagValue)
-            .body(new InputStreamResource(resource.getInputStream()));
-        //        return new ResponseEntity<>(resource, headers, HttpStatus.OK);
-    }
-
-    @RequestMapping(value = { "/-/{realm}/logo" }, method = RequestMethod.GET)
-    public ResponseEntity<InputStreamResource> realmLogo() throws IOException {
-        // TODO implement logo support per realm
-        return logo();
-    }
-
-    private String computeWeakEtag(InputStream is) throws IOException {
-        StringBuilder builder = new StringBuilder();
-        // use same pattern as shallow etag filter
-        builder.append("W/");
-        builder.append("\"0");
-        DigestUtils.appendMd5DigestAsHex(is, builder);
-        builder.append('"');
-        return builder.toString();
     }
 }

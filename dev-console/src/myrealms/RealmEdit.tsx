@@ -30,6 +30,7 @@ import {
     DeveloperListView,
 } from '../developers/DeveloperList';
 import { AceEditorInput } from '@dslab/ra-ace-editor';
+import { RealmLogoEditor } from './RealmLogoEditor';
 
 export const RealmEdit = () => {
     return (
@@ -100,9 +101,16 @@ const RealmEditForm = () => {
                 />
                 <BooleanInput
                     source="public"
-                    label="field.public.name"
-                    helperText="field.public.helperText"
+                    label="field.isPublic.name"
+                    helperText="field.isPublic.helperText"
                 />
+            </TabbedForm.Tab>
+            <TabbedForm.Tab label="tab.logo">
+                <SectionTitle
+                    text={translate('page.realm.logo.header.title')}
+                    secondaryText={translate('page.realm.logo.header.subtitle')}
+                />
+                <RealmLogoEditor />
             </TabbedForm.Tab>
             <TabbedForm.Tab label="tab.localization">
                 <SectionTitle

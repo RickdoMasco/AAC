@@ -53,6 +53,9 @@ import it.smartcommunitylab.aac.model.RealmRole;
 import it.smartcommunitylab.aac.model.User;
 import it.smartcommunitylab.aac.oidc.model.OIDCUserAccount;
 import it.smartcommunitylab.aac.password.model.InternalUserPassword;
+import it.smartcommunitylab.aac.realms.model.RealmLogo;
+import it.smartcommunitylab.aac.realms.persistence.RealmLogoEntity;
+import it.smartcommunitylab.aac.realms.service.RealmLogoService;
 import it.smartcommunitylab.aac.realms.service.RealmService;
 import it.smartcommunitylab.aac.roles.RealmRoleManager;
 import it.smartcommunitylab.aac.saml.model.SamlUserAccount;
@@ -64,6 +67,7 @@ import it.smartcommunitylab.aac.templates.service.TemplateService;
 import it.smartcommunitylab.aac.users.UserManager;
 import it.smartcommunitylab.aac.users.service.UserService;
 import it.smartcommunitylab.aac.webauthn.model.WebAuthnUserCredential;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -82,10 +86,12 @@ import org.jsoup.safety.Safelist;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.InputStreamSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 @Service
@@ -103,6 +109,9 @@ public class RealmManager {
 
     @Autowired
     private RealmService realmService;
+
+    @Autowired
+    private RealmLogoService realmLogoService;
 
     @Autowired
     private ClientManager clientManager;
@@ -260,9 +269,9 @@ public class RealmManager {
             Cleaner cleaner = new Cleaner(Safelist.none());
             Document clean = cleaner.clean(dirty);
 
-            String style = clean.body().wholeText();       
+            String style = clean.body().wholeText();
             r.getTemplatesConfiguration().setCustomStyle(style);
-            
+
             //export
             templatesConfigMap = r.getTemplatesConfiguration().getConfiguration();
         }
@@ -489,9 +498,7 @@ public class RealmManager {
             userAccountServices.forEach(accountService -> {
                 try {
                     accountService.deleteAllAccountsByRealm(slug);
-                } catch (Exception e) {
-                    // skip
-                }
+                } catch (Exception e) {}
             });
         }
 
@@ -558,13 +565,13 @@ public class RealmManager {
         Set<RealmGrantedAuthority> authorities = user
             .getAuthorities()
             .stream()
-            .filter(a -> {               
+            .filter(a -> {
                 if (a instanceof RealmGrantedAuthority) {
                     return realm.equals(((RealmGrantedAuthority) a).getRealm());
                 }
                 return false;
             })
-            .map(r -> (RealmGrantedAuthority)r)
+            .map(r -> (RealmGrantedAuthority) r)
             .collect(Collectors.toSet());
 
         dev.setAuthorities(authorities);
@@ -581,8 +588,11 @@ public class RealmManager {
         }
         if (user == null && StringUtils.hasText(email)) {
             // lookup by email in system
-            user =
-                userService.findUsersByEmailAddress(SystemKeys.REALM_SYSTEM, email).stream().findFirst().orElse(null);
+            user = userService
+                .findUsersByEmailAddress(SystemKeys.REALM_SYSTEM, email)
+                .stream()
+                .findFirst()
+                .orElse(null);
         }
 
         if (user == null && StringUtils.hasText(email)) {
@@ -661,8 +671,7 @@ public class RealmManager {
         List<OIDCUserAccount> oidcUsers = oidcUserAccountService.findAccountsByRealm(realm);
         List<SamlUserAccount> samlUsers = samlUserAccountService.findAccountsByRealm(realm);
 
-        List<AbstractUserAccount> users = Stream
-            .of(internalUsers, oidcUsers, samlUsers)
+        List<AbstractUserAccount> users = Stream.of(internalUsers, oidcUsers, samlUsers)
             .flatMap(l -> l.stream())
             .collect(Collectors.toList());
 
@@ -671,5 +680,44 @@ public class RealmManager {
         // TODO
 
         return rc;
+    }
+
+    /*
+     * Logos
+     */
+
+    public RealmLogo findLogo(String slug) {
+        return realmLogoService.findLogo(slug);
+    }
+
+    public RealmLogo getLogo(String slug) throws NoSuchRealmException {
+        return realmLogoService.getLogo(slug);
+    }
+
+    public void deleteLogo(String slug) {
+        realmLogoService.deleteLogo(slug);
+    }
+
+    public RealmLogo uploadLogo(String slug, String fileName, String mimeType, InputStreamSource source)
+        throws NoSuchRealmException, SystemException {
+        Assert.notNull(source, "source is mandatory");
+
+        try {
+            // check size
+            long size = source.getInputStream().available();
+            if (size > RealmLogoService.MAX_LOGO_SIZE) {
+                throw new IllegalArgumentException(
+                    "logo size exceeds maximum allowed size of " + RealmLogoService.MAX_LOGO_SIZE
+                );
+            }
+
+            //extract data
+            byte[] data = source.getInputStream().readAllBytes();
+
+            //persist
+            return realmLogoService.uploadLogo(slug, fileName, mimeType, data);
+        } catch (IOException e) {
+            throw new SystemException("error reading logo input stream", e);
+        }
     }
 }
