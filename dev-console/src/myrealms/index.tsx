@@ -1,6 +1,6 @@
 import { RealmEdit } from './RealmEdit';
 import { RealmIcon } from './RealmIcon';
-import { RealmList, RealmSelectorList } from './RealmList';
+import { RealmList } from './RealmList';
 
 export default {
     name: 'myrealms',
@@ -8,5 +8,5 @@ export default {
     edit: RealmEdit,
     icon: RealmIcon,
     recordRepresentation: record => record.slug,
-    selector: RealmSelectorList,
+    selector: RealmList,
 };

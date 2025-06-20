@@ -52,32 +52,12 @@ export const RealmList = () => {
                 component={Box}
                 empty={false}
             >
-                <RealmListView />
+                <RealmListView actions={<RealmActions />} />
             </List>
         </Page>
     );
 };
-export const RealmSelectorList = (props: RootSelectorListProps) => {
-    const translate = useTranslate();
-    return (
-        <Page>
-            <PageTitle
-                text={translate('page.realms.list.title')}
-                secondaryText={translate('page.realms.list.subtitle')}
-            />
-            <List
-                exporter={YamlExporter}
-                actions={<RealmListActions />}
-                filters={RealmFilters}
-                sort={{ field: 'name', order: 'ASC' }}
-                component={Box}
-                empty={false}
-            >
-                <RealmListView actions={<RealmSelectorActions />} />
-            </List>
-        </Page>
-    );
-};
+
 export const RealmListView = (props: { actions?: ReactElement | boolean }) => {
     const { actions: actionProps = true } = props;
     const { selectRoot } = useRootSelector();
@@ -109,20 +89,21 @@ export const RealmListView = (props: { actions?: ReactElement | boolean }) => {
     );
 };
 
-const RealmSelectorActions = () => {
+const RealmActions = () => {
     const record = useRecordContext();
     return (
         <RowButtonGroup label="⋮">
             <Stack direction={'row'} columnGap={1}>
                 <RootSelectorButton variant="contained" label="action.select" />
-                {record?.editable && (
+                {/* TODO check permissions in record to enable contextual actions */}
+                {/* {record?.editable && (
                     <EditInDialogButton variant="contained">
                         <RealmCreateForm />
                     </EditInDialogButton>
                 )}
                 {record?.editable && (
                     <DeleteWithDialogButton variant="contained" />
-                )}
+                )} */}
             </Stack>
         </RowButtonGroup>
     );
@@ -130,25 +111,27 @@ const RealmSelectorActions = () => {
 
 const RealmFilters = [<SearchInput source="q" alwaysOn />];
 
-const RealmListActions = () => {
-    const { root: realmId } = useRootSelector();
-    const transform = (data: any) => {
-        return {
-            ...data,
-            realm: realmId,
-        };
-    };
+const RealmListActions = () => <></>;
 
-    return (
-        <TopToolbar>
-            <CreateInDialogButton
-                fullWidth
-                maxWidth={'sm'}
-                variant="contained"
-                transform={transform}
-            >
-                <RealmCreateForm />
-            </CreateInDialogButton>
-        </TopToolbar>
-    );
-};
+// const RealmListActions = () => {
+//     const { root: realmId } = useRootSelector();
+//     const transform = (data: any) => {
+//         return {
+//             ...data,
+//             realm: realmId,
+//         };
+//     };
+
+//     return (
+//         <TopToolbar>
+//             <CreateInDialogButton
+//                 fullWidth
+//                 maxWidth={'sm'}
+//                 variant="contained"
+//                 transform={transform}
+//             >
+//                 <RealmCreateForm />
+//             </CreateInDialogButton>
+//         </TopToolbar>
+//     );
+// };
