@@ -26,6 +26,7 @@ import it.smartcommunitylab.aac.credentials.base.AbstractUserCredentials;
 import it.smartcommunitylab.aac.identity.model.ConfigurableIdentityProvider;
 import it.smartcommunitylab.aac.model.ClientApp;
 import it.smartcommunitylab.aac.model.Realm;
+import it.smartcommunitylab.aac.model.RealmRole;
 import it.smartcommunitylab.aac.services.Service;
 import it.smartcommunitylab.aac.templates.model.ConfigurableTemplateProvider;
 import java.util.List;
@@ -60,6 +61,9 @@ public class RealmConfig {
 
     // credentials
     private List<AbstractUserCredentials> credentials;
+
+    //roles
+    private List<RealmRole> roles;
 
     public RealmConfig() {}
 
@@ -138,5 +142,13 @@ public class RealmConfig {
 
     public void setIdp(ConfigurableIdentityProvider idp) {
         this.idp = idp;
+    }
+
+    public List<RealmRole> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<RealmRole> roles) {
+        this.roles = roles;
     }
 }
