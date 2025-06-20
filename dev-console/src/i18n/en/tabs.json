@@ -26,5 +26,6 @@
     "templates": "Templates",
     "oauth2": "OAuth2",
     "developers": "Developers",
-    "status": "Status"
+    "status": "Status",
+    "logo": "Logo"
 }

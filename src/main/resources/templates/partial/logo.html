@@ -8,7 +8,8 @@
 <body>
    <div th:fragment="card-logo">
       <div class="card-logo">
-         <img class="" th:src="@{/logo}" th:alt="${displayName}">
+         <img class="" th:if="${realm == null || realm == 'system'}"  th:src="@{/logo}" th:alt="${displayName}">
+         <img class="" th:if="${realm != null && realm != 'system'}"  th:src="@{/-/{realm}/logo(realm = ${realm})}" th:alt="${displayName}">
          <h4 class="text-center" th:text="${displayName}">AAC</h4>
       </div>
    </div>

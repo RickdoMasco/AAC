@@ -20,8 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.Hidden;
 import it.smartcommunitylab.aac.Config;
 import it.smartcommunitylab.aac.SystemKeys;
-import it.smartcommunitylab.aac.attributes.AttributeProviderManager;
-import it.smartcommunitylab.aac.clients.ClientManager;
 import it.smartcommunitylab.aac.common.NoSuchAuthorityException;
 import it.smartcommunitylab.aac.common.NoSuchProviderException;
 import it.smartcommunitylab.aac.common.NoSuchRealmException;
@@ -29,24 +27,20 @@ import it.smartcommunitylab.aac.common.NoSuchSubjectException;
 import it.smartcommunitylab.aac.common.NoSuchUserException;
 import it.smartcommunitylab.aac.common.RegistrationException;
 import it.smartcommunitylab.aac.common.SystemException;
+import it.smartcommunitylab.aac.config.ApplicationProperties;
 import it.smartcommunitylab.aac.core.SubjectManager;
 import it.smartcommunitylab.aac.core.UserDetails;
 import it.smartcommunitylab.aac.core.auth.UserAuthentication;
 import it.smartcommunitylab.aac.dto.RealmConfig;
 import it.smartcommunitylab.aac.dto.UserSubject;
-import it.smartcommunitylab.aac.groups.GroupManager;
-import it.smartcommunitylab.aac.identity.IdentityProviderManager;
 import it.smartcommunitylab.aac.model.Developer;
 import it.smartcommunitylab.aac.model.Realm;
 import it.smartcommunitylab.aac.model.Subject;
 import it.smartcommunitylab.aac.realms.RealmManager;
-import it.smartcommunitylab.aac.roles.RealmRoleManager;
-import it.smartcommunitylab.aac.services.ServicesManager;
+import it.smartcommunitylab.aac.realms.model.RealmLogo;
 import it.smartcommunitylab.aac.templates.TemplatesManager;
 import it.smartcommunitylab.aac.templates.model.ConfigurableTemplateProvider;
 import it.smartcommunitylab.aac.templates.service.LanguageService;
-import it.smartcommunitylab.aac.users.UserManager;
-
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -76,7 +70,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @Validated
@@ -87,37 +83,16 @@ public class DevRealmController {
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     @Autowired
+    private ApplicationProperties appProps;
+
+    @Autowired
     private RealmManager realmManager;
-
-    @Autowired
-    private IdentityProviderManager identityProviderManager;
-
-    @Autowired
-    private AttributeProviderManager attributeProviderManager;
-
-    @Autowired
-    private ClientManager clientManager;
-
-    @Autowired
-    private ServicesManager serviceManager;
 
     @Autowired
     private SubjectManager subjectManager;
 
     @Autowired
     private TemplatesManager templatesManager;
-
-    @Autowired
-    private UserManager userManager;
-
-    @Autowired
-    private GroupManager groupManager;
-    
-    @Autowired
-    private RealmRoleManager roleManager;
-
-    //    @Autowired
-    //    private AuditManager auditManager;
 
     @Autowired
     @Qualifier("yamlObjectMapper")
@@ -224,7 +199,7 @@ public class DevRealmController {
     /*
      * Dev console users
      */
-    @GetMapping(value = {"/realms/{realm}/developers", "/developers/{realm}"})
+    @GetMapping(value = { "/realms/{realm}/developers", "/developers/{realm}" })
     @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
     public Collection<Developer> getDevelopers(
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm
@@ -232,7 +207,8 @@ public class DevRealmController {
         return realmManager.getDevelopers(realm);
     }
 
-    @PostMapping(value = {"/realms/{realm}/developers", "/developers/{realm}"})
+    @PostMapping(value = { "/realms/{realm}/developers", "/developers/{realm}" })
+    @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
     public Developer inviteDeveloper(
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
         @RequestBody @Valid @NotNull UserSubject bean
@@ -240,18 +216,22 @@ public class DevRealmController {
         return realmManager.inviteDeveloper(realm, bean.getSubjectId(), bean.getEmail());
     }
 
-    @GetMapping(value = {"/realms/{realm}/developers/{subjectId}", "/developers/{realm}/{subjectId}"})
+    @GetMapping(value = { "/realms/{realm}/developers/{subjectId}", "/developers/{realm}/{subjectId}" })
     @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
     public Developer getDeveloper(
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String subjectId
     ) throws NoSuchRealmException, NoSuchSubjectException {
-        return realmManager.getDevelopers(realm).stream()
+        return realmManager
+            .getDevelopers(realm)
+            .stream()
             .filter(d -> d.getSubjectId().equals(subjectId))
-            .findFirst().orElseThrow(NoSuchSubjectException::new);
+            .findFirst()
+            .orElseThrow(NoSuchSubjectException::new);
     }
 
     @PutMapping("/realms/{realm}/developers/{subjectId}")
+    @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
     public Developer updateDeveloperRoles(
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String subjectId,
@@ -261,19 +241,29 @@ public class DevRealmController {
     }
 
     @PutMapping("/developers/{realm}/{subjectId}")
+    @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
     public Developer updateDeveloper(
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String subjectId,
         @RequestBody @Valid @NotNull Developer developer
     ) throws NoSuchRealmException, NoSuchUserException {
         Set<String> roles = Collections.emptySet();
-        if(developer.getAuthorities() != null) {
-            roles = new HashSet<>(developer.getAuthorities().stream().filter(a -> realm.equals(a.getRealm())).map(a -> a.getRole()).toList());
-        }        
-        
+        if (developer.getAuthorities() != null) {
+            roles = new HashSet<>(
+                developer
+                    .getAuthorities()
+                    .stream()
+                    .filter(a -> realm.equals(a.getRealm()))
+                    .map(a -> a.getRole())
+                    .toList()
+            );
+        }
+
         return realmManager.updateDeveloper(realm, subjectId, roles);
     }
-    @DeleteMapping(value = {"/realms/{realm}/developers/{subjectId}", "/developers/{realm}/{subjectId}"})
+
+    @DeleteMapping(value = { "/realms/{realm}/developers/{subjectId}", "/developers/{realm}/{subjectId}" })
+    @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
     public void removeDeveloper(
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String subjectId
@@ -285,6 +275,11 @@ public class DevRealmController {
      * Realm subjects
      */
     @GetMapping("/realms/{realm}/subjects")
+    @PreAuthorize(
+        "hasAuthority('" +
+        Config.R_ADMIN +
+        "') or hasAuthority(#realm+':ROLE_ADMIN') or hasAuthority(#realm+':ROLE_DEVELOPER')"
+    )
     public Collection<Subject> getRealmSubjects(
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
         @RequestParam(required = false) String q,
@@ -297,6 +292,11 @@ public class DevRealmController {
     }
 
     @GetMapping("/realms/{realm}/subjects/{subjectId}")
+    @PreAuthorize(
+        "hasAuthority('" +
+        Config.R_ADMIN +
+        "') or hasAuthority(#realm+':ROLE_ADMIN') or hasAuthority(#realm+':ROLE_DEVELOPER')"
+    )
     public Subject getRealmSubject(
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String subjectId
@@ -316,6 +316,11 @@ public class DevRealmController {
     }
 
     @GetMapping("/realms/{realm}/templates/conf")
+    @PreAuthorize(
+        "hasAuthority('" +
+        Config.R_ADMIN +
+        "') or hasAuthority(#realm+':ROLE_ADMIN') or hasAuthority(#realm+':ROLE_DEVELOPER')"
+    )
     public ConfigurableTemplateProvider getTemplateProviderConfig(
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm
     )
@@ -325,6 +330,7 @@ public class DevRealmController {
     }
 
     @PutMapping("/realms/{realm}/templates/conf")
+    @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
     public ConfigurableTemplateProvider setTemplateProviderConfig(
         @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
         @RequestBody @Valid @NotNull ConfigurableTemplateProvider config
@@ -339,5 +345,109 @@ public class DevRealmController {
             config.setProvider(cp.getProvider());
             return templatesManager.updateProvider(realm, cp.getProvider(), config);
         }
+    }
+
+    /*
+     * Realm logos
+     */
+
+    @GetMapping("/realms/{realm}/logo")
+    @PreAuthorize(
+        "hasAuthority('" +
+        Config.R_ADMIN +
+        "') or hasAuthority(#realm+':ROLE_ADMIN') or hasAuthority(#realm+':ROLE_DEVELOPER')"
+    )
+    public RealmLogo getLogo(@PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm) {
+        RealmLogo logo = realmManager.findLogo(realm);
+        if (logo == null) {
+            logo = new RealmLogo();
+            logo.setId("logo");
+            logo.setRealm(realm);
+        } else {
+            //reset id
+            logo.setId("logo");
+
+            //clear data
+            logo.setImage(null);
+
+            //set url
+            logo.setUrl(appProps.getUrl() + "/console/dev/realms/" + realm + "/logo/image?name=" + logo.getFileName());
+        }
+
+        return logo;
+    }
+
+    @GetMapping("/realms/{realm}/logo/image")
+    @PreAuthorize(
+        "hasAuthority('" +
+        Config.R_ADMIN +
+        "') or hasAuthority(#realm+':ROLE_ADMIN') or hasAuthority(#realm+':ROLE_DEVELOPER')"
+    )
+    public void getLogoImage(
+        @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
+        HttpServletResponse res
+    ) throws NoSuchRealmException, IOException {
+        RealmLogo logo = realmManager.getLogo(realm);
+        if (logo == null || logo.getImage() == null || logo.getImage().length == 0) {
+            // no logo, return empty
+            res.setStatus(HttpServletResponse.SC_NOT_FOUND);
+            return;
+        }
+
+        //raw write
+        res.setStatus(HttpServletResponse.SC_OK);
+        res.setContentType(logo.getMimeType());
+        res.setHeader("Content-Disposition", "inline;filename=" + logo.getFileName());
+        res.setContentLength(logo.getImage().length);
+        ServletOutputStream out = res.getOutputStream();
+        out.write(logo.getImage());
+        out.flush();
+        out.close();
+    }
+
+    @DeleteMapping("/realms/{realm}/logo")
+    @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
+    public void deleteLogo(@PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm)
+        throws NoSuchRealmException {
+        logger.debug("delete logo for realm {}", realm);
+        realmManager.deleteLogo(realm);
+    }
+
+    @PostMapping("/realms/{realm}/logo")
+    @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
+    public RealmLogo uploadLogo(
+        @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
+        @RequestPart(name = "file", required = false) @Valid MultipartFile file
+    )
+        throws NoSuchRealmException, RegistrationException, NoSuchProviderException, NoSuchAuthorityException, MethodArgumentNotValidException {
+        logger.debug("upload logo for realm {}", realm);
+        if (file == null || file.isEmpty()) {
+            throw new MethodArgumentNotValidException(null, null);
+        }
+        if (file.getContentType() == null || file.getOriginalFilename() == null) {
+            throw new IllegalArgumentException("invalid file");
+        }
+        //read file
+        String fileName = StringUtils.getFilename(file.getOriginalFilename());
+        String mimeType = file.getContentType();
+
+        //check mime type is an image
+        if (!mimeType.startsWith("image/")) {
+            throw new IllegalArgumentException("invalid file type, must be an image");
+        }
+
+        //persist
+        RealmLogo logo = realmManager.uploadLogo(realm, fileName, mimeType, file);
+
+        //clear data
+        logo.setImage(null);
+
+        //set url
+        logo.setUrl(appProps.getUrl() + "/console/dev/realms/" + realm + "/logo/image");
+
+        //reset id
+        logo.setId("logo");
+
+        return logo;
     }
 }
