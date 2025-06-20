@@ -29,6 +29,7 @@ import it.smartcommunitylab.aac.common.NoSuchClientException;
 import it.smartcommunitylab.aac.common.NoSuchCredentialException;
 import it.smartcommunitylab.aac.common.NoSuchProviderException;
 import it.smartcommunitylab.aac.common.NoSuchRealmException;
+import it.smartcommunitylab.aac.common.NoSuchRoleException;
 import it.smartcommunitylab.aac.common.NoSuchScopeException;
 import it.smartcommunitylab.aac.common.NoSuchServiceException;
 import it.smartcommunitylab.aac.common.NoSuchSubjectException;
@@ -44,6 +45,7 @@ import it.smartcommunitylab.aac.identity.service.IdentityProviderService;
 import it.smartcommunitylab.aac.internal.model.InternalUserAccount;
 import it.smartcommunitylab.aac.model.ClientApp;
 import it.smartcommunitylab.aac.model.Realm;
+import it.smartcommunitylab.aac.model.RealmRole;
 import it.smartcommunitylab.aac.model.SpaceRole;
 import it.smartcommunitylab.aac.model.SubjectStatus;
 import it.smartcommunitylab.aac.oauth.service.OAuth2ClientAppService;
@@ -51,6 +53,7 @@ import it.smartcommunitylab.aac.oauth.store.SearchableApprovalStore;
 import it.smartcommunitylab.aac.password.auth.UsernamePasswordAuthenticationToken;
 import it.smartcommunitylab.aac.password.model.InternalUserPassword;
 import it.smartcommunitylab.aac.realms.service.RealmService;
+import it.smartcommunitylab.aac.roles.service.RealmRoleService;
 import it.smartcommunitylab.aac.roles.service.SpaceRoleService;
 import it.smartcommunitylab.aac.services.Service;
 import it.smartcommunitylab.aac.services.ServiceClaim;
@@ -70,7 +73,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,7 +123,7 @@ public class AACBootstrap {
     private ServicesService serviceService;
 
     @Autowired
-    private ServicesManager serviceManager;    
+    private ServicesManager serviceManager;
 
     @Autowired
     private UserEntityService userEntityService;
@@ -166,13 +168,14 @@ public class AACBootstrap {
     private OAuth2ClientAppService clientAppService;
 
     @Autowired
+    private RealmRoleService realmRoleService;
+
+    @Autowired
     private ResourceEntityService resourceService;
 
     @Autowired
     private PasswordHash hasher;
-    
-    
-    
+
     @Autowired
     private SearchableApprovalStore approvalStore;
 
@@ -419,25 +422,33 @@ public class AACBootstrap {
                     if (realm == null) {
                         logger.debug("add realm {}", r.getSlug());
 
-                        realm =
-                            realmService.addRealm(r.getSlug(), r.getName(), r.getEmail(), r.isEditable(), r.isPublic());
+                        realm = realmService.addRealm(
+                            r.getSlug(),
+                            r.getName(),
+                            r.getEmail(),
+                            r.isEditable(),
+                            r.isPublic()
+                        );
                     } else {
                         logger.debug("update realm {}", r.getSlug());
 
                         // config maps
                         // TODO put in dedicated providers + config
-                        realm =
-                            realmService.updateRealm(
-                                r.getSlug(),
-                                r.getName(),
-                                r.getEmail(),
-                                r.isEditable(),
-                                r.isPublic(),
-                                r.getOAuthConfiguration() != null ? r.getOAuthConfiguration().getConfiguration() : null,
-                                r.getTosConfiguration() != null ? r.getTosConfiguration().getConfiguration() : null,
-                                r.getLocalizationConfiguration() != null ? r.getLocalizationConfiguration().getConfiguration() : null,
-                                r.getTemplatesConfiguration() != null ? r.getTemplatesConfiguration().getConfiguration() : null
-                            );
+                        realm = realmService.updateRealm(
+                            r.getSlug(),
+                            r.getName(),
+                            r.getEmail(),
+                            r.isEditable(),
+                            r.isPublic(),
+                            r.getOAuthConfiguration() != null ? r.getOAuthConfiguration().getConfiguration() : null,
+                            r.getTosConfiguration() != null ? r.getTosConfiguration().getConfiguration() : null,
+                            r.getLocalizationConfiguration() != null
+                                ? r.getLocalizationConfiguration().getConfiguration()
+                                : null,
+                            r.getTemplatesConfiguration() != null
+                                ? r.getTemplatesConfiguration().getConfiguration()
+                                : null
+                        );
                     }
 
                     /*
@@ -718,16 +729,14 @@ public class AACBootstrap {
                                     if (service == null) {
                                         logger.debug("add service {} for realm {}", id, String.valueOf(s.getRealm()));
 
-                                        service =
-                                            serviceService.addService(
-                                                s.getRealm(),
-                                                id,
-                                                s.getNamespace(),
-                                                s.getName(),
-                                                s.getDescription(),
-                                                s.getClaimMapping()
-                                            );
-
+                                        service = serviceService.addService(
+                                            s.getRealm(),
+                                            id,
+                                            s.getNamespace(),
+                                            s.getName(),
+                                            s.getDescription(),
+                                            s.getClaimMapping()
+                                        );
                                     } else {
                                         // check again realm match over existing
                                         if (!slug.equals(service.getRealm())) {
@@ -741,8 +750,13 @@ public class AACBootstrap {
                                             String.valueOf(s.getRealm())
                                         );
 
-                                        service = serviceService.updateService(id, s.getName(), s.getDescription(), s.getClaimMapping());
-                                    }                                    
+                                        service = serviceService.updateService(
+                                            id,
+                                            s.getName(),
+                                            s.getDescription(),
+                                            s.getClaimMapping()
+                                        );
+                                    }
 
                                     // related
                                     Collection<ServiceScope> scopes = s.getScopes();
@@ -752,8 +766,8 @@ public class AACBootstrap {
                                         for (ServiceScope sc : scopes) {
                                             sc.setServiceId(id);
 
-                                            ServiceScope ss =  serviceService.findScope(id, sc.getScope());
-                                            if(ss == null) {
+                                            ServiceScope ss = serviceService.findScope(id, sc.getScope());
+                                            if (ss == null) {
                                                 //add
                                                 ss = serviceService.addScope(
                                                     id,
@@ -797,7 +811,7 @@ public class AACBootstrap {
                                             sc.setServiceId(id);
 
                                             ServiceClaim ss = serviceService.findClaim(id, sc.getKey());
-                                            if(ss == null) {
+                                            if (ss == null) {
                                                 //add
                                                 ss = serviceService.addClaim(
                                                     id,
@@ -824,9 +838,12 @@ public class AACBootstrap {
                                     }
 
                                     s.setClaims(serviceClaims);
-                                
-                                    
-                                } catch (RegistrationException | NoSuchServiceException | NoSuchScopeException | NoSuchClaimException e) {
+                                } catch (
+                                    RegistrationException
+                                    | NoSuchServiceException
+                                    | NoSuchScopeException
+                                    | NoSuchClaimException e
+                                ) {
                                     logger.error(
                                         "error creating service " +
                                         String.valueOf(s.getServiceId()) +
@@ -971,13 +988,12 @@ public class AACBootstrap {
 
                                     if (user == null) {
                                         // register as new user
-                                        user =
-                                            userEntityService.addUser(
-                                                userId,
-                                                slug,
-                                                u.getUsername(),
-                                                u.getEmailAddress()
-                                            );
+                                        user = userEntityService.addUser(
+                                            userId,
+                                            slug,
+                                            u.getUsername(),
+                                            u.getEmailAddress()
+                                        );
                                     }
 
                                     u.setUserId(userId);
@@ -1009,8 +1025,13 @@ public class AACBootstrap {
                                         logger.debug("add {} account {} for realm {}", authority, id, slug);
 
                                         // create as new
-                                        account =
-                                            userAccountService.createUserAccount(authority, providerId, userId, id, u);
+                                        account = userAccountService.createUserAccount(
+                                            authority,
+                                            providerId,
+                                            userId,
+                                            id,
+                                            u
+                                        );
                                     } else {
                                         // check again realm match over existing
                                         if (!slug.equals(account.getRealm())) {
@@ -1162,14 +1183,13 @@ public class AACBootstrap {
                                         );
 
                                         // create as new
-                                        credentials =
-                                            userCredentialsService.createUserCredentials(
-                                                authority,
-                                                providerId,
-                                                userId,
-                                                id,
-                                                c
-                                            );
+                                        credentials = userCredentialsService.createUserCredentials(
+                                            authority,
+                                            providerId,
+                                            userId,
+                                            id,
+                                            c
+                                        );
                                     } else {
                                         // check again realm match over existing
                                         if (!slug.equals(credentials.getRealm())) {
@@ -1197,55 +1217,7 @@ public class AACBootstrap {
                                                 String.valueOf(credentials)
                                             );
                                         }
-                                        // // register as resource if missing
-                                        // if (resourceService.findResourceEntity(credentials.getId()) == null) {
-                                        //     resourceService.addResourceEntity(
-                                        //         credentials.getUuid(),
-                                        //         SystemKeys.RESOURCE_CREDENTIALS,
-                                        //         credentials.getAuthority(),
-                                        //         credentials.getProvider(),
-                                        //         credentials.getAccountId()
-                                        //     );
-                                        // }
                                     }
-                                    //                            // TODO refactor with a single method
-                                    //                            // TODO refactor password services over repo
-                                    //                            // TODO support webauthn
-                                    //                            if ("credentials_password".equals(c.getType())) {
-                                    //                                // cast
-                                    //                                InternalUserPassword uc = (InternalUserPassword) c;
-                                    //
-                                    //                                if (!StringUtils.hasText(uc.getProvider())) {
-                                    //                                    providerId = slug;
-                                    //                                }
-                                    //
-                                    //                                // extract password and encode if required
-                                    //                                String password = uc.getPassword();
-                                    //                                // TODO encode and set via new service
-                                    //                                if (id != null) {
-                                    //                                    credentials = internalUserPasswordService.findPasswordById(id);
-                                    //                                }
-                                    //
-                                    //                                if (credentials == null) {
-                                    //                                    logger.debug("add password {} for realm {} account {}", id, slug,
-                                    //                                            uc.getAccountId());
-                                    //
-                                    //                                    credentials = internalUserPasswordService.setPassword(providerId, uc.getUsername(),
-                                    //                                            password, false, null, 0);
-                                    //                                } else {
-                                    //                                    // check again realm match over existing
-                                    //                                    if (!slug.equals(credentials.getRealm())) {
-                                    //                                        logger.error("error creating {} password, realm mismatch");
-                                    //                                        return;
-                                    //                                    }
-                                    //
-                                    //                                    logger.debug("update password {} for realm {} account {}", id, slug,
-                                    //                                            uc.getAccountId());
-                                    //                                    credentials = internalUserPasswordService.setPassword(providerId, uc.getUsername(),
-                                    //                                            password, false, null, 0);
-                                    //                                }
-                                    //                            }
-
                                 } catch (
                                     RegistrationException
                                     | NoSuchCredentialException
@@ -1263,6 +1235,81 @@ public class AACBootstrap {
                             });
                     }
 
+                    /*
+                     * Roles
+                     * TODO register subject roles
+                     */
+                    if (rc.getRoles() != null) {
+                        rc
+                            .getRoles()
+                            .forEach(role -> {
+                                logger.debug("create role for realm {}", String.valueOf(role.getRealm()));
+
+                                // validate realm match
+                                if (StringUtils.hasText(role.getRealm()) && !slug.equals(role.getRealm())) {
+                                    logger.error("error creating role, realm mismatch");
+                                    return;
+                                }
+
+                                // enforce realm
+                                role.setRealm(slug);
+
+                                if (!StringUtils.hasText(role.getRoleId())) {
+                                    // we ask id to be provided otherwise we create a new one every time
+                                    logger.error("error creating role, missing roleId");
+                                    throw new IllegalArgumentException("missing roleId");
+                                }
+
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("role: {}", String.valueOf(role));
+                                }
+
+                                try {
+                                    // add or update via service
+                                    String id = role.getRoleId();
+                                    RealmRole rr = realmRoleService.fetchRole(id);
+                                    if (rr == null) {
+                                        logger.debug("add role {} for realm {}", id, String.valueOf(role.getRealm()));
+
+                                        rr = realmRoleService.addRole(
+                                            id,
+                                            role.getRealm(),
+                                            role.getRole(),
+                                            role.getName(),
+                                            role.getDescription()
+                                        );
+                                    } else {
+                                        // check again realm match over existing
+                                        if (!slug.equals(rr.getRealm())) {
+                                            logger.error("error creating role, realm mismatch");
+                                            return;
+                                        }
+
+                                        logger.debug(
+                                            "update role {} for realm {}",
+                                            id,
+                                            String.valueOf(role.getRealm())
+                                        );
+
+                                        rr = realmRoleService.updateRole(
+                                            id,
+                                            role.getRealm(),
+                                            role.getRole(),
+                                            role.getName(),
+                                            role.getDescription()
+                                        );
+                                    }
+
+                                    if (rr != null) {
+                                        if (logger.isTraceEnabled()) {
+                                            logger.trace("role: {}", String.valueOf(rr));
+                                        }
+                                    }
+                                } catch (NoSuchRoleException e) {
+                                    logger.error("error creating role " + String.valueOf(role.getRoleId()) + ": " + e);
+                                }
+                            });
+                    }
                     logger.debug("bootstrap realm {} created", String.valueOf(slug));
                 } catch (Exception e) {
                     logger.error("error creating realm " + String.valueOf(slug) + ": " + e.getMessage());
@@ -1272,16 +1319,15 @@ public class AACBootstrap {
                 }
             });
 
-
         // always reload services
-        try {        
+        try {
             reloadServices();
         } catch (Exception e) {
             logger.error("error reloading services: " + e.getMessage());
             if (logger.isTraceEnabled()) {
                 e.printStackTrace();
             }
-        } 
+        }
 
         logger.debug("bootstrap config done");
         /*
@@ -1292,26 +1338,24 @@ public class AACBootstrap {
 
     public void reloadServices() throws Exception {
         Runnable run = new Runnable() {
-        public void run() {
-            try {    
-                // reload services
-                serviceManager.reload();
-
-                //TODO add others
-            } catch (Exception e) {
-                logger.error("error reloading services: " + e.getMessage());
-                if (logger.isTraceEnabled()) {
-                    e.printStackTrace();
+            public void run() {
+                try {
+                    // reload services
+                    serviceManager.reload();
+                    //TODO add others
+                } catch (Exception e) {
+                    logger.error("error reloading services: " + e.getMessage());
+                    if (logger.isTraceEnabled()) {
+                        e.printStackTrace();
+                    }
                 }
-            } 
-        }
+            }
         };
         //workaround - init an admin context and dispatch
         SecurityContext context = initContext(adminUsername);
         DelegatingSecurityContextRunnable dcr = new DelegatingSecurityContextRunnable(run, context);
         new Thread(dcr).start();
     }
-
     /*
      * Call init on each service we expect services to be independent and to execute
      * in their own transaction to avoid rollback issues across services
