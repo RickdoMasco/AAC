@@ -116,8 +116,7 @@ public class TemplatesManager
                 settingsMap.setLanguages(r.getLocalizationConfiguration().getLanguages());
             } else {
                 settingsMap.setLanguages(
-                    Arrays
-                        .asList(LanguageService.LANGUAGES)
+                    Arrays.asList(LanguageService.LANGUAGES)
                         .stream()
                         .map(l -> Language.parse(l))
                         .collect(Collectors.toSet())
@@ -194,8 +193,25 @@ public class TemplatesManager
      * Templates from authorities
      */
 
-    public Collection<String> getAuthorities(String realm) {
-        return authorityService.getAuthoritiesIds();
+    public Collection<String> getAuthorities(String realm) throws NoSuchRealmException, NoSuchProviderException {
+        //sanity check, realm must exists and be configured
+        Realm r = realmService.findRealm(realm);
+        if (r == null) {
+            throw new NoSuchRealmException();
+        }
+
+        try {
+            ConfigurableTemplateProvider config = getProviderByRealm(realm);
+            if (config == null) {
+                throw new NoSuchProviderException();
+            }
+
+            return authorityService.getAuthoritiesIds();
+        } catch (
+            MethodArgumentNotValidException | NoSuchProviderException | NoSuchRealmException | RegistrationException e
+        ) {
+            throw new SystemException(e.getMessage());
+        }
     }
 
     public Collection<Template> listTemplates(String realm, String authority)
@@ -319,13 +335,12 @@ public class TemplatesManager
         // cleanup unregistered keys
         Map<String, String> content = null;
         if (reg.getContent() != null) {
-            content =
-                reg
-                    .getContent()
-                    .entrySet()
-                    .stream()
-                    .filter(e -> keys.contains(e.getKey()))
-                    .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            content = reg
+                .getContent()
+                .entrySet()
+                .stream()
+                .filter(e -> keys.contains(e.getKey()))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
         }
         reg.setContent(content);
 
@@ -370,13 +385,12 @@ public class TemplatesManager
         // cleanup unregistered keys
         Map<String, String> content = null;
         if (reg.getContent() != null) {
-            content =
-                reg
-                    .getContent()
-                    .entrySet()
-                    .stream()
-                    .filter(e -> keys.contains(e.getKey()))
-                    .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            content = reg
+                .getContent()
+                .entrySet()
+                .stream()
+                .filter(e -> keys.contains(e.getKey()))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
         }
         reg.setContent(content);
 
@@ -429,13 +443,12 @@ public class TemplatesManager
         // cleanup unregistered keys
         Map<String, String> content = null;
         if (reg.getContent() != null) {
-            content =
-                reg
-                    .getContent()
-                    .entrySet()
-                    .stream()
-                    .filter(e -> keys.contains(e.getKey()))
-                    .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+            content = reg
+                .getContent()
+                .entrySet()
+                .stream()
+                .filter(e -> keys.contains(e.getKey()))
+                .collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
         }
         reg.setContent(content);
 
