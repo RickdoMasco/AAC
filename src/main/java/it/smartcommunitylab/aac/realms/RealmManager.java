@@ -687,6 +687,10 @@ public class RealmManager {
         // credentials
         // TODO
 
+        //roles
+        Collection<RealmRole> roles = roleManager.getRealmRoles(realm);
+        rc.setRoles(new ArrayList<>(roles));
+
         return rc;
     }
 

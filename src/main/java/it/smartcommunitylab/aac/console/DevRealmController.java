@@ -149,6 +149,15 @@ public class DevRealmController {
         realmManager.deleteRealm(realm, true);
     }
 
+    @GetMapping("/realms/{realm}/backup")
+    @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
+    public RealmConfig backupRealm(
+        @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
+        HttpServletResponse res
+    ) throws NoSuchRealmException, SystemException, IOException {
+        return realmManager.getRealmConfig(realm);
+    }
+
     @GetMapping("/realms/{realm}/export")
     @PreAuthorize("hasAuthority('" + Config.R_ADMIN + "') or hasAuthority(#realm+':ROLE_ADMIN')")
     public void exportRealm(
