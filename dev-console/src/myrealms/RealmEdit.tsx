@@ -31,6 +31,7 @@ import {
 } from '../developers/DeveloperList';
 import { AceEditorInput } from '@dslab/ra-ace-editor';
 import { RealmLogoEditor } from './RealmLogoEditor';
+import { BackupExportButton } from '../components/BackupExportButton';
 
 export const RealmEdit = () => {
     return (
@@ -194,6 +195,7 @@ const ActionsToolbar = () => {
             <InspectButton />
             <DeleteWithDialogButton />
             <RefreshingExportButton />
+            <BackupExportButton resource="realms" />
         </TopToolbar>
     );
 };
