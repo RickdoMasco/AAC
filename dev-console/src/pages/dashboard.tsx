@@ -3,6 +3,7 @@ import {
     useCreatePath,
     useDataProvider,
     useGetIdentity,
+    useGetOne,
     useGetResourceLabel,
     useTranslate,
 } from 'react-admin';
@@ -25,8 +26,46 @@ const DevDashboard = () => {
     const { root: realmId } = useRootSelector();
     const translate = useTranslate();
     const dataProvider = useDataProvider();
+    const { data: logo, isLoading: isLogoLoading } = useGetOne(
+        'realms/' + realmId,
+        {
+            id: 'logo',
+        }
+    );
 
     const [stats, setStats] = useState<any>(null);
+
+    const avatar =
+        !logo || !logo.url ? (
+            <Avatar
+                sx={{
+                    width: 72,
+                    height: 72,
+                    mb: 2,
+                    alignItems: 'center',
+                    display: 'inline-block',
+                    textTransform: 'uppercase',
+                    fontSize: 36,
+                    fontWeight: 'bold',
+                    lineHeight: '64px',
+                    backgroundColor: '#0066cc',
+                    // textAlign: 'center',
+                }}
+            >
+                {stats?.realm?.name ? stats.realm.name.substring(0, 2) : ''}
+            </Avatar>
+        ) : (
+            <Avatar
+                src={logo.url}
+                sx={{
+                    width: 72,
+                    height: 72,
+                    mb: 2,
+                    alignItems: 'center',
+                    display: 'inline-block',
+                }}
+            />
+        );
 
     useEffect(() => {
         let loading = true;
@@ -52,27 +91,7 @@ const DevDashboard = () => {
             <PageTitle
                 text={stats.realm.name}
                 secondaryText={translate('page.dashboard.description')}
-                icon={
-                    stats.realm.name && (
-                        <Avatar
-                            sx={{
-                                width: 72,
-                                height: 72,
-                                mb: 2,
-                                alignItems: 'center',
-                                display: 'inline-block',
-                                textTransform: 'uppercase',
-                                fontSize: 36,
-                                fontWeight: 'bold',
-                                lineHeight: '64px',
-                                backgroundColor: '#0066cc',
-                                // textAlign: 'center',
-                            }}
-                        >
-                            {stats.realm.name.substring(0, 2)}
-                        </Avatar>
-                    )
-                }
+                icon={stats.realm.name && avatar}
             />
 
             <Grid container spacing={2} mb={2}>
