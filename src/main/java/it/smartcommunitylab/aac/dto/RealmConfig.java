@@ -20,7 +20,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonUnwrapped;
+import com.fasterxml.jackson.databind.ser.std.StdKeySerializers.Default;
 import it.smartcommunitylab.aac.accounts.base.AbstractUserAccount;
+import it.smartcommunitylab.aac.attributes.DefaultAttributesSet;
 import it.smartcommunitylab.aac.attributes.model.ConfigurableAttributeProvider;
 import it.smartcommunitylab.aac.credentials.base.AbstractUserCredentials;
 import it.smartcommunitylab.aac.identity.model.ConfigurableIdentityProvider;
@@ -64,6 +66,9 @@ public class RealmConfig {
 
     //roles
     private List<RealmRole> roles;
+
+    //attribute sets
+    private List<DefaultAttributesSet> attributeSets;
 
     public RealmConfig() {}
 
@@ -150,5 +155,13 @@ public class RealmConfig {
 
     public void setRoles(List<RealmRole> roles) {
         this.roles = roles;
+    }
+
+    public List<DefaultAttributesSet> getAttributeSets() {
+        return attributeSets;
+    }
+
+    public void setAttributeSets(List<DefaultAttributesSet> attributeSets) {
+        this.attributeSets = attributeSets;
     }
 }

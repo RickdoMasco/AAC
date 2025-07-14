@@ -20,9 +20,13 @@ import it.smartcommunitylab.aac.Config;
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.accounts.model.UserAccount;
 import it.smartcommunitylab.aac.accounts.persistence.UserAccountService;
+import it.smartcommunitylab.aac.attributes.DefaultAttributesSet;
+import it.smartcommunitylab.aac.attributes.model.AttributeSet;
 import it.smartcommunitylab.aac.attributes.model.ConfigurableAttributeProvider;
 import it.smartcommunitylab.aac.attributes.service.AttributeProviderService;
+import it.smartcommunitylab.aac.attributes.service.AttributeService;
 import it.smartcommunitylab.aac.base.service.AbstractConfigurableProviderService;
+import it.smartcommunitylab.aac.common.NoSuchAttributeSetException;
 import it.smartcommunitylab.aac.common.NoSuchAuthorityException;
 import it.smartcommunitylab.aac.common.NoSuchClaimException;
 import it.smartcommunitylab.aac.common.NoSuchClientException;
@@ -142,6 +146,9 @@ public class AACBootstrap {
 
     @Autowired
     private SpaceRoleService roleService;
+
+    @Autowired
+    private AttributeService attributeService;
 
     @Autowired
     private it.smartcommunitylab.aac.accounts.service.UserAccountService userAccountService;
@@ -1307,6 +1314,88 @@ public class AACBootstrap {
                                     }
                                 } catch (NoSuchRoleException e) {
                                     logger.error("error creating role " + String.valueOf(role.getRoleId()) + ": " + e);
+                                }
+                            });
+                    }
+                    /*
+                     * Attribute Sets
+                     */
+                    if (rc.getAttributeSets() != null) {
+                        rc
+                            .getAttributeSets()
+                            .forEach(attributeSet -> {
+                                logger.debug(
+                                    "create attributeSet for realm {}",
+                                    String.valueOf(attributeSet.getRealm())
+                                );
+
+                                // validate realm match
+                                if (
+                                    StringUtils.hasText(attributeSet.getRealm()) &&
+                                    !slug.equals(attributeSet.getRealm())
+                                ) {
+                                    logger.error("error creating attributeSet, realm mismatch");
+                                    return;
+                                }
+
+                                // enforce realm
+                                attributeSet.setRealm(slug);
+
+                                if (!StringUtils.hasText(attributeSet.getIdentifier())) {
+                                    // we ask id to be provided otherwise we create a new one every time
+                                    logger.error("error creating attributeSet, missing identifier");
+                                    throw new IllegalArgumentException("missing identifier");
+                                }
+
+                                if (logger.isTraceEnabled()) {
+                                    logger.trace("attributeSet: {}", String.valueOf(attributeSet));
+                                }
+
+                                try {
+                                    // add or update via service
+                                    String id = attributeSet.getIdentifier();
+                                    AttributeSet as = attributeService.findAttributeSet(id);
+                                    if (as == null) {
+                                        logger.debug(
+                                            "add attributeSet {} for realm {}",
+                                            id,
+                                            String.valueOf(attributeSet.getRealm())
+                                        );
+
+                                        as = attributeService.addAttributeSet(slug, attributeSet);
+                                    } else {
+                                        // check again realm match over existing
+                                        if (!(as instanceof DefaultAttributesSet)) {
+                                            logger.error("error creating attributeSet, not a default set");
+                                            return;
+                                        }
+
+                                        if (!slug.equals(((DefaultAttributesSet) as).getRealm())) {
+                                            logger.error("error creating attributeSet, realm mismatch");
+                                            return;
+                                        }
+
+                                        logger.debug(
+                                            "update attributeSet {} for realm {}",
+                                            id,
+                                            String.valueOf(attributeSet.getRealm())
+                                        );
+
+                                        as = attributeService.updateAttributeSet(id, attributeSet);
+                                    }
+
+                                    if (as != null) {
+                                        if (logger.isTraceEnabled()) {
+                                            logger.trace("attributeSet: {}", String.valueOf(as));
+                                        }
+                                    }
+                                } catch (NoSuchAttributeSetException e) {
+                                    logger.error(
+                                        "error creating attributeSet " +
+                                        String.valueOf(attributeSet.getIdentifier()) +
+                                        ": " +
+                                        e
+                                    );
                                 }
                             });
                     }

@@ -55,6 +55,8 @@ public class CustomProfileClaimsExtractorProvider implements ScopeClaimsExtracto
         attributeService
             .listAttributeSets()
             .stream()
+            //do not expose internal sets
+            .filter(a -> !a.getIdentifier().startsWith("aac."))
             .forEach(a -> {
                 res.add(buildScope(a.getIdentifier()));
             });

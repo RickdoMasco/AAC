@@ -22,6 +22,7 @@ import it.smartcommunitylab.aac.accounts.base.AbstractUserAccount;
 import it.smartcommunitylab.aac.accounts.model.UserAccount;
 import it.smartcommunitylab.aac.accounts.persistence.UserAccountService;
 import it.smartcommunitylab.aac.attributes.AttributeSetsManager;
+import it.smartcommunitylab.aac.attributes.DefaultAttributesSet;
 import it.smartcommunitylab.aac.attributes.model.AttributeSet;
 import it.smartcommunitylab.aac.attributes.model.ConfigurableAttributeProvider;
 import it.smartcommunitylab.aac.attributes.service.AttributeProviderService;
@@ -690,6 +691,15 @@ public class RealmManager {
         //roles
         Collection<RealmRole> roles = roleManager.getRealmRoles(realm);
         rc.setRoles(new ArrayList<>(roles));
+
+        // attribute sets
+        Collection<DefaultAttributesSet> attributeSets = attributeManager
+            .listAttributeSets(realm, false)
+            .stream()
+            .filter(s -> s instanceof DefaultAttributesSet)
+            .map(s -> (DefaultAttributesSet) s)
+            .collect(Collectors.toList());
+        rc.setAttributeSets(new ArrayList<>(attributeSets));
 
         return rc;
     }
