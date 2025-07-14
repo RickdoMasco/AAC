@@ -47,6 +47,7 @@ import org.springframework.security.saml2.provider.service.registration.RelyingP
 import org.springframework.security.saml2.provider.service.registration.Saml2MessageBinding;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
+import org.springframework.web.util.UriComponentsBuilder;
 
 public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<SpidIdentityProviderConfigMap> {
 
@@ -63,6 +64,8 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
     private transient Set<RelyingPartyRegistration> relyingPartyRegistrations; // first time evaluated by the getter, then immutable
     private Map<String, SpidRegistration> identityProviders; // local registry
+    private transient SpidIdentityProviderStatusMap statusMap;
+    private String baseUrl;
 
     public SpidIdentityProviderConfig(String provider, String realm) {
         super(
@@ -92,6 +95,51 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
      */
     private SpidIdentityProviderConfig() {
         super();
+    }
+
+    public void setBaseUrl(String baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    public SpidIdentityProviderStatusMap getStatusMap() {
+        if (statusMap == null) {
+
+            statusMap = new SpidIdentityProviderStatusMap();
+            statusMap.setMetadataUrl(getMetadataUrl());
+            statusMap.setAssertionConsumerUrls(getAssertionConsumerUrls());
+        }
+        return statusMap;
+    }
+
+    public String getMetadataUrl() {
+        if (baseUrl != null) {
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(metadataUrlTemplate());
+            return builder.buildAndExpand(Map.of("baseUrl", baseUrl, "registrationId", getMetadataRegistrationId())).toUriString();
+        }
+        return null;
+    }
+
+    public String metadataUrlTemplate() {
+        return "{baseUrl}/auth/" + getAuthority() + "/metadata/{registrationId}";
+    }
+
+    public Map<String, String> getAssertionConsumerUrls(){
+        if (baseUrl != null) {
+            Map<String, String> assertionConsumerUrls = new HashMap<>();
+            for(RelyingPartyRegistration relyingPartyRegistration : getUpstreamRelyingPartyRegistrations()){
+                if(relyingPartyRegistration.getProviderDetails() != null) {
+                    assertionConsumerUrls.put(
+                            relyingPartyRegistration.getProviderDetails().getEntityId(),
+                            UriComponentsBuilder.fromUriString(assertionConsumerUrlTemplate()).buildAndExpand(Map.of("baseUrl", baseUrl, "registrationId", relyingPartyRegistration.getRegistrationId())).toUriString());
+                    }
+                }
+            return assertionConsumerUrls;
+        }
+        return null;
+    }
+
+    public String assertionConsumerUrlTemplate() {
+        return "{baseUrl}/auth/" + getAuthority() + "/authenticate/{registrationId}";
     }
 
     /*
@@ -241,10 +289,6 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
     public String getLogoutUrl() {
         return "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "slo/" + getMetadataRegistrationId();
-    }
-
-    public String getMetadataUrl() {
-        return "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "metadata/" + getMetadataRegistrationId();
     }
 
     // create a relying party registration for an upstream idp; only ap autoconfiguration
