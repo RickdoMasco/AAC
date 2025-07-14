@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.Pattern;
@@ -44,7 +45,7 @@ public class DefaultAttributesSet implements AttributeSet {
     private String name;
     private String description;
 
-    private Collection<DefaultAttribute> attributes = Collections.emptyList();
+    private List<DefaultAttribute> attributes = Collections.emptyList();
 
     public DefaultAttributesSet() {
         this.attributes = new ArrayList<>();
@@ -92,16 +93,16 @@ public class DefaultAttributesSet implements AttributeSet {
         return Collections.unmodifiableCollection(attributes);
     }
 
-    public void setAttributes(Collection<DefaultAttribute> attributes) {
+    public void setAttributes(List<DefaultAttribute> attributes) {
         this.attributes = attributes;
     }
-    
+
     public String getId() {
-    	return this.identifier;
+        return this.identifier;
     }
 
     public void addAttributes(Collection<Attribute> attributes) {
-        this.attributes = new HashSet<>();
+        this.attributes = new ArrayList<>();
         if (attributes != null) {
             this.attributes.addAll(
                     attributes
@@ -140,20 +141,19 @@ public class DefaultAttributesSet implements AttributeSet {
         aset.name = set.getName();
         aset.description = set.getDescription();
         if (set.getAttributes() != null) {
-            aset.attributes =
-                set
-                    .getAttributes()
-                    .stream()
-                    .map(a -> {
-                        DefaultAttribute attr = new DefaultAttribute();
-                        attr.setKey(a.getKey());
-                        attr.setType(a.getType());
-                        attr.setName(a.getName());
-                        attr.setDescription(a.getDescription());
-                        attr.setIsMultiple(a.getIsMultiple());
-                        return attr;
-                    })
-                    .collect(Collectors.toSet());
+            aset.attributes = set
+                .getAttributes()
+                .stream()
+                .map(a -> {
+                    DefaultAttribute attr = new DefaultAttribute();
+                    attr.setKey(a.getKey());
+                    attr.setType(a.getType());
+                    attr.setName(a.getName());
+                    attr.setDescription(a.getDescription());
+                    attr.setIsMultiple(a.getIsMultiple());
+                    return attr;
+                })
+                .collect(Collectors.toList());
         }
 
         return aset;
