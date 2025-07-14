@@ -31,14 +31,17 @@ import it.smartcommunitylab.aac.attributes.persistence.AttributeEntity;
 import it.smartcommunitylab.aac.attributes.persistence.AttributeSetEntity;
 import it.smartcommunitylab.aac.common.NoSuchAttributeException;
 import it.smartcommunitylab.aac.common.NoSuchAttributeSetException;
+import it.smartcommunitylab.aac.config.AttributeSetsProperties;
 import it.smartcommunitylab.aac.model.AttributeType;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,11 +58,25 @@ public class AttributeService {
     @Autowired
     private AttributeEntityService attributeService;
 
-    private Map<String, AttributeSet> systemAttributeSets = Collections.emptyMap();
+    private Map<String, AttributeSet> systemAttributeSets = new HashMap<>();
 
     @Autowired
     public void setAttributeSets(List<AttributeSet> sets) {
-        systemAttributeSets = sets.stream().collect(Collectors.toMap(s -> s.getIdentifier(), s -> s));
+        if (sets != null) {
+            sets.forEach(s -> {
+                systemAttributeSets.put(s.getIdentifier(), s);
+            });
+        }
+    }
+
+    @Autowired
+    public void setAttributeSetsProperties(AttributeSetsProperties attributeSetsProperties) {
+        logger.debug("configure system attribute sets from properties");
+        if (attributeSetsProperties != null) {
+            for (DefaultAttributesSet set : attributeSetsProperties.getSets()) {
+                systemAttributeSets.put(set.getIdentifier(), set);
+            }
+        }
     }
 
     /*
@@ -106,18 +123,20 @@ public class AttributeService {
     public Collection<AttributeSet> listAttributeSets() {
         logger.debug("list attribute sets");
 
-        // TODO add static (internal) attribute sets to list
-        return attributeService
-            .listAttributeSets()
-            .stream()
-            .map(s -> {
-                DefaultAttributesSet a = toSet(s);
-                try {
-                    a.addAttributes(listAttributes(s.getIdentifier()));
-                } catch (NoSuchAttributeSetException e) {}
-                return a;
-            })
-            .collect(Collectors.toList());
+        // NOTE: add static (internal) attribute sets to list
+        return Stream.concat(
+            systemAttributeSets.values().stream(),
+            attributeService
+                .listAttributeSets()
+                .stream()
+                .map(s -> {
+                    DefaultAttributesSet a = toSet(s);
+                    try {
+                        a.addAttributes(listAttributes(s.getIdentifier()));
+                    } catch (NoSuchAttributeSetException e) {}
+                    return a;
+                })
+        ).collect(Collectors.toList());
     }
 
     public Collection<AttributeSet> listAttributeSets(String realm) {
@@ -198,8 +217,17 @@ public class AttributeService {
             for (Attribute attr : set.getAttributes()) {
                 AttributeEntity ae = attributeService.findAttribute(identifier, attr.getKey());
                 if (ae == null) {
-                    ae =
-                        attributeService.addAttribute(
+                    ae = attributeService.addAttribute(
+                        identifier,
+                        attr.getKey(),
+                        attr.getType(),
+                        attr.getIsMultiple(),
+                        attr.getName(),
+                        attr.getDescription()
+                    );
+                } else {
+                    try {
+                        ae = attributeService.updateAttribute(
                             identifier,
                             attr.getKey(),
                             attr.getType(),
@@ -207,17 +235,6 @@ public class AttributeService {
                             attr.getName(),
                             attr.getDescription()
                         );
-                } else {
-                    try {
-                        ae =
-                            attributeService.updateAttribute(
-                                identifier,
-                                attr.getKey(),
-                                attr.getType(),
-                                attr.getIsMultiple(),
-                                attr.getName(),
-                                attr.getDescription()
-                            );
                     } catch (NoSuchAttributeException e) {}
                 }
 

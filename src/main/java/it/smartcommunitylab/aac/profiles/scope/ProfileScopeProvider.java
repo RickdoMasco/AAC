@@ -66,8 +66,7 @@ public class ProfileScopeProvider implements ScopeProvider {
     private final AttributeService attributeService;
 
     // loading cache for set profile approvers
-    private final LoadingCache<String, WhitelistScopeApprover> setApprovers = CacheBuilder
-        .newBuilder()
+    private final LoadingCache<String, WhitelistScopeApprover> setApprovers = CacheBuilder.newBuilder()
         .expireAfterWrite(1, TimeUnit.HOURS) // expires 1 hour after fetch
         .maximumSize(100)
         .build(
@@ -103,6 +102,8 @@ public class ProfileScopeProvider implements ScopeProvider {
         attributeService
             .listAttributeSets()
             .stream()
+            //do not expose internal sets
+            .filter(a -> !a.getIdentifier().startsWith("aac."))
             .forEach(a -> {
                 res.add(new CustomProfileScope(a.getIdentifier()));
             });
