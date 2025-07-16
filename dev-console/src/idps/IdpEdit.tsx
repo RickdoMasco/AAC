@@ -308,11 +308,23 @@ const IdpEditForm = () => {
                     />
                     <RecordContextProvider value={config}>
                         <Stack direction={'column'}>
-                            {Object.keys(config.statusMap).map(e => (
-                                <Labeled>
-                                    <IdField source={'statusMap.' + e} />
-                                </Labeled>
-                            ))}
+                            {Object.entries(config.statusMap).map(([key, value]) => {
+                                if (typeof value === 'string') {
+                                    return (
+                                        <Labeled>
+                                            <IdField source={'statusMap.' + key} />
+                                        </Labeled>
+                                    );
+                                } else {
+                                    return (
+                                         Object.entries(value).map(([subkey, subvalue]) => (
+                                             <Labeled>
+                                                <IdField source={'statusMap.' + key + '.["' + subkey + '"]'} />
+                                             </Labeled>
+                                         ))
+                                    );
+                                }
+                            })}
                         </Stack>
                     </RecordContextProvider>
                 </TabbedForm.Tab>
