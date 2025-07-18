@@ -31,12 +31,14 @@ import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedIdentityProvider;
 import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedIdentityProviderConfig;
 import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedIdentityProviderConfigMap;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 @Service
+@ConditionalOnProperty(value = "authorities.identity.openidfed.enable", havingValue = "true")
 public class OpenIdFedIdentityAuthority
     extends AbstractIdentityProviderAuthority<OpenIdFedIdentityProvider, OIDCUserIdentity, OpenIdFedIdentityProviderConfig, OpenIdFedIdentityProviderConfigMap>
     implements ApplicationEventPublisherAware {

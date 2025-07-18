@@ -26,6 +26,8 @@ public class CustomAuthoritiesProperties {
 
     public String description;
 
+    public Boolean enable;
+
     private OIDCIdentityProviderConfigMap oidc;
 
     public String getId() {
@@ -50,6 +52,14 @@ public class CustomAuthoritiesProperties {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Boolean getEnable() {
+        return enable;
+    }
+
+    public void setEnable(Boolean enable) {
+        this.enable = enable;
     }
 
     public OIDCIdentityProviderConfigMap getOidc() {

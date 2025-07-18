@@ -173,18 +173,24 @@ authorities:
         passwordRequireSpecial: false   
         passwordKeepNumber: 1   
      oidc:
+        enable: ${AUTHORITY_OIDC:true}
         scope: openid,email
         userNameAttributeName: sub
         clientAuthenticationMethod: CLIENT_SECRET_BASIC
         enablePkce: true
         trustEmailAddress: true
+     openidfed:
+        enable: ${AUTHORITY_OPENIDFED:true}       
      apple:
+        enable: ${AUTHORITY_APPLE:true}
         askNameScope: true
         askEmailScope: true
      saml:
+        enable: ${AUTHORITY_SAML:true}
         signAuthNRequest: true
         ssoServiceBinding: HTTP-POST
-#     spid:
+     spid:
+        enable: ${AUTHORITY_SPID:true}
 #        userNameAttributeName: SPID_CODE
 #        idAttribute: SPID_CODE
 #        useSpidCodeAsNameId: true
@@ -197,6 +203,7 @@ authorities:
      custom:
       - id: google
         name: Google
+        enable: ${AUTHORITY_GOOGLE:true}
         oidc:
           clientName: Google
           clientAuthenticationMethod: client_secret_basic
@@ -207,6 +214,7 @@ authorities:
           enablePkce: true
       - id: facebook
         name: Facebook
+        enable: ${AUTHORITY_FACEBOOK:true}
         oidc:
           clientName: Facebook
           clientAuthenticationMethod: client_secret_post
@@ -221,6 +229,7 @@ authorities:
           enablePkce: false
       - id: github
         name: GitHub
+        enable: ${AUTHORITY_GITHUB:true}
         oidc:
           clientName: GitHub
           clientAuthenticationMethod: client_secret_basic

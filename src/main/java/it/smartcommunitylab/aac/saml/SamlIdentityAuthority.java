@@ -31,12 +31,14 @@ import it.smartcommunitylab.aac.saml.provider.SamlIdentityProvider;
 import it.smartcommunitylab.aac.saml.provider.SamlIdentityProviderConfig;
 import it.smartcommunitylab.aac.saml.provider.SamlIdentityProviderConfigMap;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 @Service
+@ConditionalOnProperty(value = "authorities.identity.saml.enable", havingValue = "true")
 public class SamlIdentityAuthority
     extends AbstractIdentityProviderAuthority<SamlIdentityProvider, SamlUserIdentity, SamlIdentityProviderConfig, SamlIdentityProviderConfigMap>
     implements ApplicationEventPublisherAware {

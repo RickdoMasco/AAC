@@ -34,14 +34,22 @@ import it.smartcommunitylab.aac.oidc.apple.provider.AppleIdentityProviderConfigM
 import it.smartcommunitylab.aac.oidc.model.OIDCEditableUserAccount;
 import it.smartcommunitylab.aac.oidc.model.OIDCUserAccount;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 @Service
+@ConditionalOnProperty(value = "authorities.identity.apple.enable", havingValue = "true")
 public class AppleAccountServiceAuthority
     extends AbstractProviderAuthority<AppleAccountService, AppleAccountServiceConfig>
     implements
-        AccountServiceAuthority<AppleAccountService, OIDCUserAccount, OIDCEditableUserAccount, AppleAccountServiceConfig, AppleIdentityProviderConfigMap> {
+        AccountServiceAuthority<
+            AppleAccountService,
+            OIDCUserAccount,
+            OIDCEditableUserAccount,
+            AppleAccountServiceConfig,
+            AppleIdentityProviderConfigMap
+        > {
 
     // account service
     private final UserAccountService<OIDCUserAccount> accountService;
@@ -91,7 +99,12 @@ public class AppleAccountServiceAuthority
     }
 
     @Override
-    public ConfigurationProvider<AppleAccountServiceConfig, ConfigurableAccountService, AccountServiceSettingsMap, AppleIdentityProviderConfigMap> getConfigurationProvider() {
+    public ConfigurationProvider<
+        AppleAccountServiceConfig,
+        ConfigurableAccountService,
+        AccountServiceSettingsMap,
+        AppleIdentityProviderConfigMap
+    > getConfigurationProvider() {
         return null;
     }
 }
