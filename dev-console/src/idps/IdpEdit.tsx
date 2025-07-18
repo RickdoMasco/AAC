@@ -315,7 +315,7 @@ const IdpEditForm = () => {
                                             <IdField source={'statusMap.' + key} />
                                         </Labeled>
                                     );
-                                } else {
+                                } else if (Object.prototype.toString.call(value) === '[object Object]'){
                                     return (
                                          Object.entries(value).map(([subkey, subvalue]) => (
                                              <Labeled>
@@ -323,6 +323,8 @@ const IdpEditForm = () => {
                                              </Labeled>
                                          ))
                                     );
+                                }else{
+                                     return ( <></> );
                                 }
                             })}
                         </Stack>
