@@ -77,6 +77,7 @@ public class AssetsSecurityConfig {
         "/img/**",
         "/italia/**",
         "/logo",
+        "/logo/**",
         "/favicon.ico",
     };
 }
