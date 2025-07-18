@@ -105,6 +105,11 @@ public class AuthoritiesConfig {
         // load custom authorities and build
         if (authsProps.getCustom() != null) {
             for (CustomAuthoritiesProperties authProp : authsProps.getCustom()) {
+                if (!Boolean.TRUE.equals(authProp.getEnable())) {
+                    // skip disabled authorities
+                    continue;
+                }
+
                 // read props
                 String id = authProp.getId();
                 String name = authProp.getName();

@@ -31,10 +31,12 @@ import it.smartcommunitylab.aac.oidc.apple.provider.AppleIdentityProviderConfigM
 import it.smartcommunitylab.aac.oidc.model.OIDCUserAccount;
 import it.smartcommunitylab.aac.oidc.model.OIDCUserIdentity;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 @Service
+@ConditionalOnProperty(value = "authorities.identity.apple.enable", havingValue = "true")
 public class AppleIdentityAuthority
     extends AbstractSingleProviderIdentityAuthority<AppleIdentityProvider, OIDCUserIdentity, AppleIdentityProviderConfig, AppleIdentityProviderConfigMap> {
 

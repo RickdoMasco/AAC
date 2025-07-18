@@ -34,10 +34,12 @@ import it.smartcommunitylab.aac.oidc.provider.OIDCAccountServiceConfigConverter;
 import it.smartcommunitylab.aac.oidc.provider.OIDCIdentityProviderConfig;
 import it.smartcommunitylab.aac.oidc.provider.OIDCIdentityProviderConfigMap;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 @Service
+@ConditionalOnProperty(value = "authorities.identity.oidc.enable", havingValue = "true")
 public class OIDCAccountServiceAuthority
     extends AbstractProviderAuthority<OIDCAccountService, OIDCAccountServiceConfig>
     implements

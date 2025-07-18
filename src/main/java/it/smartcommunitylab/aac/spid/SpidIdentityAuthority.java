@@ -38,11 +38,13 @@ import it.smartcommunitylab.aac.spid.registry.LocalSpidRegistry;
 import it.smartcommunitylab.aac.spid.service.SpidRegistry;
 import java.util.concurrent.TimeUnit;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.stereotype.Service;
 
 @Service
+@ConditionalOnProperty(value = "authorities.identity.spid.enable", havingValue = "true")
 public class SpidIdentityAuthority
     extends AbstractIdentityProviderAuthority<SpidIdentityProvider, SpidUserIdentity, SpidIdentityProviderConfig, SpidIdentityProviderConfigMap>
     implements ApplicationEventPublisherAware {
