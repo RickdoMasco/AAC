@@ -388,6 +388,43 @@ public class AutoJdbcAuditEventStore implements AuditEventStore {
     }
 
     @Override
+    public Page<AuditEvent> searchByPrincipal(String principal, Instant after, Instant before, String type, @NotNull Pageable pageable) {
+        StringBuilder query = new StringBuilder();
+        query.append(selectByPrincipalAuditEvent);
+
+        List<Object> params = new LinkedList<>();
+        params.add(principal);
+
+        if (StringUtils.hasText(type)) {
+            query.append(" AND ").append(typeCondition);
+            params.add(type);
+        }
+
+        if (after != null) {
+            if (before != null) {
+                query.append(" AND ").append(timeBetweenCondition);
+                params.add(new java.sql.Timestamp(after.toEpochMilli()));
+                params.add(new java.sql.Timestamp(before.toEpochMilli()));
+            } else {
+                query.append(" AND ").append(timeAfterCondition);
+                params.add(new java.sql.Timestamp(after.toEpochMilli()));
+            }
+        }
+
+        query.append(" ").append(orderBy);
+
+        query.append(" ").append(limitOffsetCondition);
+        params.add(pageable.getPageSize());
+        params.add(pageable.getOffset());
+
+        return PageableExecutionUtils.getPage(
+            jdbcTemplate.query(query.toString(), rowMapper, params.toArray(new Object[0])),
+            pageable,
+            () -> countByPrincipal(principal, after, before, type)
+        );        
+    }
+
+    @Override
     public long countByPrincipal(String principal, Instant after, Instant before, String type) {
         StringBuilder query = new StringBuilder();
         query.append(countByPrincipalAuditEvent);

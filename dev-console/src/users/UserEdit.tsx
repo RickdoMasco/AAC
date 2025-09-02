@@ -8,6 +8,7 @@ import {
     Edit,
     IconButtonWithTooltip,
     Labeled,
+    Pagination,
     ReferenceArrayInput,
     ReferenceManyField,
     TabbedForm,
@@ -253,6 +254,7 @@ const UserForm = () => {
                 />
                 <ReferenceManyField reference="audit" target="principal">
                     <AuditListView />
+                    <Pagination /> 
                 </ReferenceManyField>
             </TabbedForm.Tab>
         </TabbedForm>
