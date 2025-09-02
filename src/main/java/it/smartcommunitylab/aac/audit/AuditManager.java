@@ -127,4 +127,21 @@ public class AuditManager {
         );
         return auditStore.findByPrincipal(principal, a, b, type);
     }
+
+    public Page<AuditEvent> searchPrincipalEvents(String realm, String principal, String type, Date after, Date before, Pageable pageable) {
+        Instant a = after == null ? null : after.toInstant();
+        Instant b = before == null ? null : before.toInstant();
+
+        logger.debug(
+            "find audit events for principal " +
+            StringUtils.trimAllWhitespace(principal) +
+            " type " +
+            StringUtils.trimAllWhitespace(String.valueOf(type)) +
+            " interval after " +
+            String.valueOf(a) +
+            " before " +
+            String.valueOf(b)
+        );
+        return auditStore.searchByPrincipal(principal, a, b, type, pageable);
+    }    
 }

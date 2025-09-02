@@ -104,17 +104,16 @@ public class BaseAuditController implements InitializingBean {
     ) throws NoSuchRealmException {
         logger.debug("find audit events for realm {}", StringUtils.trimAllWhitespace(realm));
         if(principal != null) {
-            List<AuditEvent> events = auditManager.findPrincipalEvents(realm, principal, type.orElse(null), after.orElse(null), before.orElse(null));
+            Page<AuditEvent> page = auditManager.searchPrincipalEvents(realm, principal, type.orElse(null), after.orElse(null), before.orElse(null), pageRequest);
             return PageableExecutionUtils.getPage(
-                events.stream().map(a -> new AuditEntry(a)).toList(),
+               page.getContent().stream().map(a -> new AuditEntry(a)).toList(),
                 pageRequest,
-                () -> events.size()
+                () -> page.getTotalElements()
             ); 
         }
 
 
         Page<AuditEvent> page = auditManager.searchRealmEvents(realm, type.orElse(null), after.orElse(null), before.orElse(null), pageRequest);
-
         return PageableExecutionUtils.getPage(
             page.getContent().stream().map(a -> new AuditEntry(a)).toList(),
             pageRequest,

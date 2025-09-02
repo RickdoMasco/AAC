@@ -38,5 +38,7 @@ public interface AuditEventStore extends AuditEventRepository {
 
     public List<AuditEvent> findByPrincipal(String principal, Instant after, Instant before, String type);
 
+    public Page<AuditEvent> searchByPrincipal(String principal, Instant after, Instant before, String type, Pageable pageable);
+
     public void cleanupAuditEvents(Instant before);
 }

@@ -5,6 +5,7 @@ import {
     EditButton,
     IconButtonWithTooltip,
     Labeled,
+    Pagination,
     ReferenceArrayField,
     ReferenceManyField,
     Show,
@@ -181,6 +182,7 @@ const AppView = () => {
                 />
                 <ReferenceManyField reference="audit" target="principal">
                     <AuditListView />
+                    <Pagination /> 
                 </ReferenceManyField>
             </TabbedShowLayout.Tab>
         </TabbedShowLayout>
