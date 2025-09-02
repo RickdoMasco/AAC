@@ -572,6 +572,8 @@ public class UserService {
 
         // roles
         spaceRoleService.deleteRoles(subjectId);
+        roleService.deleteRoles(subjectId);
+        groupService.deleteSubjectFromGroups(subjectId);
 
         //orphan user accounts
         userAccountServices.forEach(accountService -> {
