@@ -63,7 +63,6 @@ public class SamlIdentityProviderMetadataTest {
 
     private String signingAndCryptIdpMetadataUrl;
     private String signingAndCryptIdpSigningCertificate;
-    private String signingAndCryptIdpCryptCertificate;
 
     private final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
     private final String END_CERT = "-----END CERTIFICATE-----";
@@ -92,7 +91,6 @@ public class SamlIdentityProviderMetadataTest {
                     SamlIdentityProviderConfigMap config2 = new SamlIdentityProviderConfigMap();
                     config2.setConfiguration(idp2.getConfiguration());
                     signingAndCryptIdpSigningCertificate = config2.getSigningCertificate();
-                    signingAndCryptIdpCryptCertificate = config2.getCryptCertificate();
                 }
             });
     }
@@ -308,7 +306,7 @@ public class SamlIdentityProviderMetadataTest {
 
         assertThat(metadataSigningCertificateX509).isEqualTo(idpSigningCertificateX509);
 
-        // metadata crypt certificate must be equal to idp configuration crypt certificate
+        // metadata crypt certificate must be equal to idp configuration signing certificate
         List<org.opensaml.xmlsec.signature.X509Certificate> cryptCertificates = cryptKeyDescriptor
             .getKeyInfo()
             .getX509Datas()
@@ -325,7 +323,7 @@ public class SamlIdentityProviderMetadataTest {
             .getInstance("X.509")
             .generateCertificate(metadataCryptCertificateStream);
 
-        String strippedIdpCryptCertificate = signingAndCryptIdpCryptCertificate
+        String strippedIdpCryptCertificate = signingAndCryptIdpSigningCertificate
             .replace(BEGIN_CERT, "")
             .replace(END_CERT, "")
             .replace("\n", "");

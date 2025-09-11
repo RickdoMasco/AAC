@@ -45,8 +45,6 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     private String signingKey;
     private String signingCertificate;
-    private String cryptKey;
-    private String cryptCertificate;
 
     // ap autoconfiguration
     private String idpMetadataUrl;
@@ -90,22 +88,6 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     public void setSigningCertificate(String signingCertificate) {
         this.signingCertificate = signingCertificate;
-    }
-
-    public String getCryptKey() {
-        return cryptKey;
-    }
-
-    public void setCryptKey(String cryptKey) {
-        this.cryptKey = cryptKey;
-    }
-
-    public String getCryptCertificate() {
-        return cryptCertificate;
-    }
-
-    public void setCryptCertificate(String cryptCertificate) {
-        this.cryptCertificate = cryptCertificate;
     }
 
     public String getIdpMetadataUrl() {
@@ -265,8 +247,6 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
     public void setConfiguration(SamlIdentityProviderConfigMap map) {
         this.signingKey = map.getSigningKey();
         this.signingCertificate = map.getSigningCertificate();
-        this.cryptKey = map.getCryptKey();
-        this.cryptCertificate = map.getCryptCertificate();
 
         this.idpMetadataUrl = map.getIdpMetadataUrl();
 
