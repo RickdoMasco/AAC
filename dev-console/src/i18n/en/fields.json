@@ -575,14 +575,6 @@
         "name": "Signing Certificate",
         "helperText": "Certificate (PEM) "
     },
-    "cryptKey": {
-        "name": "Encryption Key",
-        "helperText": "Key (PEM)"
-    },
-    "cryptCertificate": {
-        "name": "Encryption Certificate",
-        "helperText": "Certificate (PEM) "
-    },
     "idpEntityId": {
         "name": "Idp Entity Id",
         "helperText": "EntityId"

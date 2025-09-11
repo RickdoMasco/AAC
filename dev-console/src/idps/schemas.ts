@@ -153,15 +153,13 @@ export const uiSchemaWebAuthnIdp: UiSchema = {
 
 export const uiSchemaSamlIdp: UiSchema = {
     'ui:layout': [
-        12, 6, 6, 6, 6, 12, 12, 6, 6, 6, 6, 12, 6, 6, 8, 4, 8, 12, 4, 4, 4, 6,
+        12, 6, 6, 12, 12, 6, 6, 6, 6, 12, 6, 6, 8, 4, 8, 12, 4, 4, 4, 6,
         6,
     ],
     'ui:order': [
         'entityId',
         'signingKey',
         'signingCertificate',
-        'cryptKey',
-        'cryptCertificate',
         'idpMetadataUrl',
         'idpEntityId',
         'webSsoUrl',
@@ -191,12 +189,6 @@ export const uiSchemaSamlIdp: UiSchema = {
         'ui:widget': 'textarea',
     },
     signingCertificate: {
-        'ui:widget': 'textarea',
-    },
-    cryptKey: {
-        'ui:widget': 'textarea',
-    },
-    cryptCertificate: {
         'ui:widget': 'textarea',
     },
     authnContextClasses: {

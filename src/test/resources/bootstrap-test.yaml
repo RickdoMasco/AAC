@@ -351,54 +351,6 @@ realms:
             MBPr0H8ENL3ngin0CG/OCh/2CNrLvbOqYGcO9VWxDCDEyOJzGVzIe8OqjSHwBLRq
             D86q3+yDhVPHT8rAUdDdwxMWC+Tmxj8b+mJ6hy6+80+KbmM3nauz1U31qEzLwBo=
             -----END CERTIFICATE-----
-          cryptKey: |-
-            -----BEGIN PRIVATE KEY-----
-            MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC1cH4qPQsJ2L8K
-            1zlbrDa8+HKn6GDpvAk6H1+MhpArITCcKs6E60QRXXkwqApuNatby4SqmVRgDtms
-            4CABkB3Kq9ZZ53kQwgs5qOTNsDQWh3mrVyIyZ1FAWZXCLq5EpZYGDv4eBQEn+6lJ
-            k2CL8r93s4LQHy1bjsR1FnuC2lNzRp3+ijQEOTjZ2RR8BIEQuJ9YYT2EGTDIkLsN
-            JB91x9Q2VK2SiWCA0ZLo8tinC2jKODAoCGVsSIT+2cKa04quqW4ABKDZLCXT3ITE
-            OUFCnTOojEMZ4dkDc4nRSPd7LmzZJGc0izL4sCcsCLjEMpNLXNA5AmFBXuEpNdHx
-            7CXi6PqnAgMBAAECggEACk7XGoVrGToDQu8bg9EV/DvUBvFyTauQc9XKQvypt/GQ
-            rLnX3Ga7VsGfO+IhuZIuAPvGg6SzZ11HBTkBSH8Mc9iGx7oy8n57tPpniVhsSFov
-            a0pHfi9iRwwjFt852/RZjVDDvVpE1XJipnRYUb5Ot2yI6Lo+UVg1yOTBy2gMKEPV
-            k1jDE4yNuGn/oDT6Bmov/Y7Pbl7hCtp/EI0GneWuyylCFWjq5aNv4lITBbhc3Yeu
-            HOzBPmWVIu7VpJd+3GlfCoek6imhNzT7yMApP5sPWcnBdyZtTwZGW0RJq2ljeA+w
-            ztaIKOCnka9JwAQV5sSRSYH39Kq28wtqU4ntaF+k8QKBgQC7jq9RX8g16raRrHQx
-            ygqOSc1mHBzcYyKFjlawhnz8uSTccI5b5CVPDJwgYOeZ9doi9kqJlT7f5aTZu5/D
-            YkWU8iQ9QjhZw9Jk95HtJGZaajSKXwEEU2P56zsoK5TIk9awT229HcLZTiTDKNbC
-            +KrHtbgJUeQFk77Rb9ZNdFJ9NwKBgQD3pkekblQIZwfUsTNnccoLDSk8VbIgh/pT
-            dL586wzUxukXWUm3RWs/Zr2xa1vPlFortT13LykjzSTH9p4z3u9PMOioRtIfL7cw
-            6tkmPwRrPnkNCdhj8BEsHCJw6KB6NYiet+QxiA+d/9ojfNQUt9E86CNf/4XUgvqO
-            JGh+fCumEQKBgHGqyamBaO70Lm0enNTH45nUNH0bsIoIMpXKa9NTzk/DTQmj1ULv
-            g4Ti2YPt9q6iBu+FYCr9njtHC59BTFO3LQBVt4zAozITsWCrgW68zqMhFnJ9nTon
-            58FAxHtV3jepEUWM/a7NaJcV+sWj7HQBDE84XC6ZyJ1wqwZ2xuPuCUgFAoGBAK04
-            EURiJ0T5S/DpQRtJ7BhuzDj3d/BpLB7TuamGfyMVPlSmj3kxhSKDqos+nKlFCw0n
-            aCbFRfFUvDVhuqZteNXbT+DkKHTH20rL+bdWvLCGsgT8re65LEm+JBj1ncndSAI8
-            fdBnawUIwHuyBGW5bRE9DgFHqURLmRVzQeO21pEBAoGAKp1RLFHMq5s5dcoxDmyd
-            Zo7L8+UeXGFqWsA8A1va0j4dGSyYUMltVqdqKkkKEialO056sgW21Npo1ozCvMfI
-            bMjCwlBLTzuDXYUhhYeCv8FQPbx2fJrc0Fhkr4hiB4qOjzLArrv716SYZEjqy+L0
-            sgYZjqGRF4oAnEWfbyADzbg=
-            -----END PRIVATE KEY-----
-          cryptCertificate: |-
-            -----BEGIN CERTIFICATE-----
-            MIIC+zCCAeOgAwIBAgIUOGmCZOEXroRfdUVZxQWwjewDzlkwDQYJKoZIhvcNAQEL
-            BQAwDTELMAkGA1UEBhMCSVQwHhcNMjMwOTI5MDkzOTQyWhcNMjQwOTI4MDkzOTQy
-            WjANMQswCQYDVQQGEwJJVDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
-            ALVwfio9CwnYvwrXOVusNrz4cqfoYOm8CTofX4yGkCshMJwqzoTrRBFdeTCoCm41
-            q1vLhKqZVGAO2azgIAGQHcqr1lnneRDCCzmo5M2wNBaHeatXIjJnUUBZlcIurkSl
-            lgYO/h4FASf7qUmTYIvyv3ezgtAfLVuOxHUWe4LaU3NGnf6KNAQ5ONnZFHwEgRC4
-            n1hhPYQZMMiQuw0kH3XH1DZUrZKJYIDRkujy2KcLaMo4MCgIZWxIhP7ZwprTiq6p
-            bgAEoNksJdPchMQ5QUKdM6iMQxnh2QNzidFI93subNkkZzSLMviwJywIuMQyk0tc
-            0DkCYUFe4Sk10fHsJeLo+qcCAwEAAaNTMFEwHQYDVR0OBBYEFL/KHPMNU/MneFdb
-            4jnOzPe4UQ18MB8GA1UdIwQYMBaAFL/KHPMNU/MneFdb4jnOzPe4UQ18MA8GA1Ud
-            EwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAG1VXCG/ER2HF8RWW4PdDIcA
-            Jw6LB5frKOigAgEoeaqLECpMwfKe19+J56xPbSfz22KjUx8pvqLIK78CTKb598lz
-            HDh4mxiRHHuzxH6DGApQobD+ePfXHZIWUSlx36DclP+Y8wX8J70LIKQ9m51og9Ve
-            Uzj1wVE2qJo0M9Wo/CFlM4OtWDQR+RhvvEko9DPKfIOESFL0eCL6N78sqMrfZThJ
-            ME2sqLzaYpbAuSM4JRQX64WB4ZmNLxdo7m6hiKG1GVwU6QE4ZXSLZ3d3oUsSLf1S
-            YsVKhP6uhzJEyitd9NVD6ttPTH5pihMTwgWCvcTBcX7TTCDvB/k3KCYVzSKc6FA=
-            -----END CERTIFICATE-----
           idpEntityId: "https://idp.identityserver"
           webSsoUrl: "https://idp.identityserver/saml/sso"
           webLogoutUrl: "https://idp.identityserver/saml/slo"

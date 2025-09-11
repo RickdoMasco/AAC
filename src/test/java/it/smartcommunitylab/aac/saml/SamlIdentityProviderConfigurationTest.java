@@ -126,8 +126,6 @@ public class SamlIdentityProviderConfigurationTest {
         rawCfgMap.put("entityId", ENTITY_ID);
         rawCfgMap.put("signingKey", SIGN_PRIV_KEY);
         rawCfgMap.put("signingCertificate", SIGN_CERTIFICATE);
-        rawCfgMap.put("cryptKey", "ToyPEMbase64PrivateKeyValue");
-        rawCfgMap.put("cryptCertificate", "Toyx509PublicKeyCertificate(s)");
         rawCfgMap.put("idpMetadataUrl", IDP_METADATA_URL);
         rawCfgMap.put("idpEntityId", "ToyIdPEntityManualDiscovery");
         rawCfgMap.put("webSsoUrl", "toyWebSsoUrlManualDiscovery");
@@ -154,8 +152,6 @@ public class SamlIdentityProviderConfigurationTest {
         assertThat(idpCfgMap.getEntityId()).isEqualTo(rawCfgMap.get("entityId"));
         assertThat(idpCfgMap.getSigningKey()).isEqualTo(rawCfgMap.get("signingKey"));
         assertThat(idpCfgMap.getSigningCertificate()).isEqualTo(rawCfgMap.get("signingCertificate"));
-        assertThat(idpCfgMap.getCryptKey()).isEqualTo(rawCfgMap.get("cryptKey"));
-        assertThat(idpCfgMap.getCryptCertificate()).isEqualTo(rawCfgMap.get("cryptCertificate"));
 
         assertThat(idpCfgMap.getIdpMetadataUrl()).isEqualTo(rawCfgMap.get("idpMetadataUrl"));
         assertThat(idpCfgMap.getIdpEntityId()).isEqualTo(rawCfgMap.get("idpEntityId"));
@@ -190,8 +186,6 @@ public class SamlIdentityProviderConfigurationTest {
         rawCfgMap.put("entityId", ENTITY_ID);
         rawCfgMap.put("signingKey", SIGN_PRIV_KEY);
         rawCfgMap.put("signingCertificate", SIGN_CERTIFICATE);
-        rawCfgMap.put("cryptKey", null);
-        rawCfgMap.put("cryptCertificate", null);
         rawCfgMap.put("idpMetadataUrl", IDP_METADATA_URL); // url checked for automatic relying party registration
         rawCfgMap.put("idpEntityId", null);
         rawCfgMap.put("webSsoUrl", null);
@@ -300,8 +294,6 @@ public class SamlIdentityProviderConfigurationTest {
         rawCfgMap.put("entityId", ENTITY_ID);
         rawCfgMap.put("signingKey", SIGN_PRIV_KEY);
         rawCfgMap.put("signingCertificate", SIGN_CERTIFICATE);
-        rawCfgMap.put("cryptKey", null);
-        rawCfgMap.put("cryptCertificate", null);
         rawCfgMap.put("idpMetadataUrl", null);
         rawCfgMap.put("idpEntityId", IDP_ENTITY_ID);
         rawCfgMap.put("webSsoUrl", IDP_WEB_SSO_URL);
