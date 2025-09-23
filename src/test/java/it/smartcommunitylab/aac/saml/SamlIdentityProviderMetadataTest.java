@@ -63,7 +63,6 @@ public class SamlIdentityProviderMetadataTest {
 
     private String signingAndCryptIdpMetadataUrl;
     private String signingAndCryptIdpSigningCertificate;
-    private String signingAndCryptIdpCryptCertificate;
 
     private final String BEGIN_CERT = "-----BEGIN CERTIFICATE-----";
     private final String END_CERT = "-----END CERTIFICATE-----";
@@ -92,7 +91,6 @@ public class SamlIdentityProviderMetadataTest {
                     SamlIdentityProviderConfigMap config2 = new SamlIdentityProviderConfigMap();
                     config2.setConfiguration(idp2.getConfiguration());
                     signingAndCryptIdpSigningCertificate = config2.getSigningCertificate();
-                    signingAndCryptIdpCryptCertificate = config2.getCryptCertificate();
                 }
             });
     }
@@ -249,94 +247,4 @@ public class SamlIdentityProviderMetadataTest {
         assertThat(metadataSigningCertificateX509).isEqualTo(idpSigningCertificateX509);
     }
 
-    // disabled until encryption management is fixed
-    @EnabledIf("false")
-    @Test
-    public void bothSigningAndEncryptionCertificatesArePresent() throws Exception {
-        MvcResult res = this.mockMvc.perform(get(signingAndCryptIdpMetadataUrl)).andExpect(status().isOk()).andReturn();
-
-        // parse XML
-        String xml = res.getResponse().getContentAsString();
-        Document document = parserPool.parse(new ByteArrayInputStream(xml.getBytes()));
-        Element element = document.getDocumentElement();
-
-        Unmarshaller unmarshaller = registry.getUnmarshallerFactory().getUnmarshaller(element);
-        assertThat(unmarshaller).isNotNull();
-        EntityDescriptor descriptor = (EntityDescriptor) unmarshaller.unmarshall(element);
-
-        List<KeyDescriptor> keyDescriptors = descriptor
-            .getSPSSODescriptor("urn:oasis:names:tc:SAML:2.0:protocol")
-            .getKeyDescriptors();
-
-        // two KeyDescriptor elements respectively with use "signing" and "encryption" must exist
-        assertThat(keyDescriptors.size()).isEqualTo(2);
-
-        KeyDescriptor signingKeyDescriptor = keyDescriptors.get(0);
-        assertThat(signingKeyDescriptor.getUse()).isEqualTo(UsageType.SIGNING);
-
-        KeyDescriptor cryptKeyDescriptor = keyDescriptors.get(1);
-        assertThat(cryptKeyDescriptor.getUse()).isEqualTo(UsageType.ENCRYPTION);
-
-        // metadata signing certificate must be equal to idp configuration signing certificate
-        List<org.opensaml.xmlsec.signature.X509Certificate> signingCertificates = signingKeyDescriptor
-            .getKeyInfo()
-            .getX509Datas()
-            .get(0)
-            .getX509Certificates();
-        assertThat(signingCertificates.size()).isEqualTo(1);
-        String metadataSigningCertificate = signingCertificates.get(0).getValue();
-        assertThat(metadataSigningCertificate).isNotNull();
-
-        InputStream metadataSigningCertificateStream = new ByteArrayInputStream(
-            Base64.getDecoder().decode(metadataSigningCertificate.getBytes())
-        );
-        X509Certificate metadataSigningCertificateX509 = (X509Certificate) CertificateFactory
-            .getInstance("X.509")
-            .generateCertificate(metadataSigningCertificateStream);
-
-        String strippedIdpSigningCertificate = signingAndCryptIdpSigningCertificate
-            .replace(BEGIN_CERT, "")
-            .replace(END_CERT, "")
-            .replace("\n", "");
-
-        InputStream idpSigningCertificateStream = new ByteArrayInputStream(
-            Base64.getDecoder().decode(strippedIdpSigningCertificate.getBytes())
-        );
-        X509Certificate idpSigningCertificateX509 = (X509Certificate) CertificateFactory
-            .getInstance("X.509")
-            .generateCertificate(idpSigningCertificateStream);
-
-        assertThat(metadataSigningCertificateX509).isEqualTo(idpSigningCertificateX509);
-
-        // metadata crypt certificate must be equal to idp configuration crypt certificate
-        List<org.opensaml.xmlsec.signature.X509Certificate> cryptCertificates = cryptKeyDescriptor
-            .getKeyInfo()
-            .getX509Datas()
-            .get(0)
-            .getX509Certificates();
-        assertThat(cryptCertificates.size()).isEqualTo(1);
-        String metadataCryptCertificate = cryptCertificates.get(0).getValue();
-        assertThat(metadataCryptCertificate).isNotNull();
-
-        InputStream metadataCryptCertificateStream = new ByteArrayInputStream(
-            Base64.getDecoder().decode(metadataCryptCertificate.getBytes())
-        );
-        X509Certificate metadataCryptCertificateX509 = (X509Certificate) CertificateFactory
-            .getInstance("X.509")
-            .generateCertificate(metadataCryptCertificateStream);
-
-        String strippedIdpCryptCertificate = signingAndCryptIdpCryptCertificate
-            .replace(BEGIN_CERT, "")
-            .replace(END_CERT, "")
-            .replace("\n", "");
-
-        InputStream idpCryptCertificateStream = new ByteArrayInputStream(
-            Base64.getDecoder().decode(strippedIdpCryptCertificate.getBytes())
-        );
-        X509Certificate idpCryptCertificateX509 = (X509Certificate) CertificateFactory
-            .getInstance("X.509")
-            .generateCertificate(idpCryptCertificateStream);
-
-        assertThat(metadataCryptCertificateX509).isEqualTo(idpCryptCertificateX509);
-    }
 }

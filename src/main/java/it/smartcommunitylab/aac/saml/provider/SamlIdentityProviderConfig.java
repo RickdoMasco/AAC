@@ -113,8 +113,6 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         // note: only RSA keys supported
         String signingKey = configMap.getSigningKey();
         String signingCertificate = configMap.getSigningCertificate();
-        String cryptKey = configMap.getCryptKey();
-        String cryptCertificate = configMap.getCryptCertificate();
 
         // ap autoconfiguration
         String idpMetadataLocation = configMap.getIdpMetadataUrl();
@@ -171,26 +169,6 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             );
             // add for signature
             builder.signingX509Credentials(c -> c.add(signingCredentials));
-
-            // we use these also for decrypt
-            builder.decryptionX509Credentials(c -> c.add(signingCredentials));
-        }
-
-        if (StringUtils.hasText(cryptKey) && StringUtils.hasText(cryptCertificate)) {
-            // cleanup spaces, base64 encoding certs are expected
-            //            cryptKey = cleanupPem("PRIVATE KEY", cryptKey);
-            //            cryptCertificate = cleanupPem("CERTIFICATE", cryptCertificate);
-
-            Saml2X509Credential cryptCredentials = getCredentials(
-                cryptKey,
-                cryptCertificate,
-                Saml2X509CredentialType.ENCRYPTION,
-                Saml2X509CredentialType.DECRYPTION
-            );
-            // add to decrypt credentials
-            builder.decryptionX509Credentials(c -> c.add(cryptCredentials));
-            // also use to encrypt messages
-            builder.assertingPartyDetails(party -> party.encryptionX509Credentials(c -> c.add(cryptCredentials)));
         }
 
         return builder.build();
