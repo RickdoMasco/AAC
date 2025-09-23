@@ -28,6 +28,7 @@ import it.smartcommunitylab.aac.common.NoSuchProviderException;
 import it.smartcommunitylab.aac.common.NoSuchRealmException;
 import it.smartcommunitylab.aac.common.RegistrationException;
 import it.smartcommunitylab.aac.common.SystemException;
+
 import java.util.Collection;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -38,6 +39,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -106,19 +109,23 @@ public class BaseAttributeProviderController implements InitializingBean {
 
     @GetMapping("/aps/{realm}")
     @Operation(summary = "list attribute providers from a given realm")
-    public Collection<ConfigurableAttributeProvider> listAps(
-        @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm
+    public Page<ConfigurableAttributeProvider> listAps(
+        @PathVariable @Valid @NotNull @Pattern(regexp = SystemKeys.SLUG_PATTERN) String realm,
+        @RequestParam(required = false) String q,
+        Pageable pageRequest
     ) throws NoSuchRealmException {
         logger.debug("list ap for realm {}", StringUtils.trimAllWhitespace(realm));
 
-        return providerManager
-            .listProviders(realm)
+        Page<ConfigurableAttributeProvider> page = providerManager.searchProviders(realm, q, pageRequest);
+
+        page
+            .getContent()
             .stream()
-            .map(cp -> {
+            .forEach(cp -> {
                 cp.setRegistered(providerManager.isProviderRegistered(realm, cp));
-                return cp;
-            })
-            .collect(Collectors.toList());
+            });
+
+        return page;
     }
 
     @GetMapping("/aps/{realm}/{providerId}")
