@@ -320,7 +320,6 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
                 Saml2X509Credential.Saml2X509CredentialType.DECRYPTION
             );
             builder.signingX509Credentials(c -> c.add(credential));
-            builder.decryptionX509Credentials(c -> c.add(credential));
         }
 
         return builder.build();
