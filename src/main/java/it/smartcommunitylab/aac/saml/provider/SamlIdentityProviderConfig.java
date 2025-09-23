@@ -169,9 +169,6 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             );
             // add for signature
             builder.signingX509Credentials(c -> c.add(signingCredentials));
-
-            // we use these also for decrypt
-            builder.decryptionX509Credentials(c -> c.add(signingCredentials));
         }
 
         return builder.build();
