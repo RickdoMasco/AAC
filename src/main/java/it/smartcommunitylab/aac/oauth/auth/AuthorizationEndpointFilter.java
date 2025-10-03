@@ -20,11 +20,14 @@ import it.smartcommunitylab.aac.core.auth.ComposedAuthenticationToken;
 import it.smartcommunitylab.aac.core.auth.ExtendedLoginUrlAuthenticationEntryPoint;
 import it.smartcommunitylab.aac.core.auth.LoginUrlRequestConverter;
 import it.smartcommunitylab.aac.core.auth.UserAuthentication;
+import it.smartcommunitylab.aac.model.User;
 import it.smartcommunitylab.aac.oauth.client.OAuth2Client;
 import it.smartcommunitylab.aac.oauth.model.PromptMode;
 import it.smartcommunitylab.aac.oauth.service.OAuth2ClientDetailsService;
 import it.smartcommunitylab.aac.oauth.service.OAuth2ClientService;
 import it.smartcommunitylab.aac.oauth.store.AuthorizationRequestStore;
+import it.smartcommunitylab.aac.users.service.UserService;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.LinkedHashSet;
@@ -57,15 +60,20 @@ public class AuthorizationEndpointFilter extends OncePerRequestFilter {
     // we need access to client
     private final OAuth2ClientService clientService;
 
+    // we need access to user
+    private final UserService userService;
+
     public AuthorizationEndpointFilter(
+        UserService userService,
         OAuth2ClientService clientService,
         OAuth2ClientDetailsService clientDetailsService,
         AuthorizationRequestStore authorizationRequestStore
     ) {
-        this(clientService, clientDetailsService, authorizationRequestStore, DEFAULT_FILTER_URI);
+        this(userService, clientService, clientDetailsService, authorizationRequestStore, DEFAULT_FILTER_URI);
     }
 
     public AuthorizationEndpointFilter(
+        UserService userService,
         OAuth2ClientService clientService,
         OAuth2ClientDetailsService clientDetailsService,
         AuthorizationRequestStore authorizationRequestStore,
@@ -73,6 +81,7 @@ public class AuthorizationEndpointFilter extends OncePerRequestFilter {
     ) {
         Assert.notNull(clientService, "client service is required");
         Assert.hasText(filterProcessingUrl, "filter url can not be null or empty");
+        this.userService = userService;
         this.clientService = clientService;
         this.requestMatcher = new AntPathRequestMatcher(filterProcessingUrl);
 
@@ -135,6 +144,16 @@ public class AuthorizationEndpointFilter extends OncePerRequestFilter {
 
             // load client
             OAuth2Client client = clientService.findClient(clientId);
+
+            // load user
+            User user = userService.findUser(userAuth.getSubjectId());
+            if (user == null) {
+                // user not found, should not happen
+                // we ask for relogin
+                this.requestCache.saveRequest(request, response);
+                this.authenticationEntryPoint.commence(request, response, null);
+                return;
+            }
 
             // we ignore errors, don't want to unauthenticated users on non existing
             // clients..
