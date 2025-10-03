@@ -124,6 +124,10 @@ public class SpidIdentityProvider
         return "/auth/" + getAuthority() + "/authenticate/";
     }
 
+    public String getLoginUrl() {
+        return "/auth/" + getAuthority() + "/form/" + getProvider();
+    }
+
     @Override
     public SpidLoginProvider getLoginProvider(ClientDetails clientDetails, AuthorizationRequest authRequest) {
         SpidLoginProvider lp = new SpidLoginProvider(getAuthority(), getProvider(), getRealm(), getName());
@@ -131,8 +135,8 @@ public class SpidIdentityProvider
         lp.setTitleMap(getTitleMap()); // TODO: Remove? Localization and customization might not be supported for SPID buttons
         lp.setDescriptionMap(getDescriptionMap());
         lp.setPosition(getConfig().getPosition());
-
-        lp.setLoginUrl(getAuthenticationUrl() + getProvider()); // TODO: Remove? this is not a login to anywhere
+        lp.setLoginUrl(getLoginUrl());
+        
         List<SpidLoginProvider.SpidIdpButton> spidIdpsLogin = new LinkedList<>();
         for (RelyingPartyRegistration reg : config.getUpstreamRelyingPartyRegistrations()) {
             // TODO: should be exposes by a dedicated method
