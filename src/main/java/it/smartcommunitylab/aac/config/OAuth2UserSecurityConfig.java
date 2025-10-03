@@ -142,6 +142,7 @@ public class OAuth2UserSecurityConfig {
                     idpProviderService,
                     clientDetailsService,
                     clientService,
+                    userService,
                     authorizationRequestStore,
                     loginPath
                 ),
@@ -164,10 +165,12 @@ public class OAuth2UserSecurityConfig {
         IdentityProviderService providerService,
         OAuth2ClientDetailsService oauth2ClientDetailsService,
         OAuth2ClientService oauth2ClientService,
+        UserService userService,
         AuthorizationRequestStore authorizationRequestStore,
         String loginUrl
     ) {
         AuthorizationEndpointFilter authorizationFilter = new AuthorizationEndpointFilter(
+            userService,
             oauth2ClientService,
             oauth2ClientDetailsService,
             authorizationRequestStore
