@@ -24,8 +24,18 @@ import it.smartcommunitylab.aac.identity.model.ConfigurableIdentityProvider;
 import it.smartcommunitylab.aac.identity.provider.IdentityProviderSettingsMap;
 import it.smartcommunitylab.aac.spid.model.SpidRegistration;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+import com.fasterxml.jackson.module.jsonSchema.types.ArraySchema;
+import com.fasterxml.jackson.module.jsonSchema.types.ObjectSchema;
+import com.fasterxml.jackson.module.jsonSchema.types.StringSchema;
 
 @Service
 public class SpidIdentityConfigurationProvider
@@ -69,5 +79,26 @@ public class SpidIdentityConfigurationProvider
 
     public void setLocalRegistry(Collection<SpidRegistration> localRegistry) {
         this.localRegistry = localRegistry;
+    }
+
+    @Override
+    public JsonSchema getSchema() throws JsonMappingException {
+        JsonSchema schema = super.getSchema();
+        Map<String, JsonSchema> properties = ((ObjectSchema) schema).getProperties();
+        
+        // add registry information to baseSchema
+        StringSchema idpsValuesSchema = new StringSchema();
+        Set<String> idpsValues = new HashSet<>();
+        for (SpidRegistration registration : localRegistry) {
+            idpsValues.add(registration.getEntityId());
+        }
+        idpsValuesSchema.setEnums(idpsValues);
+
+        ArraySchema idpsSchema = new ArraySchema();
+        idpsSchema.setItemsSchema(idpsValuesSchema);
+        
+        properties.put("idps", idpsSchema);
+        ((ObjectSchema) schema).setProperties(properties);
+        return schema;
     }
 }

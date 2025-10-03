@@ -23,6 +23,9 @@ import it.smartcommunitylab.aac.core.provider.config.ProviderConfig;
 import java.io.Serializable;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+
 /*
  * Expose provider configuration outside modules
  * attached to authorities because different authorities could share the same config/provider
@@ -86,5 +89,5 @@ public interface ConfigurationProvider<
      * etc and should be used for API doc, UI forms etc
      */
 
-    // public JsonSchema getSchema();
+    public JsonSchema getSchema() throws JsonMappingException;
 }
