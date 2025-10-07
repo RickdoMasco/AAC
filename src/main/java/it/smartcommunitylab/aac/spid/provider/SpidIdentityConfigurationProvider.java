@@ -83,7 +83,7 @@ public class SpidIdentityConfigurationProvider
 
     @Override
     public JsonSchema getSchema() throws JsonMappingException {
-        JsonSchema schema = super.getSchema();
+        JsonSchema schema = defaultConfigMap.getSchema();
         Map<String, JsonSchema> properties = ((ObjectSchema) schema).getProperties();
         
         // add registry information to baseSchema
@@ -95,6 +95,7 @@ public class SpidIdentityConfigurationProvider
         idpsValuesSchema.setEnums(idpsValues);
 
         ArraySchema idpsSchema = new ArraySchema();
+        idpsSchema.setUniqueItems(true);
         idpsSchema.setItemsSchema(idpsValuesSchema);
         
         properties.put("idps", idpsSchema);
