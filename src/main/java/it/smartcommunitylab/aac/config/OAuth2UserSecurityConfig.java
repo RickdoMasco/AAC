@@ -125,6 +125,7 @@ public class OAuth2UserSecurityConfig {
                     loginPath,
                     authorityService,
                     idpProviderService,
+                    clientService,
                     clientDetailsService,
                     authorizationRequestStore
                 )
@@ -214,6 +215,7 @@ public class OAuth2UserSecurityConfig {
         String loginUrl,
         IdentityProviderAuthorityService authorityService,
         IdentityProviderService providerService,
+        OAuth2ClientService clientService,
         OAuth2ClientDetailsService oauth2ClientDetailsService,
         AuthorizationRequestStore authorizationRequestStore
     ) {
@@ -221,7 +223,8 @@ public class OAuth2UserSecurityConfig {
         List<LoginUrlRequestConverter> converters = new ArrayList<>();
         LoginUrlRequestConverter idpAwareConverter = new OAuth2IdpAwareLoginUrlConverter(
             idpProviderService,
-            authorityService
+            authorityService,
+            clientService
         );
         LoginUrlRequestConverter clientAwareConverter = new OAuth2ClientAwareLoginUrlConverter(
             oauth2ClientDetailsService,
