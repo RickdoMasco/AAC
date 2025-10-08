@@ -80,7 +80,7 @@ public class OAuth2IdpAwareLoginUrlConverter implements LoginUrlRequestConverter
                     throw new NoSuchProviderException();
                 }
 
-                return provider.getAuthenticationUrl();
+                return provider.getAuthenticationUrl(request);
             } catch (NoSuchAuthorityException | NoSuchProviderException e) {
                 // no valid response
                 return null;
