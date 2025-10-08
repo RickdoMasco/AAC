@@ -60,7 +60,7 @@ public abstract class AbstractIdentityProvider<
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public static final String UPSTREAM_IDP_PARAMETER_NAME = "upstream_idp_hint";
+    public static final String DOMAIN_HINT_PARAMETER_NAME = "domain_hint";
 
     protected ApplicationEventPublisher eventPublisher;
 
@@ -238,7 +238,7 @@ public abstract class AbstractIdentityProvider<
         }
 
         // uuid is available for persisted accounts
-        // String uuid = account.getUuid();
+        String uuid = account.getUuid();
         // // set uuid on principal when possible - DISABLED, not needed
         // if (principal instanceof AbstractUserAuthenticatedPrincipal) {
         //     ((AbstractUserAuthenticatedPrincipal) principal).setUuid(uuid);
