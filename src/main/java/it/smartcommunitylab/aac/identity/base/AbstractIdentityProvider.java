@@ -36,6 +36,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -56,6 +59,8 @@ public abstract class AbstractIdentityProvider<
     implements IdentityProvider<I, U, P, M, C>, ApplicationEventPublisherAware, InitializingBean {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    public static final String UPSTREAM_IDP_PARAMETER_NAME = "upstream_idp_hint";
 
     protected ApplicationEventPublisher eventPublisher;
 
@@ -233,7 +238,7 @@ public abstract class AbstractIdentityProvider<
         }
 
         // uuid is available for persisted accounts
-        String uuid = account.getUuid();
+        // String uuid = account.getUuid();
         // // set uuid on principal when possible - DISABLED, not needed
         // if (principal instanceof AbstractUserAuthenticatedPrincipal) {
         //     ((AbstractUserAuthenticatedPrincipal) principal).setUuid(uuid);
@@ -437,5 +442,9 @@ public abstract class AbstractIdentityProvider<
                 deleteIdentity(userId, account.getAccountId());
             } catch (NoSuchUserException e) {}
         }
+    }
+
+    public String getAuthenticationUrl(HttpServletRequest request) {
+        return getAuthenticationUrl();
     }
 }

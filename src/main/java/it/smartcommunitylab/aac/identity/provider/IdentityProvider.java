@@ -28,6 +28,9 @@ import it.smartcommunitylab.aac.core.provider.SubjectResolver;
 import it.smartcommunitylab.aac.identity.model.UserAuthenticatedPrincipal;
 import it.smartcommunitylab.aac.identity.model.UserIdentity;
 import java.util.Collection;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.springframework.lang.Nullable;
 import org.springframework.security.oauth2.provider.AuthorizationRequest;
 
@@ -140,6 +143,8 @@ public interface IdentityProvider<
      */
 
     public String getAuthenticationUrl();
+
+    public String getAuthenticationUrl(HttpServletRequest request);
 
     public LoginProvider getLoginProvider(
         @Nullable ClientDetails clientDetails,
