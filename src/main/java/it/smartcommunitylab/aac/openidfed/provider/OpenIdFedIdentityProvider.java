@@ -181,15 +181,20 @@ public class OpenIdFedIdentityProvider
 
     @Override
     public String getAuthenticationUrl(HttpServletRequest request) {
-        String registrationId = null;
-        if (request.getParameter(UPSTREAM_IDP_PARAMETER_NAME) != null) {
-            registrationId = request.getParameter(UPSTREAM_IDP_PARAMETER_NAME);
+        String entityId = null;
+        if (request.getParameter(DOMAIN_HINT_PARAMETER_NAME) != null) {
+            entityId = request.getParameter(DOMAIN_HINT_PARAMETER_NAME);
         }
 
-        if (!StringUtils.hasText(registrationId)) {
+        if (!StringUtils.hasText(entityId)) {
             return getAuthenticationUrl();
         }
-        return buildAuthenticationUrl(registrationId);
+
+        OpenIdFedClientRegistrationRepository repository = config.getClientRegistrationRepository();
+        if (repository == null) {
+            return getAuthenticationUrl();
+        }
+        return buildAuthenticationUrl(repository.encode(entityId));
     }
 
     public String getLoginUrl() {

@@ -278,7 +278,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
     // obtain an allegedly unique identifier from an idp key; this identifier can be used
     // to identify a relying party registration
-    private String evalRelyingPartyRegistrationId(String idpKeyIdentifier) {
+    public String evalRelyingPartyRegistrationId(String idpKeyIdentifier) {
         // NOTE: this function is 'inverted' by getProviderId(..)
         return getProvider() + "|" + idpKeyIdentifier;
     }
