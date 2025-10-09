@@ -184,10 +184,12 @@ public class SpidProviderResponseValidatorBuilder {
     }
 
     private boolean isIssuerFormatEntity(Response response) {
-        if (response.getIssuer() == null || !StringUtils.hasText(response.getIssuer().getFormat())) {
+        if (response.getIssuer() == null) {
             return false;
         }
-        return response.getIssuer().getFormat().equals(NameIDType.ENTITY);
+        return response.getIssuer().getFormat() != null
+            ? response.getIssuer().getFormat().equals(NameIDType.ENTITY)
+            : true;
     }
 
     private boolean isResponseAcrValid(AuthnRequest initiatingRequest, Response response) {
