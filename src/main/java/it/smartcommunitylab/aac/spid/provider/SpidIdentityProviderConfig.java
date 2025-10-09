@@ -56,6 +56,7 @@ import org.opensaml.security.credential.BasicCredential;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.CredentialSupport;
 import org.opensaml.security.credential.UsageType;
+import org.springframework.security.saml2.Saml2Exception;
 import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrations;
@@ -81,6 +82,7 @@ import it.smartcommunitylab.aac.spid.model.SpidAttributeConsumingService;
 import it.smartcommunitylab.aac.spid.model.SpidMetadataConfiguration;
 import it.smartcommunitylab.aac.spid.model.SpidRegistration;
 import it.smartcommunitylab.aac.spid.model.SpidUserAttribute;
+import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderConfigMap.SigningCredential;
 
 public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<SpidIdentityProviderConfigMap> {
 
@@ -104,7 +106,8 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     private static final String DEFAULT_ATTRIBUTE_CONSUMING_SERVICE_NAME = "default";
 
     private transient Set<RelyingPartyRegistration> relyingPartyRegistrations;
-    
+    private transient Set<RelyingPartyRegistration> metadataRelyingPartyRegistrations;
+
     private Set<SpidRegistration> identityProviders;
     private SpidMetadataConfiguration metadataConfiguration;
 
@@ -122,6 +125,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             new SpidIdentityProviderConfigMap()
         );
         this.relyingPartyRegistrations = null;
+        this.metadataRelyingPartyRegistrations = null;
         this.identityProviders = Collections.emptySet();
         this.metadataConfiguration = null;
         this.restTemplate = null;
@@ -248,7 +252,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             if (reg == null) {
                 try {
                     // build its relying party registration and create a default SpidRegistration
-                    RelyingPartyRegistration apReg = toRelyingPartyRegistration(configMap.getIdpMetadataUrl(), configMap.getIdpMetadataUrl());
+                    RelyingPartyRegistration apReg = toRelyingPartyRegistration(configMap.getIdpMetadataUrl(), configMap.getIdpMetadataUrl(), true);
                     String idpEntityId = apReg.getAssertingPartyDetails().getEntityId();
 
                     reg = new SpidRegistration();
@@ -303,7 +307,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         }
 
         try {
-            RelyingPartyRegistration r = toBareRelyingPartyRegistration();
+            RelyingPartyRegistration r = toBareRelyingPartyRegistration(true);
             if (relyingPartyRegistrations == null) {
                 relyingPartyRegistrations = new HashSet<>();
             }
@@ -335,7 +339,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         try {
             String idpMetadataUrl = getAssertingPartyMetadataUrl(idpKey);
             String registrationId = encodeRegistrationId(evalRelyingPartyRegistrationId(evalIdpKeyIdentifier(idpMetadataUrl)));
-            RelyingPartyRegistration r = toRelyingPartyRegistration(registrationId, idpMetadataUrl);
+            RelyingPartyRegistration r = toRelyingPartyRegistration(registrationId, idpMetadataUrl, true);
             if (relyingPartyRegistrations == null) {
                 relyingPartyRegistrations = new HashSet<>();
             }
@@ -346,8 +350,76 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         }
     }
 
+    /*
+     * getMetadataRelyingPartyRegistration yields a single relying party registration 
+     * with registration id equal to the encoded providerId.
+     * This is required for cases where the registration does not require any asserting party details,
+     * such as SPID metadata.
+     * It differs from getRelyingPartyRegistration as it uses the metadataRelyingPartyRegistrations set
+     * to store registrations built with the full set of signing certificates instead of the single active one.
+     */
+    @JsonIgnore
+    public RelyingPartyRegistration getMetadataRelyingPartyRegistration() {
+        if (metadataRelyingPartyRegistrations != null) {
+            String registrationId = getMetadataRegistrationId();
+            RelyingPartyRegistration r = metadataRelyingPartyRegistrations
+                .stream()
+                .filter(reg -> reg.getRegistrationId().equals(registrationId))
+                .findFirst().orElse(null);
+
+            if (r != null) {
+                return r;
+            }
+        }
+
+        try {
+            RelyingPartyRegistration r = toBareRelyingPartyRegistration(false);
+            if (metadataRelyingPartyRegistrations == null) {
+                metadataRelyingPartyRegistrations = new HashSet<>();
+            }
+            metadataRelyingPartyRegistrations.add(r);
+            return r;
+        } catch (IOException | CertificateException e) {
+            throw new RuntimeException("error building registration: " + e.getMessage());
+        }
+    }
+
+    /*
+     * getMetadataRelyingPartyRegistration yields a single relying party registration 
+     * for the configured upstream identity provider associated to the input idpKey.
+     * It differs from getRelyingPartyRegistration as it uses the metadataRelyingPartyRegistrations set
+     * to store registrations built with the full set of signing certificates instead of the single active one.
+     */
+    @JsonIgnore
+    public RelyingPartyRegistration getMetadataRelyingPartyRegistration(String idpKey) {
+        if (metadataRelyingPartyRegistrations != null) {
+            String registrationId = encodeRegistrationId(evalRelyingPartyRegistrationId(idpKey));
+            RelyingPartyRegistration r = metadataRelyingPartyRegistrations
+                .stream()
+                .filter(reg -> reg.getRegistrationId().equals(registrationId))
+                .findFirst().orElse(null);
+
+            if (r != null) {
+                return r;
+            }
+        }
+
+        try {
+            String idpMetadataUrl = getAssertingPartyMetadataUrl(idpKey);
+            String registrationId = encodeRegistrationId(evalRelyingPartyRegistrationId(evalIdpKeyIdentifier(idpMetadataUrl)));
+            RelyingPartyRegistration r = toRelyingPartyRegistration(registrationId, idpMetadataUrl, false);
+            if (metadataRelyingPartyRegistrations == null) {
+                metadataRelyingPartyRegistrations = new HashSet<>();
+            }
+            metadataRelyingPartyRegistrations.add(r);
+            return r;
+        } catch (IOException | CertificateException | URISyntaxException e) {
+            throw new RuntimeException("error building registration: " + e.getMessage());
+        }
+    }
+
     // create a relying party registration with placeholder ap configuration.
-    private RelyingPartyRegistration toBareRelyingPartyRegistration() throws IOException, CertificateException {
+    private RelyingPartyRegistration toBareRelyingPartyRegistration(Boolean onlyActiveCredential) throws IOException, CertificateException {
         RelyingPartyRegistration.Builder builder = RelyingPartyRegistration
             .withRegistrationId(getMetadataRegistrationId())
             .entityId(getEntityId())
@@ -361,25 +433,13 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
                 .singleSignOnServiceLocation("http://placeholder.sso.location")
         );
 
-        String signingKey = configMap.getSigningKey();
-        String signingCertificate = configMap.getSigningCertificate();
-        if (StringUtils.hasText(signingKey) && StringUtils.hasText(signingCertificate)) {
-            // only RSA keys are supported
-            Saml2X509Credential credential = CertificateParser.genCredentials(
-                signingKey,
-                signingCertificate,
-                Saml2X509Credential.Saml2X509CredentialType.SIGNING,
-                Saml2X509Credential.Saml2X509CredentialType.DECRYPTION
-            );
-            builder.signingX509Credentials(c -> c.add(credential));
-        }
-
+        builder = buildSigningCredentials(builder, onlyActiveCredential);
         return builder.build();
     }
 
     // create a relying party registration for an upstream idp; only ap autoconfiguration is supported,
     // hence function parameters require an idp metadata url
-    private RelyingPartyRegistration toRelyingPartyRegistration(String registrationId, String idpMetadataUrl) throws IOException, CertificateException {
+    private RelyingPartyRegistration toRelyingPartyRegistration(String registrationId, String idpMetadataUrl, Boolean onlyActiveCredential) throws IOException, CertificateException {
         // start from ap autoconfiguration ...
         RelyingPartyRegistration.Builder builder = RelyingPartyRegistrations
             .fromMetadataLocation(idpMetadataUrl)
@@ -392,20 +452,41 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             .assertionConsumerServiceBinding(Saml2MessageBinding.POST)
             .singleLogoutServiceLocation(getLogoutUrl());
 
-        String signingKey = configMap.getSigningKey();
-        String signingCertificate = configMap.getSigningCertificate();
-        if (StringUtils.hasText(signingKey) && StringUtils.hasText(signingCertificate)) {
-            // only RSA keys are supported
-            Saml2X509Credential credential = CertificateParser.genCredentials(
-                signingKey,
-                signingCertificate,
-                Saml2X509Credential.Saml2X509CredentialType.SIGNING,
-                Saml2X509Credential.Saml2X509CredentialType.DECRYPTION
-            );
-            builder.signingX509Credentials(c -> c.add(credential));
+        builder = buildSigningCredentials(builder, onlyActiveCredential);
+        return builder.build();
+    }
+
+    private RelyingPartyRegistration.Builder buildSigningCredentials (RelyingPartyRegistration.Builder builder, Boolean onlyActiveCredential) throws IOException, CertificateException {
+        List<SigningCredential> signingCredentialList = getSigningCredentials();
+
+        if (onlyActiveCredential) {
+            String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
+            signingCredentialList
+                .stream()
+                .filter(c -> StringUtils.hasText(c.getCredentialId()) && c.getCredentialId().equals(activeSigningCredentialId))
+                .findFirst().map(c -> List.of(c))
+                .orElseGet(
+                    () -> signingCredentialList.isEmpty() ? Collections.emptyList() : List.of(signingCredentialList.get(0))
+                );
         }
 
-        return builder.build();
+        for (SigningCredential signingCredential : signingCredentialList) {
+            String signingKey = signingCredential.getSigningKey();
+            String signingCertificate = signingCredential.getSigningCertificate();
+
+            if (StringUtils.hasText(signingKey) && StringUtils.hasText(signingCertificate)) {
+                // only RSA keys are supported
+                Saml2X509Credential credential = CertificateParser.genCredentials(
+                    signingKey,
+                    signingCertificate,
+                    Saml2X509Credential.Saml2X509CredentialType.SIGNING,
+                    Saml2X509Credential.Saml2X509CredentialType.DECRYPTION
+                );
+                builder.signingX509Credentials(c -> c.add(credential));
+            }
+        }
+
+        return builder;
     }
 
     // yield a unique key per upstream metadata (url)
@@ -452,9 +533,9 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     }
 
     @JsonIgnore
-    public List<Credential> getRelyingPartySigningCredentials() {
+    public List<Credential> getMetadataRelyingPartySigningCredentials() {
         List<Credential> credentials = new ArrayList<>();
-        RelyingPartyRegistration rp = getRelyingPartyRegistration();
+        RelyingPartyRegistration rp = getMetadataRelyingPartyRegistration();
         if (rp == null) {
             return credentials;
         }
@@ -475,6 +556,12 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
         // return always true due to check in spid validator
         return true;
+    }
+
+    public List<SigningCredential> getSigningCredentials() {
+        return configMap.getSigningCredentials() != null 
+            ? configMap.getSigningCredentials() 
+            : Collections.emptyList();
     }
 
     public String getEntityId() {
@@ -696,9 +783,14 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             throw new IllegalArgumentException("no valid signing certificates found in metadata");
         }
         
-        String confCert = configMap.getSigningCertificate();
-        String confCertNormalized = stripPem(confCert);
-        if (!metaCertNormalizedList.contains(confCertNormalized)) {
+        Set<String> confCertNormalizedList = getSigningCredentials()
+            .stream()
+            .map(SigningCredential::getSigningCertificate)
+            .filter(StringUtils::hasText)
+            .map(c -> stripPem(c))
+            .collect(Collectors.toSet());
+        
+        if (!metaCertNormalizedList.equals(confCertNormalizedList)) {
             throw new IllegalArgumentException("configured signingCertificate not present in metadata signing X509Certificate");
         }
     }

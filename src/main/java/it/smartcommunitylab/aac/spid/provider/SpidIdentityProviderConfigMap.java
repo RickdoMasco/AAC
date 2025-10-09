@@ -27,6 +27,7 @@ import it.smartcommunitylab.aac.spid.model.SpidAttribute;
 import it.smartcommunitylab.aac.spid.model.SpidAuthnContext;
 import it.smartcommunitylab.aac.spid.model.SpidUserAttribute;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.validation.Valid;
@@ -45,8 +46,8 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         SystemKeys.AUTHORITY_SPID;
 
     // <Signature> options
-    private String signingKey;
-    private String signingCertificate; // for <KeyDescriptor use="signing"><KeyInfo>
+    private List<SpidIdentityProviderConfigMap.SigningCredential> signingCredentials;
+    private String activeSigningCredentialId;
 
     private String metadataUrl;
     private String metadataXML;
@@ -77,20 +78,20 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
     private SpidUserAttribute subAttributeName; // optional
     private SpidUserAttribute usernameAttributeName; // optional
 
-    public String getSigningKey() {
-        return signingKey;
+    public List<SpidIdentityProviderConfigMap.SigningCredential> getSigningCredentials() {
+        return signingCredentials;
     }
 
-    public void setSigningKey(String signingKey) {
-        this.signingKey = signingKey;
+    public void setSigningCredentials(List<SpidIdentityProviderConfigMap.SigningCredential> signingCredentials) {
+        this.signingCredentials = signingCredentials;
     }
 
-    public String getSigningCertificate() {
-        return signingCertificate;
+    public String getActiveSigningCredentialId() {
+        return activeSigningCredentialId;
     }
 
-    public void setSigningCertificate(String signingCertificate) {
-        this.signingCertificate = signingCertificate;
+    public void setActiveSigningCredentialId(String activeSigningCredentialId) {
+        this.activeSigningCredentialId = activeSigningCredentialId;
     }
 
     public String getMetadataUrl() {
@@ -223,8 +224,8 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     @JsonIgnore
     public void setConfiguration(SpidIdentityProviderConfigMap map) {
-        this.signingKey = map.getSigningKey();
-        this.signingCertificate = map.getSigningCertificate();
+        this.signingCredentials = map.getSigningCredentials();
+        this.activeSigningCredentialId = map.getActiveSigningCredentialId();
         this.metadataUrl = map.getMetadataUrl();
         this.metadataXML = map.getMetadataXML();
         this.entityId = map.getEntityId();
@@ -257,5 +258,43 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
     @JsonIgnore
     public JsonSchema getSchema() throws JsonMappingException {
         return schemaGen.generateSchema(SpidIdentityProviderConfigMap.class);
+    }
+
+    public static class SigningCredential implements Serializable{
+        private String credentialId;
+        private String signingKey;
+        private String signingCertificate;
+
+        public SigningCredential() { }
+
+        public SigningCredential(String credentialId, String signingKey, String signingCertificate){
+            this.credentialId = credentialId;
+            this.signingKey = signingKey;
+            this.signingCertificate = signingCertificate;
+        }
+
+        public String getCredentialId() {
+            return this.credentialId;
+        }
+
+        public void setCredentialId(String credentialId){
+            this.credentialId = credentialId;
+        }
+
+        public String getSigningKey() {
+            return this.signingKey;
+        }
+
+        public void setSigningKey(String signingKey){
+            this.signingKey = signingKey;
+        }
+
+        public String getSigningCertificate() {
+            return this.signingCertificate;
+        }
+
+        public void setSigningCertificate(String signingCertificate){
+            this.signingCertificate = signingCertificate;
+        }
     }
 }

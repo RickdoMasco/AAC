@@ -27,6 +27,7 @@ import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
 import it.smartcommunitylab.aac.core.service.ResourceEntityService;
 import it.smartcommunitylab.aac.identity.base.AbstractIdentityProviderAuthority;
 import it.smartcommunitylab.aac.saml.model.SamlUserAccount;
+import it.smartcommunitylab.aac.spid.auth.SpidMetadataRelyingPartyRegistrationRepository;
 import it.smartcommunitylab.aac.spid.auth.SpidRelyingPartyRegistrationRepository;
 import it.smartcommunitylab.aac.spid.model.SpidUserIdentity;
 import it.smartcommunitylab.aac.spid.provider.SpidFilterProvider;
@@ -53,6 +54,7 @@ public class SpidIdentityAuthority
     private final UserAccountService<SamlUserAccount> accountService;
     private final SpidRelyingPartyRegistrationRepository registrationRepository;
     private final ProviderConfigRepository<SpidIdentityProviderConfig> providerConfigRepository;
+    private final SpidMetadataRelyingPartyRegistrationRepository metadataRelyingPartyRegistrationRepository;
     private final SpidFilterProvider filterProvider;
     private ScriptExecutionService executionService;
     private ResourceEntityService resourceService;
@@ -88,7 +90,8 @@ public class SpidIdentityAuthority
         this.accountService = accountService;
         this.providerConfigRepository = providerConfigRepository;
         this.registrationRepository = new SpidRelyingPartyRegistrationRepository(providerConfigRepository);
-        this.filterProvider = new SpidFilterProvider(registrationRepository, providerConfigRepository);
+        this.metadataRelyingPartyRegistrationRepository = new SpidMetadataRelyingPartyRegistrationRepository(providerConfigRepository);
+        this.filterProvider = new SpidFilterProvider(registrationRepository, metadataRelyingPartyRegistrationRepository, providerConfigRepository);
     }
 
     @Autowired
