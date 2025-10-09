@@ -171,16 +171,18 @@ public class SpidAuthenticationRequestContextConverter
 
         // assertion consuming
         // TODO: review with ACR
-        auth.setAssertionConsumerServiceIndex(0);
+        if (providerConfig.getUseAssertionConsumerServiceUrl()) {
+            auth.setProtocolBinding(protocolBinding);
+            auth.setAssertionConsumerServiceURL(context.getAssertionConsumerServiceUrl());
+        } else {
+            auth.setAssertionConsumerServiceIndex(0);
+        }
+        
         auth.setAttributeConsumingServiceIndex(0);
-        // If assertion consuming service index is not set, the following should be used instead
-        //        auth.setProtocolBinding(protocolBinding);
-        //        auth.setAssertionConsumerServiceURL(context.getAssertionConsumerServiceUrl());
 
         //        Scoping scoping = new ScopingBuilder().buildObject();
         //        scoping.setProxyCount(0);
         //        auth.setScoping(scoping);
         return auth;
-        //        return null;
     }
 }
