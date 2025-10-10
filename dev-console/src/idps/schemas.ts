@@ -1,5 +1,18 @@
 import { RJSFSchema, UiSchema } from '@rjsf/utils';
 
+const fixIdsRecursive = (obj: any) => {
+    if (obj && typeof obj === "object") {
+        if ('id' in obj && typeof obj['id'] === 'string' && obj['id'].startsWith("urn:jsonschema:")) {
+            obj['$id'] = obj['id'];
+            delete obj['id'];
+        }
+        for (const key in obj) {
+            fixIdsRecursive(obj[key]);
+        }
+    }
+    return obj;
+};
+
 export const getIdpSchema = (schema?: any) => {
     if (!schema) {
         return {};
@@ -7,12 +20,7 @@ export const getIdpSchema = (schema?: any) => {
 
     //fix id definition
     //TODO update in backend
-    if ('id' in schema) {
-        schema['$id'] = schema['id'];
-        delete schema['id'];
-    }
-
-    return schema;
+    return fixIdsRecursive(schema);
 };
 
 export const getIdpUiSchema = (schema?: any) => {
@@ -117,10 +125,24 @@ export const uiSchemaAppleIdp: UiSchema = {
 };
 export const uiSchemaOidcIdp: UiSchema = {
     'ui:layout': [
-        12, 12, 12, 12, 6, 6, 12, 6, 6, 4, 4, 4, 12, 12, 12, 12, 12, 6, 6,
+        12, 12, 12, 12, 6, 6, 12, 6, 6, 4, 4, 4, 12, 12, 12, 12, 12, 6, 6, 12, 12
     ],
     clientJwk: {
         'ui:widget': 'textarea',
+    },
+    customAuthNParameters: {
+        items: {
+            'ui:layout': [6, 6],
+            'ui:order': ['name', 'value'],
+            name: {
+                'ui:title': 'field.customAuthNParameters.parameterName.name',
+                'ui:description': 'field.customAuthNParameters.parameterName.helperText',
+            },
+            value: {
+                'ui:title': 'field.customAuthNParameters.parameterValue.name',
+                'ui:description': 'field.customAuthNParameters.parameterValue.helperText',
+            },
+        },
     },
 };
 export const uiSchemaPasswordIdp: UiSchema = {

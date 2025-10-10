@@ -72,6 +72,8 @@ public class OIDCIdentityProviderConfigMap extends AbstractConfigMap {
     private Boolean respectTokenExpiration;
     private Set<PromptMode> promptMode;
 
+    private Set<CustomAuthNParameter> customAuthNParameters;
+
     public OIDCIdentityProviderConfigMap() {}
 
     public String getClientId() {
@@ -234,6 +236,14 @@ public class OIDCIdentityProviderConfigMap extends AbstractConfigMap {
         this.promptMode = promptMode;
     }
 
+    public Set<CustomAuthNParameter> getCustomAuthNParameters() {
+        return customAuthNParameters;
+    }
+
+    public void setCustomParameters(Set<CustomAuthNParameter> customAuthNParameters) {
+        this.customAuthNParameters = customAuthNParameters;
+    }
+
     @JsonIgnore
     public void setConfiguration(OIDCIdentityProviderConfigMap map) {
         this.clientId = map.getClientId();
@@ -263,6 +273,8 @@ public class OIDCIdentityProviderConfigMap extends AbstractConfigMap {
         this.propagateEndSession = map.getPropagateEndSession();
         this.respectTokenExpiration = map.getRespectTokenExpiration();
         this.promptMode = map.getPromptMode();
+
+        this.customAuthNParameters = map.getCustomAuthNParameters();
     }
 
     @Override
@@ -277,5 +289,34 @@ public class OIDCIdentityProviderConfigMap extends AbstractConfigMap {
     @JsonIgnore
     public JsonSchema getSchema() throws JsonMappingException {
         return schemaGen.generateSchema(OIDCIdentityProviderConfigMap.class);
+    }
+
+    public static class CustomAuthNParameter implements Serializable {
+
+        private String name;
+        private String value;
+
+        public CustomAuthNParameter() { }
+
+        public CustomAuthNParameter(String name, String value){
+            this.name = name;
+            this.value = value;
+        }
+
+        public String getName() {
+            return this.name;
+        }
+
+        public void setName(String name){
+            this.name = name;
+        }
+
+        public String getValue() {
+            return this.value;
+        }
+
+        public void setValue(String value){
+            this.value = value;
+        }
     }
 }
