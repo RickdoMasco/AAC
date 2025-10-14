@@ -286,7 +286,7 @@ public class SpidAuthenticationProvider
                             .stream()
                             .filter(e -> e.getValue() != null)
                             // each spid attribute is authoritative and cannot be overwritten or re-evaluated
-                            .filter(e -> SpidAttribute.contains(e.getKey()))
+                            .filter(e -> !SpidAttribute.contains(e.getKey()))
                             .forEach(e -> principalAttributes.put(e.getKey(), e.getValue()));
                         user.setAttributes(principalAttributes);
                     }
