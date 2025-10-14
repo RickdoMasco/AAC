@@ -20,9 +20,9 @@ import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
 import it.smartcommunitylab.aac.saml.auth.Saml2AuthenticationRequestRepository;
 import it.smartcommunitylab.aac.saml.auth.SerializableSaml2AuthenticationRequestContext;
-import it.smartcommunitylab.aac.saml.events.SamlAuthenticationRequestEvent;
 import it.smartcommunitylab.aac.saml.service.HttpSessionSaml2AuthenticationRequestRepository;
 import it.smartcommunitylab.aac.spid.SpidIdentityAuthority;
+import it.smartcommunitylab.aac.spid.events.SpidAuthenticationRequestEvent;
 import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderConfig;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -181,7 +181,7 @@ public class SpidWebSsoAuthenticationRequestFilter
 
         if (eventPublisher != null) {
             eventPublisher.publishEvent(
-                new SamlAuthenticationRequestEvent(
+                new SpidAuthenticationRequestEvent(
                     authorityId,
                     config.getProvider(),
                     config.getRealm(),
