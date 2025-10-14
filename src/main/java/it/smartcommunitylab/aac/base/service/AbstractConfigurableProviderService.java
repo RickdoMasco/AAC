@@ -469,7 +469,7 @@ public abstract class AbstractConfigurableProviderService<C extends Configurable
     public JsonSchema getConfigurationSchema(String authority) throws NoSuchAuthorityException {
         ConfigurationProvider<?, ?, S, ? extends ConfigMap> configProvider = getConfigurationProvider(authority);
         try {
-            return configProvider.getDefaultConfigMap().getSchema();
+            return configProvider.getSchema();
         } catch (JsonMappingException e) {
             throw new SystemException(e.getMessage());
         }

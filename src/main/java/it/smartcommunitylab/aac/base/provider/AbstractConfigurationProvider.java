@@ -20,7 +20,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.base.model.AbstractConfigMap;
 import it.smartcommunitylab.aac.base.model.AbstractSettingsMap;
@@ -224,14 +227,10 @@ public abstract class AbstractConfigurationProvider<
         return mapper.convertValue(configMap, typeRef);
     }
 
-    // @Override
-    // public JsonSchema getSchema() {
-    //     try {
-    //         return defaultConfigMap.getSchema();
-    //     } catch (JsonMappingException e) {
-    //         return null;
-    //     }
-    // }
+    @Override
+    public JsonSchema getSchema() throws JsonMappingException {
+        return defaultConfigMap.getSchema();
+    }
 
     @Override
     public P register(C cp) throws RegistrationException {
