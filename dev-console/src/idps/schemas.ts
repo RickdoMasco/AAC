@@ -243,7 +243,7 @@ export const uiSchemaOpenidfedIdp: UiSchema = {
     },
 };
 export const uiSchemaSpidIdp: UiSchema = {
-    'ui:layout': [12, 6, 6, 6, 6, 12, 6, 6, 6, 6, 12, 12, 12, 12, 6, 6],
+    'ui:layout': [12, 6, 6, 6, 6, 12, 6, 6, 6, 6, 12, 12, 12, 12, 12, 6, 6],
     'ui:order': [
         'entityId',
         'signingKey',
@@ -258,6 +258,7 @@ export const uiSchemaSpidIdp: UiSchema = {
         'idps',
         'idpMetadataUrl',
         'spidAttributes',
+        'useAssertionConsumerServiceUrl',
         'authnContext',
         'subAttributeName',
         'usernameAttributeName',

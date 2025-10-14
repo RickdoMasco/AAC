@@ -355,6 +355,12 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         return configMap.getSpidAttributes() == null ? Collections.emptySet() : configMap.getSpidAttributes();
     }
 
+    public Boolean getUseAssertionConsumerServiceUrl() {
+        return configMap.getUseAssertionConsumerServiceUrl() != null
+            ? configMap.getUseAssertionConsumerServiceUrl()
+            : Boolean.FALSE;
+    }
+
     public Set<String> getRelyingPartyRegistrationAuthnContextClassRefs() {
         return configMap.getAuthnContext() == null
             ? Collections.emptySet()

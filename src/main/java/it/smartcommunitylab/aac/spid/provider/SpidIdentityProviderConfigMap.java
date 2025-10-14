@@ -30,8 +30,6 @@ import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 
 @Valid
@@ -80,6 +78,7 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
     private String idpMetadataUrl; // optional (see note above)
     private Set<SpidAttribute> spidAttributes; // optional
 
+    private Boolean useAssertionConsumerServiceUrl;
     private SpidAuthnContext authnContext;
 
     private SpidUserAttribute subAttributeName; // optional
@@ -189,6 +188,14 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         this.spidAttributes = spidAttributes;
     }
 
+    public Boolean getUseAssertionConsumerServiceUrl() {
+        return useAssertionConsumerServiceUrl;
+    }
+
+    public void setUseAssertionConsumerServiceUrl(Boolean useAssertionConsumerServiceUrl) {
+        this.useAssertionConsumerServiceUrl = useAssertionConsumerServiceUrl;
+    }
+
     public SpidAuthnContext getAuthnContext() {
         return authnContext;
     }
@@ -228,6 +235,7 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         this.idps = map.getIdps();
         this.idpMetadataUrl = map.getIdpMetadataUrl();
         this.spidAttributes = map.getSpidAttributes();
+        this.useAssertionConsumerServiceUrl = map.getUseAssertionConsumerServiceUrl();
         this.authnContext = map.getAuthnContext();
         this.subAttributeName = map.getSubAttributeName();
         this.usernameAttributeName = map.getUsernameAttributeName();

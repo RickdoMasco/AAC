@@ -659,6 +659,10 @@
         "name": "Spid user attributes",
         "helperText": "List of attribute names to be requested to Idp"
     },
+    "useAssertionConsumerServiceUrl": {
+        "name": "Use Assertion Consumer Service URL",
+        "helperText": "Enable to use the AssertionConsumerServiceURL attribute in the request instead of the AssertionConsumerServiceIndex attribute"
+    },
     "spidLevel": {
         "name": "Spid level",
         "helperText": "SPID authentication level"
