@@ -72,6 +72,22 @@ public class OAuth2IdpAwareLoginUrlConverter implements LoginUrlRequestConverter
             idpHint = (String) request.getAttribute(IDP_PARAMETER_NAME);
         }
 
+        // get realm from client id for idp-realm correspondance check and name-within-realm discovery 
+        String clientId = null;
+        if (request.getParameter(OAuth2ParameterNames.CLIENT_ID) != null) {
+            clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);
+        }
+        if (!StringUtils.hasText(clientId)) {
+            return null;
+        }
+
+        String realm = clientService.findClient(clientId) != null
+                    ? clientService.findClient(clientId).getRealm()
+                    : null;
+        if (!StringUtils.hasText(realm)) {
+            return null;
+        }
+
         // check if idp hint
         if (StringUtils.hasText(idpHint)) {
             // TODO check for idpHint == authorityId
@@ -82,23 +98,7 @@ public class OAuth2IdpAwareLoginUrlConverter implements LoginUrlRequestConverter
                 idp = providerService.getProvider(idpHint);
                 // TODO check if active
             } catch (NoSuchProviderException e) {
-                // try to resolve by realm + clientId
-                String clientId = null;
-                if (request.getParameter(OAuth2ParameterNames.CLIENT_ID) != null) {
-                    clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);
-                }
-                if (!StringUtils.hasText(clientId)) {
-                    return null;
-                }
-
-                String realm = clientService.findClient(clientId) != null
-                    ? clientService.findClient(clientId).getRealm()
-                    : null;
-
-                if (!StringUtils.hasText(realm)) {
-                    return null;
-                }
-
+                // try to resolve by name within realm
                 Collection<ConfigurableIdentityProvider> providers = providerService.listProviders(realm);
                 for (ConfigurableIdentityProvider p : providers) {
                     if (p.getName().equals(idpHint)) {
@@ -110,6 +110,11 @@ public class OAuth2IdpAwareLoginUrlConverter implements LoginUrlRequestConverter
                     // not found
                     return null;
                 }
+            }
+
+            if (!idp.getRealm().equals(realm)) {
+                // realm mismatch
+                return null;
             }
 
             try {               
