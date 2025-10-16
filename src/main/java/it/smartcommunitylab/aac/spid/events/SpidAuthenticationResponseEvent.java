@@ -16,28 +16,30 @@
 
 package it.smartcommunitylab.aac.spid.events;
 
-import org.springframework.security.saml2.provider.service.authentication.AbstractSaml2AuthenticationRequest;
+import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticationToken;
 import org.springframework.util.Assert;
 
-public class SpidAuthenticationRequestEvent extends SpidEvent {
+public class SpidAuthenticationResponseEvent extends SpidEvent {
 
-    public SpidAuthenticationRequestEvent(
+    public SpidAuthenticationResponseEvent(
         String authority,
         String provider,
         String realm,
-        AbstractSaml2AuthenticationRequest request
+        Saml2AuthenticationToken response
     ) {
-        super(authority, provider, realm, request);
-        Assert.notNull(request, "request can not be null");
+        super(authority, provider, realm, response);
+        Assert.notNull(response, "request can not be null");
     }
 
-    public AbstractSaml2AuthenticationRequest getAuthenticationRequest() {
-        return (AbstractSaml2AuthenticationRequest) super.getSource();
+    public String getAuthenticationResponse() {
+        Saml2AuthenticationToken saml2AuthenticationToken = (Saml2AuthenticationToken) super.getSource();
+        return saml2AuthenticationToken.getSaml2Response();
     }
 
     @Override
     public String getRelayState() {
-        return getAuthenticationRequest().getRelayState();
+        Saml2AuthenticationToken saml2AuthenticationToken = (Saml2AuthenticationToken) super.getSource();
+        return saml2AuthenticationToken.getAuthenticationRequest().getRelayState();
     }
 }
 

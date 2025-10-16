@@ -23,6 +23,7 @@ import it.smartcommunitylab.aac.core.auth.UserAuthentication;
 import it.smartcommunitylab.aac.core.auth.WebAuthenticationDetails;
 import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
 import it.smartcommunitylab.aac.saml.SamlIdentityAuthority;
+import it.smartcommunitylab.aac.saml.events.SamlAuthenticationResponseEvent;
 import it.smartcommunitylab.aac.saml.provider.SamlIdentityProviderConfig;
 import it.smartcommunitylab.aac.saml.service.HttpSessionSaml2AuthenticationRequestRepository;
 import it.smartcommunitylab.aac.saml.service.Saml2AuthenticationTokenConverter;
@@ -54,6 +55,7 @@ import org.springframework.util.StringUtils;
 public class SamlWebSsoAuthenticationFilter extends AbstractAuthenticationProcessingFilter {
 
     public static final String DEFAULT_FILTER_URI = SamlIdentityAuthority.AUTHORITY_URL + "sso/{registrationId}";
+    private static final String authorityId = SystemKeys.AUTHORITY_SAML;
 
     private final RequestMatcher requestMatcher;
 
@@ -202,6 +204,17 @@ public class SamlWebSsoAuthenticationFilter extends AbstractAuthenticationProces
 
         // collect info for webauth as additional details
         //        Object authenticationDetails = this.authenticationDetailsSource.buildDetails(request);
+
+        if (eventPublisher != null) {
+            eventPublisher.publishEvent(
+                new SamlAuthenticationResponseEvent(
+                    authorityId,
+                    providerConfig.getProvider(),
+                    providerConfig.getRealm(),
+                    authenticationRequest
+                )
+            );
+        }
 
         // wrap auth request for multi-provider manager
         // providerId is registrationId

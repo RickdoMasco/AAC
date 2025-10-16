@@ -34,7 +34,6 @@ import javax.servlet.Filter;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.saml2.provider.service.authentication.Saml2AuthenticationRequestContext;
 import org.springframework.util.Assert;
 
 public class SamlFilterProvider implements FilterProvider, ApplicationEventPublisherAware {
@@ -97,6 +96,7 @@ public class SamlFilterProvider implements FilterProvider, ApplicationEventPubli
             buildFilterUrl("sso/{registrationId}"),
             null
         );
+        ssoFilter.setApplicationEventPublisher(eventPublisher);
         ssoFilter.setAuthenticationRequestRepository(authenticationRequestRepository);
         // TODO use custom success handler to support auth sagas (disabled for now)
         //        ssoFilter.setAuthenticationSuccessHandler(new RequestAwareAuthenticationSuccessHandler());

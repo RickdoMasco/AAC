@@ -27,6 +27,7 @@ import it.smartcommunitylab.aac.saml.auth.SerializableSaml2AuthenticationRequest
 import it.smartcommunitylab.aac.saml.service.HttpSessionSaml2AuthenticationRequestRepository;
 import it.smartcommunitylab.aac.saml.service.Saml2AuthenticationTokenConverter;
 import it.smartcommunitylab.aac.spid.SpidIdentityAuthority;
+import it.smartcommunitylab.aac.spid.events.SpidAuthenticationResponseEvent;
 import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderConfig;
 import java.io.IOException;
 import java.util.HashMap;
@@ -72,6 +73,7 @@ public class SpidWebSsoAuthenticationFilter extends AbstractAuthenticationProces
 
     public static final String DEFAULT_FILTER_URI = SpidIdentityAuthority.AUTHORITY_URL + "sso/{registrationId}";
     private static final char PATH_DELIMITER = '/';
+    private static final String authorityId = SystemKeys.AUTHORITY_SPID;
 
     private final RequestMatcher requestMatcher;
     private final ProviderConfigRepository<SpidIdentityProviderConfig> providerConfigRegistrationRepository;
@@ -309,6 +311,17 @@ public class SpidWebSsoAuthenticationFilter extends AbstractAuthenticationProces
                 "Wrong destination for response"
             );
             throw new Saml2AuthenticationException(saml2Error);
+        }
+
+        if(eventPublisher != null) {
+            eventPublisher.publishEvent(
+                new SpidAuthenticationResponseEvent(
+                    authorityId,
+                    providerConfig.getProvider(),
+                    providerConfig.getRealm(),
+                    authenticationRequest
+                )
+            );
         }
 
         // D. generate a wrapped authentication for the multi-provider auth manager
