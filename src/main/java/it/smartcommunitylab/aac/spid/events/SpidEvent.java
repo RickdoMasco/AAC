@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package it.smartcommunitylab.aac.saml.events;
+package it.smartcommunitylab.aac.spid.events;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -23,13 +23,13 @@ import it.smartcommunitylab.aac.events.ProviderEmittedEvent;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.util.Assert;
 
-public abstract class SamlRequestEvent extends ApplicationEvent implements ProviderEmittedEvent {
+public abstract class SpidEvent extends ApplicationEvent implements ProviderEmittedEvent {
 
     private final String authority;
     private final String provider;
     private final String realm;
 
-    protected SamlRequestEvent(String authority, String provider, String realm, Object source) {
+    protected SpidEvent(String authority, String provider, String realm, Object source) {
         super(source);
         Assert.hasText(provider, "provider identifier can not be null or blank");
         this.authority = authority;
