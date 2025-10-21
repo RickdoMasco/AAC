@@ -23,7 +23,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.audit.store.AuditApplicationEventMixIns;
 import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
-import it.smartcommunitylab.aac.saml.events.SamlRequestEvent;
+import it.smartcommunitylab.aac.saml.events.SamlEvent;
 import it.smartcommunitylab.aac.saml.provider.SamlIdentityProviderConfig;
 import java.time.Instant;
 import java.util.HashMap;
@@ -31,7 +31,6 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.listener.AuditApplicationEvent;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,11 +40,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 @Component
-public class SamlAuditEventListener implements ApplicationListener<SamlRequestEvent>, ApplicationEventPublisherAware {
+public class SamlAuditEventListener implements ApplicationListener<SamlEvent>, ApplicationEventPublisherAware {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private static final String SAML_REQUEST = "SAML_REQUEST";
+    private static final String SAML_RESPONSE = "SAML_RESPONSE";
 
     private final ObjectMapper mapper = new ObjectMapper()
         .registerModule(new JavaTimeModule())
@@ -70,13 +70,23 @@ public class SamlAuditEventListener implements ApplicationListener<SamlRequestEv
     }
 
     @Override
-    public void onApplicationEvent(SamlRequestEvent event) {
+    public void onApplicationEvent(SamlEvent event) {
         String authority = event.getAuthority();
         String provider = event.getProvider();
         String realm = event.getRealm();
         String relayState = event.getRelayState();
 
-        logger.debug("receive saml request event for {}:{} key {}", authority, provider, String.valueOf(relayState));
+        String eventType = null;
+        if (event instanceof it.smartcommunitylab.aac.saml.events.SamlAuthenticationRequestEvent) {
+            eventType = SAML_REQUEST;
+        } else if (event instanceof it.smartcommunitylab.aac.saml.events.SamlAuthenticationResponseEvent) {
+            eventType = SAML_RESPONSE;
+        } else {
+            logger.debug("unsupported saml event type, skip event");
+            return;
+        }
+
+        logger.debug("receive {} event for {}:{} key {}", eventType, authority, provider, String.valueOf(relayState));
 
         if (registrationRepository == null || publisher == null) {
             logger.debug("invalid configuration, skip event");
@@ -112,11 +122,11 @@ public class SamlAuditEventListener implements ApplicationListener<SamlRequestEv
         AuditApplicationEvent auditEvent = new AuditApplicationEvent(
             Instant.ofEpochMilli(event.getTimestamp()),
             provider,
-            SAML_REQUEST,
+            eventType,
             data
         );
 
-        logger.debug("publish saml request event for audit");
+        logger.debug("publish {} event for audit", eventType);
         if (logger.isTraceEnabled()) {
             logger.trace("audit event: {}", auditEvent);
         }

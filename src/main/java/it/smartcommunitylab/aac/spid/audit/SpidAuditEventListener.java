@@ -23,7 +23,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.audit.store.AuditApplicationEventMixIns;
 import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
-import it.smartcommunitylab.aac.spid.events.SpidRequestEvent;
+import it.smartcommunitylab.aac.spid.events.SpidEvent;
 import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderConfig;
 
 import java.time.Instant;
@@ -41,11 +41,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 @Component
-public class SpidAuditEventListener implements ApplicationListener<SpidRequestEvent>, ApplicationEventPublisherAware {
+public class SpidAuditEventListener implements ApplicationListener<SpidEvent>, ApplicationEventPublisherAware {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private static final String SPID_REQUEST = "SPID_REQUEST";
+    private static final String SPID_RESPONSE = "SPID_RESPONSE";
 
     private final ObjectMapper mapper = new ObjectMapper()
         .registerModule(new JavaTimeModule())
@@ -70,13 +71,23 @@ public class SpidAuditEventListener implements ApplicationListener<SpidRequestEv
     }
 
     @Override
-    public void onApplicationEvent(SpidRequestEvent event) {
+    public void onApplicationEvent(SpidEvent event) {
         String authority = event.getAuthority();
         String provider = event.getProvider();
         String realm = event.getRealm();
         String relayState = event.getRelayState();
 
-        logger.debug("receive spid request event for {}:{} key {}", authority, provider, String.valueOf(relayState));
+        String eventType = null;
+        if (event instanceof it.smartcommunitylab.aac.spid.events.SpidAuthenticationRequestEvent) {
+            eventType = SPID_REQUEST;
+        } else if (event instanceof it.smartcommunitylab.aac.spid.events.SpidAuthenticationResponseEvent) {
+            eventType = SPID_RESPONSE;
+        } else {
+            logger.debug("unsupported spid event type, skip event");
+            return;
+        }
+
+        logger.debug("receive {} event for {}:{} key {}", eventType, authority, provider, String.valueOf(relayState));
 
         if (registrationRepository == null || publisher == null) {
             logger.debug("invalid configuration, skip event");
@@ -112,11 +123,11 @@ public class SpidAuditEventListener implements ApplicationListener<SpidRequestEv
         AuditApplicationEvent auditEvent = new AuditApplicationEvent(
             Instant.ofEpochMilli(event.getTimestamp()),
             provider,
-            SPID_REQUEST,
+            eventType,
             data
         );
 
-        logger.debug("publish spid request event for audit");
+        logger.debug("publish {} event for audit", eventType);
         if (logger.isTraceEnabled()) {
             logger.trace("audit event: {}", auditEvent);
         }

@@ -93,6 +93,7 @@ public class SpidFilterProvider implements FilterProvider, ApplicationEventPubli
             buildFilterUrl("sso/{registrationId}"),
             null
         );
+        ssoFilter.setApplicationEventPublisher(eventPublisher);
         ssoFilter.setAuthenticationRequestRepository(authenticationRequestRepository);
         if (this.authManager != null) {
             ssoFilter.setAuthenticationManager(authManager);
