@@ -40,6 +40,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -173,11 +176,33 @@ public class OpenIdFedIdentityProvider
 
     @Override
     public String getAuthenticationUrl() {
-        return "/auth/" + getAuthority() + "/authorize/" + getProvider();
+        return getLoginUrl();
+    }
+
+    @Override
+    public String getAuthenticationUrl(HttpServletRequest request) {
+        String entityId = null;
+        if (request.getParameter(DOMAIN_HINT_PARAMETER_NAME) != null) {
+            entityId = request.getParameter(DOMAIN_HINT_PARAMETER_NAME);
+        }
+
+        if (!StringUtils.hasText(entityId)) {
+            return getAuthenticationUrl();
+        }
+
+        OpenIdFedClientRegistrationRepository repository = config.getClientRegistrationRepository();
+        if (repository == null) {
+            return getAuthenticationUrl();
+        }
+        return buildAuthenticationUrl(repository.encode(entityId));
     }
 
     public String getLoginUrl() {
         return "/auth/" + getAuthority() + "/form/" + getProvider();
+    }
+
+    public String buildAuthenticationUrl(String registrationId) {
+        return "/auth/" + getAuthority() + "/authorize/" + getProvider() + "/" + registrationId;
     }
 
     @Override
@@ -206,7 +231,7 @@ public class OpenIdFedIdentityProvider
                     String registrationId = repository.encode(e);
                     OpenIdFedLogin login = new OpenIdFedLogin(registrationId);
                     login.setEntityId(e);
-                    login.setLoginUrl(getAuthenticationUrl() + "/" + registrationId);
+                    login.setLoginUrl(buildAuthenticationUrl(registrationId));
 
                     OIDCProviderMetadata op = discoveryService.findProvider(e);
                     FederationEntityMetadata meta = discoveryService.loadProviderMetadata(e);

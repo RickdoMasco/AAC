@@ -23,9 +23,14 @@ import it.smartcommunitylab.aac.identity.model.ConfigurableIdentityProvider;
 import it.smartcommunitylab.aac.identity.provider.IdentityProvider;
 import it.smartcommunitylab.aac.identity.service.IdentityProviderAuthorityService;
 import it.smartcommunitylab.aac.identity.service.IdentityProviderService;
+import it.smartcommunitylab.aac.oauth.service.OAuth2ClientService;
+
+import java.util.Collection;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -35,16 +40,19 @@ public class OAuth2IdpAwareLoginUrlConverter implements LoginUrlRequestConverter
 
     private final IdentityProviderService providerService;
     private final IdentityProviderAuthorityService authorityService;
+    private final OAuth2ClientService clientService;
 
     public OAuth2IdpAwareLoginUrlConverter(
         IdentityProviderService providerService,
-        IdentityProviderAuthorityService authorityService
+        IdentityProviderAuthorityService authorityService,
+        OAuth2ClientService clientService
     ) {
         Assert.notNull(providerService, "provider service is required");
         Assert.notNull(authorityService, "authority service is required");
 
         this.authorityService = authorityService;
         this.providerService = providerService;
+        this.clientService = clientService;
     }
 
     @Override
@@ -64,14 +72,52 @@ public class OAuth2IdpAwareLoginUrlConverter implements LoginUrlRequestConverter
             idpHint = (String) request.getAttribute(IDP_PARAMETER_NAME);
         }
 
+        // get realm from client id for idp-realm correspondance check and name-within-realm discovery 
+        String clientId = null;
+        if (request.getParameter(OAuth2ParameterNames.CLIENT_ID) != null) {
+            clientId = request.getParameter(OAuth2ParameterNames.CLIENT_ID);
+        }
+        if (!StringUtils.hasText(clientId)) {
+            return null;
+        }
+
+        String realm = clientService.findClient(clientId) != null
+                    ? clientService.findClient(clientId).getRealm()
+                    : null;
+        if (!StringUtils.hasText(realm)) {
+            return null;
+        }
+
         // check if idp hint
         if (StringUtils.hasText(idpHint)) {
             // TODO check for idpHint == authorityId
             // needs discoverable realm either via path or via clientId
-            try {
-                ConfigurableIdentityProvider idp = providerService.getProvider(idpHint);
-                // TODO check if active
 
+            ConfigurableIdentityProvider idp = null;
+            try {
+                idp = providerService.getProvider(idpHint);
+                // TODO check if active
+            } catch (NoSuchProviderException e) {
+                // try to resolve by name within realm
+                Collection<ConfigurableIdentityProvider> providers = providerService.listProviders(realm);
+                for (ConfigurableIdentityProvider p : providers) {
+                    if (p.getName().equals(idpHint)) {
+                        idp = p;
+                        break;
+                    }
+                }
+                if (idp == null) {
+                    // not found
+                    return null;
+                }
+            }
+
+            if (!idp.getRealm().equals(realm)) {
+                // realm mismatch
+                return null;
+            }
+
+            try {               
                 // fetch providers for given realm
                 IdentityProvider<?, ?, ?, ?, ?> provider = authorityService
                     .getAuthority(idp.getAuthority())
@@ -80,7 +126,7 @@ public class OAuth2IdpAwareLoginUrlConverter implements LoginUrlRequestConverter
                     throw new NoSuchProviderException();
                 }
 
-                return provider.getAuthenticationUrl();
+                return provider.getAuthenticationUrl(request);
             } catch (NoSuchAuthorityException | NoSuchProviderException e) {
                 // no valid response
                 return null;

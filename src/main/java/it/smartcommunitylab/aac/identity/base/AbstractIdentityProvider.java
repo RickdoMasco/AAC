@@ -36,6 +36,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -56,6 +59,8 @@ public abstract class AbstractIdentityProvider<
     implements IdentityProvider<I, U, P, M, C>, ApplicationEventPublisherAware, InitializingBean {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    public static final String DOMAIN_HINT_PARAMETER_NAME = "domain_hint";
 
     protected ApplicationEventPublisher eventPublisher;
 
@@ -437,5 +442,9 @@ public abstract class AbstractIdentityProvider<
                 deleteIdentity(userId, account.getAccountId());
             } catch (NoSuchUserException e) {}
         }
+    }
+
+    public String getAuthenticationUrl(HttpServletRequest request) {
+        return getAuthenticationUrl();
     }
 }

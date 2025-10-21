@@ -33,6 +33,9 @@ import it.smartcommunitylab.aac.spid.model.SpidUserIdentity;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+
+import javax.servlet.http.HttpServletRequest;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.provider.AuthorizationRequest;
@@ -120,12 +123,30 @@ public class SpidIdentityProvider
 
     @Override
     public String getAuthenticationUrl() {
-        // TODO build a realm-bound url, need updates on filters
-        return "/auth/" + getAuthority() + "/authenticate/";
+        return getLoginUrl();
+    }
+
+    @Override
+    public String getAuthenticationUrl(HttpServletRequest request) {
+        String entityId = null;
+        if (request.getParameter(DOMAIN_HINT_PARAMETER_NAME) != null) {
+            entityId = request.getParameter(DOMAIN_HINT_PARAMETER_NAME);
+        }
+
+        if (!StringUtils.hasText(entityId)) {
+            return getAuthenticationUrl();
+        }
+
+        String plainRegistrationId = config.evalRelyingPartyRegistrationId(entityId);
+        return buildAuthenticationUrl(SpidIdentityProviderConfig.encodeRegistrationId(plainRegistrationId));
     }
 
     public String getLoginUrl() {
         return "/auth/" + getAuthority() + "/form/" + getProvider();
+    }
+
+    public String buildAuthenticationUrl(String registrationId) {
+        return "/auth/" + getAuthority() + "/authenticate/" + registrationId;
     }
 
     @Override
@@ -139,8 +160,7 @@ public class SpidIdentityProvider
         
         List<SpidLoginProvider.SpidIdpButton> spidIdpsLogin = new LinkedList<>();
         for (RelyingPartyRegistration reg : config.getUpstreamRelyingPartyRegistrations()) {
-            // TODO: should be exposes by a dedicated method
-            String loginUrl = getAuthenticationUrl() + reg.getRegistrationId();
+            String loginUrl = buildAuthenticationUrl(reg.getRegistrationId());
 
             SpidRegistration spidReg = getConfig()
                 .getIdentityProviders()
