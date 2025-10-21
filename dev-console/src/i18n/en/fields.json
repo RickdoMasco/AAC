@@ -95,6 +95,18 @@
         "name": "Prompt Mode",
         "helperText": ""
     },
+    "customAuthNParameters": {
+        "name": "Custom AuthN Parameters",
+        "helperText": "Additional custom parameters to include in authN requests",
+        "parameterName": {
+            "name": "Parameter Name",
+            "helperText": ""
+        },
+        "parameterValue": {
+            "name": "Parameter Value",
+            "helperText": ""
+        }
+    },
     "template_override": {
         "name": "Template Override",
         "helperText": ""
