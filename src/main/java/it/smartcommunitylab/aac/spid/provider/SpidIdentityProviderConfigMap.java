@@ -46,7 +46,7 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         SystemKeys.AUTHORITY_SPID;
 
     // <Signature> options
-    private List<SpidIdentityProviderConfigMap.SigningCredential> signingCredentials;
+    private List<SigningCredential> signingCredentials;
     private String activeSigningCredentialId;
 
     private String metadataUrl;
@@ -78,11 +78,11 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
     private SpidUserAttribute subAttributeName; // optional
     private SpidUserAttribute usernameAttributeName; // optional
 
-    public List<SpidIdentityProviderConfigMap.SigningCredential> getSigningCredentials() {
+    public List<SigningCredential> getSigningCredentials() {
         return signingCredentials;
     }
 
-    public void setSigningCredentials(List<SpidIdentityProviderConfigMap.SigningCredential> signingCredentials) {
+    public void setSigningCredentials(List<SigningCredential> signingCredentials) {
         this.signingCredentials = signingCredentials;
     }
 
@@ -258,43 +258,5 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
     @JsonIgnore
     public JsonSchema getSchema() throws JsonMappingException {
         return schemaGen.generateSchema(SpidIdentityProviderConfigMap.class);
-    }
-
-    public static class SigningCredential implements Serializable{
-        private String credentialId;
-        private String signingKey;
-        private String signingCertificate;
-
-        public SigningCredential() { }
-
-        public SigningCredential(String credentialId, String signingKey, String signingCertificate){
-            this.credentialId = credentialId;
-            this.signingKey = signingKey;
-            this.signingCertificate = signingCertificate;
-        }
-
-        public String getCredentialId() {
-            return this.credentialId;
-        }
-
-        public void setCredentialId(String credentialId){
-            this.credentialId = credentialId;
-        }
-
-        public String getSigningKey() {
-            return this.signingKey;
-        }
-
-        public void setSigningKey(String signingKey){
-            this.signingKey = signingKey;
-        }
-
-        public String getSigningCertificate() {
-            return this.signingCertificate;
-        }
-
-        public void setSigningCertificate(String signingCertificate){
-            this.signingCertificate = signingCertificate;
-        }
     }
 }
