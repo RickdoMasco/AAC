@@ -82,7 +82,6 @@ import it.smartcommunitylab.aac.spid.model.SpidAttributeConsumingService;
 import it.smartcommunitylab.aac.spid.model.SpidMetadataConfiguration;
 import it.smartcommunitylab.aac.spid.model.SpidRegistration;
 import it.smartcommunitylab.aac.spid.model.SpidUserAttribute;
-import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderConfigMap.SigningCredential;
 
 public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<SpidIdentityProviderConfigMap> {
 
