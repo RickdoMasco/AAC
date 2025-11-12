@@ -24,6 +24,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 
 @SpringBootApplication
 public class AACMain {
@@ -39,6 +41,7 @@ public class AACMain {
     }
 
     @Bean
+    @Order(1)
     public CommandLineRunner commandLineRunner(ApplicationContext ctx) {
         return args -> {
             printBanner();
@@ -46,10 +49,22 @@ public class AACMain {
     }
 
     @Bean
+    @Order(2)
     public CommandLineRunner bootstrapRunner(ApplicationContext ctx) {
         return args -> {
             bootstrap.bootstrap();
             bootstrap.bootstrapConfig();
+        };
+    }
+
+    @Bean
+    @Order(99)
+    @Profile("bootstrap")
+    public CommandLineRunner bootstrapExit(ApplicationContext ctx) {
+        return args -> {
+            if (ctx != null) {
+                SpringApplication.exit(ctx, () -> 0);
+            }
         };
     }
 
