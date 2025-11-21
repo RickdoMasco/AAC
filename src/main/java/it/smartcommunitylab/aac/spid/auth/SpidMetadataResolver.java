@@ -18,7 +18,6 @@ package it.smartcommunitylab.aac.spid.auth;
 
 import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
 import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderConfig;
-import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderConfigMap;
 import java.security.cert.CertificateEncodingException;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -85,7 +84,6 @@ public class SpidMetadataResolver implements Saml2MetadataResolver {
     public static final String SPID_NAMESPACE_URI = "https://spid.gov.it/saml-extensions";
 
     public static final String SPID_NAMESPACE_PREFIX = "spid";
-    private static final String DEFAULT_SERVICE_NAME = "Set0";
     private static final char PATH_DELIMITER = '/';
 
     private final ProviderConfigRepository<SpidIdentityProviderConfig> configRepository;
@@ -257,25 +255,27 @@ public class SpidMetadataResolver implements Saml2MetadataResolver {
         assertionConsumerService.setIsDefault(true);
         spSsoDescriptor.getAssertionConsumerServices().add(assertionConsumerService);
 
-        // Add single attribute consuming service to <SPSSODescriptor>. The metadata exposes one and only
-        // one index set (Set0) associated to an attribute set configurable by the user.
-        AttributeConsumingService attributeConsumingService = attributeConsumingServiceBuilder.buildObject();
-        attributeConsumingService.setIndex(0);
-        attributeConsumingService.setIsDefault(true);
-
-        ServiceName defaultServiceName = serviceNameBuilder.buildObject();
-        defaultServiceName.setValue(DEFAULT_SERVICE_NAME);
-        defaultServiceName.setXMLLang("it");
-        attributeConsumingService.getNames().add(defaultServiceName);
+        // Add attribute consuming services to <SPSSODescriptor>.
         config
-            .getSpidAttributes()
-            .forEach(attr -> {
-                RequestedAttribute attribute = requestedAttributeBuilder.buildObject();
-                attribute.setName(attr.getValue());
-                attributeConsumingService.getRequestedAttributes().add(attribute);
-            });
+            .getAttributeConsumingServices()
+            .forEach(attrService -> {
+                AttributeConsumingService attributeConsumingService = attributeConsumingServiceBuilder.buildObject();
+                attributeConsumingService.setIndex(attrService.getIndex());
 
-        spSsoDescriptor.getAttributeConsumingServices().add(attributeConsumingService);
+                ServiceName serviceName = serviceNameBuilder.buildObject();
+                serviceName.setValue(attrService.getName());
+                serviceName.setXMLLang("it");
+                attributeConsumingService.getNames().add(serviceName);
+                attrService
+                    .getAttributes()
+                    .forEach(attr -> {
+                        RequestedAttribute attribute = requestedAttributeBuilder.buildObject();
+                        attribute.setName(attr.getValue());
+                        attributeConsumingService.getRequestedAttributes().add(attribute);
+                    });
+
+                spSsoDescriptor.getAttributeConsumingServices().add(attributeConsumingService);
+            });
 
         // Add single logout service to <SPSSODescriptor>
         // extract baseUrl
@@ -304,43 +304,41 @@ public class SpidMetadataResolver implements Saml2MetadataResolver {
     }
 
     private Organization buildOrganization(SpidIdentityProviderConfig config) {
-        SpidIdentityProviderConfigMap configMap = config.getConfigMap();
         Organization organization = organizationBuilder.buildObject();
 
         OrganizationName organizationName = organizationNameBuilder.buildObject();
         organizationName.setXMLLang("it");
-        organizationName.setValue(configMap.getOrganizationName());
+        organizationName.setValue(config.getOrganizationName());
         organization.getOrganizationNames().add(organizationName);
 
         OrganizationDisplayName organizationDisplayName = organizationDisplayNameBuilder.buildObject();
         organizationDisplayName.setXMLLang("it");
-        organizationDisplayName.setValue(configMap.getOrganizationDisplayName());
+        organizationDisplayName.setValue(config.getOrganizationDisplayName());
         organization.getDisplayNames().add(organizationDisplayName);
 
         OrganizationURL organizationUrl = organizationURLBuilder.buildObject();
         organizationUrl.setXMLLang("it");
-        organizationUrl.setURI(configMap.getOrganizationUrl());
+        organizationUrl.setURI(config.getOrganizationUrl());
         organization.getURLs().add(organizationUrl);
         return organization;
     }
 
     private ContactPerson buildContactPerson(SpidIdentityProviderConfig config) {
-        SpidIdentityProviderConfigMap configMap = config.getConfigMap();
         boolean isPublic = true; // private sp are currently not supported
 
         ContactPerson contactPerson = contactPersonBuilder.buildObject();
         contactPerson.setType(ContactPersonTypeEnumeration.OTHER);
 
         EmailAddress emailAddress = emailAddressBuilder.buildObject();
-        emailAddress.setURI(configMap.getContactPerson_EmailAddress());
+        emailAddress.setURI(config.getContactPersonEmailAddress());
         contactPerson.getEmailAddresses().add(emailAddress);
 
         Extensions contactExtension = extensionsBuilder.buildObject();
         List<XMLObject> contactExtensions = new ArrayList<>();
 
-        if (StringUtils.hasText(configMap.getContactPerson_IPACode()) && isPublic) {
+        if (StringUtils.hasText(config.getContactPersonIPACode()) && isPublic) {
             XSAny ipaCode = xsAnyBuilder.buildObject(SPID_NAMESPACE_URI, "IPACode", SPID_NAMESPACE_PREFIX);
-            ipaCode.setTextContent(configMap.getContactPerson_IPACode());
+            ipaCode.setTextContent(config.getContactPersonIPACode());
             contactExtensions.add(ipaCode);
         }
 

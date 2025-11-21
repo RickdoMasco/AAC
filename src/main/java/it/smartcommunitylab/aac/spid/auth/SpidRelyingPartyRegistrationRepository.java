@@ -63,7 +63,7 @@ public class SpidRelyingPartyRegistrationRepository implements RelyingPartyRegis
                 return null;
             }
 
-            return providerConfig.getRelyingPartyRegistration();
+            return providerConfig.getBareRelyingPartyRegistration();
         }
         // registrationId is base64 url encode({providerId}|{entityLabel})
         // s[0], s[1] = providerId, entityLabel
@@ -72,11 +72,6 @@ public class SpidRelyingPartyRegistrationRepository implements RelyingPartyRegis
             return null;
         }
 
-        return providerConfig
-            .getRelyingPartyRegistrations()
-            .stream()
-            .filter(reg -> reg.getRegistrationId().equals(registrationId))
-            .findAny()
-            .orElse(null);
+        return providerConfig.getRelyingPartyRegistration(s[1]);
     }
 }

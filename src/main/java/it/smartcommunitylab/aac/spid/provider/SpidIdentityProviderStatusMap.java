@@ -42,15 +42,8 @@ public class SpidIdentityProviderStatusMap extends AbstractStatusMap {
         SystemKeys.AUTHORITY_SPID;
 
     private String metadataUrl;
-    private Map<String, String> assertionConsumerUrls;
-
-    public Map<String, String> getAssertionConsumerUrls() {
-        return assertionConsumerUrls;
-    }
-
-    public void setAssertionConsumerUrls(Map<String, String> assertionConsumerUrls) {
-        this.assertionConsumerUrls = assertionConsumerUrls;
-    }
+    private String assertionConsumerUrl;
+    private Map<String, String> metadataConfiguration;
 
     public String getMetadataUrl() {
         return metadataUrl;
@@ -60,12 +53,29 @@ public class SpidIdentityProviderStatusMap extends AbstractStatusMap {
         this.metadataUrl = metadataUrl;
     }
 
+    public String getAssertionConsumerUrl() {
+        return assertionConsumerUrl;
+    }
+
+    public void setAssertionConsumerUrl(String assertionConsumerUrl) {
+        this.assertionConsumerUrl = assertionConsumerUrl;
+    }
+
+    public Map<String, String> getMetadataConfiguration() {
+        return metadataConfiguration;
+    }
+
+    public void setMetadataConfiguration(Map<String, String> metadataConfiguration) {
+        this.metadataConfiguration = metadataConfiguration;
+    }
+
     public SpidIdentityProviderStatusMap() {}
 
     @JsonIgnore
     public void setConfiguration(SpidIdentityProviderStatusMap map) {
         this.metadataUrl = map.getMetadataUrl();
-        this.assertionConsumerUrls = map.getAssertionConsumerUrls();
+        this.assertionConsumerUrl = map.getAssertionConsumerUrl();
+        this.metadataConfiguration = map.getMetadataConfiguration();
     }
 
     @Override

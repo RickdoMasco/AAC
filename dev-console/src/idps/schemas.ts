@@ -265,22 +265,23 @@ export const uiSchemaOpenidfedIdp: UiSchema = {
     },
 };
 export const uiSchemaSpidIdp: UiSchema = {
-    'ui:layout': [12, 6, 6, 6, 6, 12, 6, 6, 6, 6, 12, 12, 12, 12, 12, 6, 6],
+    'ui:layout': [6, 6, 12, 12, 12, 4, 4, 4, 6, 6, 12, 12, 12, 6, 6, 12, 6, 6],
     'ui:order': [
-        'entityId',
         'signingKey',
         'signingCertificate',
-        'organizationDisplayName',
+        'metadataUrl',
+        'metadataXML',
+        'entityId',
         'organizationName',
+        'organizationDisplayName',
         'organizationUrl',
-        'contactPerson_EmailAddress',
-        'contactPerson_Type',
-        'contactPerson_IPACode',
-        'contactPerson_Public',
+        'contactPersonEmailAddress',
+        'contactPersonIPACode',
+        'spidAttributes',
         'idps',
         'idpMetadataUrl',
-        'spidAttributes',
         'useAssertionConsumerServiceUrl',
+        'attributeConsumingServiceIndex',
         'authnContext',
         'subAttributeName',
         'usernameAttributeName',
@@ -289,6 +290,9 @@ export const uiSchemaSpidIdp: UiSchema = {
         'ui:widget': 'textarea',
     },
     signingCertificate: {
+        'ui:widget': 'textarea',
+    },
+    metadataXML: {
         'ui:widget': 'textarea',
     },
     spidAttributes: {

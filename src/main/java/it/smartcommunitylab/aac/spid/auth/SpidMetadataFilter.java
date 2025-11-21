@@ -24,12 +24,7 @@ import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
-import org.springframework.security.saml2.provider.service.metadata.OpenSamlMetadataResolver;
-import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.web.DefaultRelyingPartyRegistrationResolver;
 import org.springframework.security.saml2.provider.service.web.RelyingPartyRegistrationResolver;
@@ -37,6 +32,7 @@ import org.springframework.security.saml2.provider.service.web.Saml2MetadataFilt
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /*
@@ -48,6 +44,8 @@ public class SpidMetadataFilter extends OncePerRequestFilter {
 
     public static final String DEFAULT_FILTER_URI = SpidIdentityAuthority.AUTHORITY_URL + "metadata/{registrationId}";
 
+    private final RequestMatcher requestMatcher;
+    private final ProviderConfigRepository<SpidIdentityProviderConfig> providerConfigRegistrationRepository;
     private final Saml2MetadataFilter samlMetadataFilter;
 
     public SpidMetadataFilter(
@@ -63,11 +61,13 @@ public class SpidMetadataFilter extends OncePerRequestFilter {
         RequestMatcher requestMatcher = new AntPathRequestMatcher(DEFAULT_FILTER_URI);
         SpidMetadataResolver metadataResolver = new SpidMetadataResolver(configRepository);
 
-        samlMetadataFilter = new Saml2MetadataFilter(registrationResolver, metadataResolver);
+        this.requestMatcher = requestMatcher;
+        this.providerConfigRegistrationRepository = configRepository;
 
-        samlMetadataFilter.setRequestMatcher(requestMatcher);
-        samlMetadataFilter.setBeanName("SamlMetadataFilter" + "." + SpidIdentityAuthority.AUTHORITY_URL);
-        samlMetadataFilter.setMetadataFilename("spid-{registrationId}-metadata.xml");
+        this.samlMetadataFilter = new Saml2MetadataFilter(registrationResolver, metadataResolver);
+        this.samlMetadataFilter.setRequestMatcher(requestMatcher);
+        this.samlMetadataFilter.setBeanName("SamlMetadataFilter" + "." + SpidIdentityAuthority.AUTHORITY_URL);
+        this.samlMetadataFilter.setMetadataFilename("spid-{registrationId}-metadata.xml");
     }
 
     @Nullable
@@ -78,6 +78,18 @@ public class SpidMetadataFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
         throws ServletException, IOException {
+        
+        String registrationId = requestMatcher.matcher(request).getVariables().get("registrationId");
+        // registrationId is base64UrlEncode({registrationId})
+        String providerId = SpidIdentityProviderConfig.decodeRegistrationId(registrationId);
+        SpidIdentityProviderConfig providerConfig = providerConfigRegistrationRepository.findByProviderId(providerId);
+        if (providerConfig == null 
+            || StringUtils.hasText(providerConfig.getConfigMap().getMetadataUrl())
+            || StringUtils.hasText(providerConfig.getConfigMap().getMetadataXML())) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+        }
+
         // delegate
         samlMetadataFilter.doFilter(request, response, filterChain);
     }

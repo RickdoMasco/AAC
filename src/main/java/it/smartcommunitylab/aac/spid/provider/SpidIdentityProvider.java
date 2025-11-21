@@ -159,7 +159,7 @@ public class SpidIdentityProvider
         lp.setLoginUrl(getLoginUrl());
         
         List<SpidLoginProvider.SpidIdpButton> spidIdpsLogin = new LinkedList<>();
-        for (RelyingPartyRegistration reg : config.getUpstreamRelyingPartyRegistrations()) {
+        for (RelyingPartyRegistration reg : config.getRelyingPartyRegistrations()) {
             String loginUrl = buildAuthenticationUrl(reg.getRegistrationId());
 
             SpidRegistration spidReg = getConfig()
@@ -167,14 +167,12 @@ public class SpidIdentityProvider
                 .get(reg.getAssertingPartyDetails().getEntityId());
 
             if (spidReg == null) {
-                // log and skip faulty providers (for example, they might be offline)
-                // TODO: verifica se questo comportamento è ok
-                logger.error(
-                    "unable to associate the registration " +
-                    reg.getRegistrationId() +
-                    " with a SPID provider in the local registry"
-                );
-                continue;
+                // the provider is not preconfigured in the local registry
+                // create a default SpidRegistration
+                spidReg = new SpidRegistration();
+                spidReg.setEntityName(reg.getAssertingPartyDetails().getEntityId());
+                spidReg.setMetadataUrl(reg.getAssertingPartyDetails().getEntityId());
+                spidReg.setEntityLabel(reg.getAssertingPartyDetails().getEntityId());
             }
 
             spidIdpsLogin.add(

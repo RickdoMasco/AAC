@@ -1,13 +1,13 @@
 package it.smartcommunitylab.aac.spid.auth;
 
 import it.smartcommunitylab.aac.spid.model.SpidAttribute;
+import it.smartcommunitylab.aac.spid.model.SpidAttributeConsumingService;
 import it.smartcommunitylab.aac.spid.model.SpidAuthnContext;
 import it.smartcommunitylab.aac.spid.model.SpidError;
 import it.smartcommunitylab.aac.spid.service.SpidRequestParser;
 import java.time.Instant;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.AuthnContextClassRef;
@@ -24,14 +24,14 @@ import org.springframework.util.StringUtils;
 
 public class SpidProviderAssertionValidatorBuilder {
 
-    private final Set<SpidAttribute> requestedAttributes;
+    private final Set<SpidAttributeConsumingService> attributeConsumingServices;
 
-    public SpidProviderAssertionValidatorBuilder(Set<SpidAttribute> requestedAttributes) {
-        this.requestedAttributes = requestedAttributes;
+    public SpidProviderAssertionValidatorBuilder(Set<SpidAttributeConsumingService> attributeConsumingServices) {
+        this.attributeConsumingServices = attributeConsumingServices;
     }
 
     public SpidProviderAssertionValidatorBuilder() {
-        this.requestedAttributes = new HashSet<>();
+        this.attributeConsumingServices = new HashSet<>();
     }
 
     public Converter<OpenSaml4AuthenticationProvider.AssertionToken, Saml2ResponseValidatorResult> build() {
@@ -127,7 +127,7 @@ public class SpidProviderAssertionValidatorBuilder {
                     )
                 );
             }
-            if (!areRequestedAttributesObtained(assertion)) {
+            if (!areRequestedAttributesObtained(initiatingRequest, assertion)) {
                 return result.concat(
                     new Saml2Error(Saml2ErrorCodes.INTERNAL_VALIDATION_ERROR, "missing requested attributes attribute")
                 );
@@ -255,11 +255,18 @@ public class SpidProviderAssertionValidatorBuilder {
      * the requested SPID attributes.
      * Note that *in general* a service provider might be configured with multiple attribute
      * sets and the SAML request actually specify which attribute sets, among the many, is
-     * actually request to the identity provider; but the current SPID implementation
-     * supports the definition of only *one* attribute set and that set is always requested.
+     * actually request to the identity provider.
      */
-    private boolean areRequestedAttributesObtained(Assertion assertion) {
+    private boolean areRequestedAttributesObtained(AuthnRequest initiatingRequest, Assertion assertion) {
         Set<SpidAttribute> obtainedAttributes = SpidProviderResponseValidatorBuilder.extractAttributes(assertion);
-        return obtainedAttributes != null && obtainedAttributes.containsAll(this.requestedAttributes);
+
+        Set<SpidAttribute> requestedAttributes = Collections.emptySet();
+        for (SpidAttributeConsumingService acs : this.attributeConsumingServices) {
+            if (acs.getAttributes() != null && acs.getIndex() == initiatingRequest.getAttributeConsumingServiceIndex()) {
+                requestedAttributes = acs.getAttributes();
+            }
+        }
+
+        return obtainedAttributes != null && obtainedAttributes.containsAll(requestedAttributes);
     }
 }

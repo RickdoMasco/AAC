@@ -16,16 +16,7 @@
 
 package it.smartcommunitylab.aac.spid.provider;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import it.smartcommunitylab.aac.SystemKeys;
-import it.smartcommunitylab.aac.crypto.CertificateParser;
-import it.smartcommunitylab.aac.identity.base.AbstractIdentityProviderConfig;
-import it.smartcommunitylab.aac.identity.model.ConfigurableIdentityProvider;
-import it.smartcommunitylab.aac.identity.provider.IdentityProviderSettingsMap;
-import it.smartcommunitylab.aac.spid.SpidIdentityAuthority;
-import it.smartcommunitylab.aac.spid.model.SpidAttribute;
-import it.smartcommunitylab.aac.spid.model.SpidRegistration;
-import it.smartcommunitylab.aac.spid.model.SpidUserAttribute;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.ConnectException;
 import java.net.URI;
@@ -34,8 +25,35 @@ import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.xml.namespace.NamespaceContext;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.web.client.RestTemplate;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+
 import org.opensaml.security.credential.BasicCredential;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.CredentialSupport;
@@ -48,6 +66,24 @@ import org.springframework.security.saml2.provider.service.registration.Saml2Mes
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+import it.smartcommunitylab.aac.SystemKeys;
+import it.smartcommunitylab.aac.crypto.CertificateParser;
+import it.smartcommunitylab.aac.identity.base.AbstractIdentityProviderConfig;
+import it.smartcommunitylab.aac.identity.model.ConfigurableIdentityProvider;
+import it.smartcommunitylab.aac.identity.provider.IdentityProviderSettingsMap;
+import it.smartcommunitylab.aac.spid.SpidIdentityAuthority;
+import it.smartcommunitylab.aac.spid.model.SpidAttribute;
+import it.smartcommunitylab.aac.spid.model.SpidAttributeConsumingService;
+import it.smartcommunitylab.aac.spid.model.SpidMetadataConfiguration;
+import it.smartcommunitylab.aac.spid.model.SpidRegistration;
+import it.smartcommunitylab.aac.spid.model.SpidUserAttribute;
 
 public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<SpidIdentityProviderConfigMap> {
 
@@ -55,17 +91,31 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     public static final String RESOURCE_TYPE =
         SystemKeys.RESOURCE_PROVIDER + SystemKeys.ID_SEPARATOR + SpidIdentityProviderConfigMap.RESOURCE_TYPE;
 
-    //    public static final String DEFAULT_METADATA_URL =
-    //        "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "metadata/{registrationId}";
-    //    public static final String DEFAULT_CONSUMER_URL =
-    //        "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "sso/{registrationId}";
-    //    public static final String DEFAULT_LOGOUT_URL =
-    //        "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "slo/{registrationId}";
+    private static final String XPATH_EXPRESSION_ENTITY_ID = "/md:EntityDescriptor/@entityID";
+    private static final String XPATH_EXPRESSION_ORGANIZATION_NAME = "/md:EntityDescriptor/md:Organization/md:OrganizationName/text()";
+    private static final String XPATH_EXPRESSION_ORGANIZATION_DISPLAY_NAME = "/md:EntityDescriptor/md:Organization/md:OrganizationDisplayName/text()";
+    private static final String XPATH_EXPRESSION_ORGANIZATION_URL = "/md:EntityDescriptor/md:Organization/md:OrganizationURL/text()";
+    private static final String XPATH_EXPRESSION_CONTACT_PERSON_EMAIL_ADDRESS = "/md:EntityDescriptor/md:ContactPerson/md:EmailAddress/text()";
+    private static final String XPATH_EXPRESSION_CONTACT_PERSON_IPA_CODE = "/md:EntityDescriptor/md:ContactPerson/md:Extensions/spid:IPACode/text()";
+    private static final String XPATH_EXPRESSION_ATTRIBUTE_CONSUMING_SERVICES = "/md:EntityDescriptor//md:AttributeConsumingService";
+    private static final String XPATH_EXPRESSION_ACS_SERVICE_NAME = "md:ServiceName/text()";
+    private static final String XPATH_EXPRESSION_ACS_REQUESTED_ATTRIBUTE = "md:RequestedAttribute";
+    private static final String XPATH_EXPRESSION_SIGNING_CERTIFICATES = "/md:EntityDescriptor//md:KeyDescriptor[@use='signing']//ds:X509Certificate";
 
+    private static final int DEFAULT_TIMEOUT = 10000;
+    private static final int DEFAULT_ATTRIBUTE_CONSUMING_SERVICE_INDEX = 0;
+    private static final String DEFAULT_ATTRIBUTE_CONSUMING_SERVICE_NAME = "default";
+
+    private transient RelyingPartyRegistration bareRelyingPartyRegistration;
     private transient Set<RelyingPartyRegistration> relyingPartyRegistrations; // first time evaluated by the getter, then immutable
+    
     private Map<String, SpidRegistration> identityProviders; // local registry
+    private SpidMetadataConfiguration metadataConfiguration;
+
     private transient SpidIdentityProviderStatusMap statusMap;
     private String baseUrl;
+
+    private transient RestTemplate restTemplate;
 
     public SpidIdentityProviderConfig(String provider, String realm) {
         super(
@@ -75,8 +125,11 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             new IdentityProviderSettingsMap(),
             new SpidIdentityProviderConfigMap()
         );
+        this.bareRelyingPartyRegistration = null;
         this.relyingPartyRegistrations = null;
         this.identityProviders = Collections.emptyMap();
+        this.metadataConfiguration = null;
+        this.restTemplate = null;
     }
 
     public SpidIdentityProviderConfig(
@@ -85,6 +138,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         SpidIdentityProviderConfigMap configs
     ) {
         super(cp, settings, configs);
+        loadMetadataConfiguration();
     }
 
     /**
@@ -93,6 +147,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
      * We need to implement this to enable deserialization of resources via
      * reflection
      */
+    @SuppressWarnings("unused")
     private SpidIdentityProviderConfig() {
         super();
     }
@@ -103,12 +158,18 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
     public SpidIdentityProviderStatusMap getStatusMap() {
         if (statusMap == null) {
-
             statusMap = new SpidIdentityProviderStatusMap();
-            statusMap.setMetadataUrl(getMetadataUrl());
-            statusMap.setAssertionConsumerUrls(getAssertionConsumerUrls());
+            if (!StringUtils.hasText(configMap.getMetadataUrl()) && ! StringUtils.hasText(configMap.getMetadataXML())) {
+                statusMap.setMetadataUrl(getMetadataUrl());
+            }
+            statusMap.setAssertionConsumerUrl(getAssertionConsumerUrl());
+            statusMap.setMetadataConfiguration(getMetadataConfiguration());
         }
         return statusMap;
+    }
+
+    public String metadataUrlTemplate() {
+        return "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "metadata/{registrationId}";
     }
 
     public String getMetadataUrl() {
@@ -119,27 +180,41 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         return null;
     }
 
-    public String metadataUrlTemplate() {
-        return "{baseUrl}/auth/" + getAuthority() + "/metadata/{registrationId}";
+    public String assertionConsumerUrlTemplate() {
+        return "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "sso/{registrationId}";
     }
 
-    public Map<String, String> getAssertionConsumerUrls(){
+    public String getAssertionConsumerUrl(){
         if (baseUrl != null) {
-            Map<String, String> assertionConsumerUrls = new HashMap<>();
-            for(RelyingPartyRegistration relyingPartyRegistration : getUpstreamRelyingPartyRegistrations()){
-                if(relyingPartyRegistration.getProviderDetails() != null) {
-                    assertionConsumerUrls.put(
-                            relyingPartyRegistration.getProviderDetails().getEntityId(),
-                            UriComponentsBuilder.fromUriString(assertionConsumerUrlTemplate()).buildAndExpand(Map.of("baseUrl", baseUrl, "registrationId", relyingPartyRegistration.getRegistrationId())).toUriString());
-                    }
-                }
-            return assertionConsumerUrls;
+            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(assertionConsumerUrlTemplate());
+            return builder.buildAndExpand(Map.of("baseUrl", baseUrl, "registrationId", getMetadataRegistrationId())).toUriString();
         }
         return null;
     }
 
-    public String assertionConsumerUrlTemplate() {
-        return "{baseUrl}/auth/" + getAuthority() + "/authenticate/{registrationId}";
+    public Map<String, String> getMetadataConfiguration() {
+        Map<String, String> config = new LinkedHashMap<>();
+        config.put("entityId", getEntityId());
+        config.put("organizationName", getOrganizationName());
+        config.put("organizationDisplayName", getOrganizationDisplayName());
+        config.put("organizationUrl", getOrganizationUrl());
+        config.put("contactPersonEmailAddress", getContactPersonEmailAddress());
+        config.put("contactPersonIpaCode", getContactPersonIPACode());
+
+        getAttributeConsumingServices()
+            .stream()
+            .filter(acs -> acs.getIndex() == getAttributeConsumingServiceIndex())
+            .findFirst()
+            .ifPresent(acs -> config.put(
+                "attributeConsumingServiceIndex " + acs.getIndex(),
+                acs.getAttributes()
+                    .stream()
+                    .map(SpidAttribute::toString)
+                    .sorted()
+                    .collect(Collectors.joining(", "))
+            ));
+
+        return config;
     }
 
     /*
@@ -170,10 +245,28 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         }
     }
 
-    public String getEntityId() {
-        return configMap.getEntityId() != null ? configMap.getEntityId() : getMetadataUrl();
+    /*
+     * getBareRelyingPartyRegistration yields a single relying party registration 
+     * with registration id equal to the encoded providerId.
+     * This is required for cases where the registration does not require any asserting party details,
+     * such as SPID metadata.
+     */
+    @JsonIgnore
+    public RelyingPartyRegistration getBareRelyingPartyRegistration() {
+        if (bareRelyingPartyRegistration == null) {
+            try {
+                bareRelyingPartyRegistration = toBareRelyingPartyRegistration();
+            } catch (IOException | CertificateException e) {
+                throw new RuntimeException("error building registration: " + e.getMessage());
+            }
+        }
+        return bareRelyingPartyRegistration;
     }
 
+    /*
+     * getRelyingPartyRegistrations yields a set of relying party registrations;
+     * one for each configured upstream identity provider
+     */
     @JsonIgnore
     public Set<RelyingPartyRegistration> getRelyingPartyRegistrations() {
         if (relyingPartyRegistrations == null) {
@@ -186,17 +279,29 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         return relyingPartyRegistrations;
     }
 
+    /*
+     * getRelyingPartyRegistration yields a single relying party registration 
+     * for the configured upstream identity provider associated to the input idpKey
+     */
     @JsonIgnore
-    public Set<RelyingPartyRegistration> getUpstreamRelyingPartyRegistrations() {
-        Set<RelyingPartyRegistration> regs = getRelyingPartyRegistrations();
-        return regs
-            .stream()
-            .filter(reg -> !reg.getRegistrationId().equals(getMetadataRegistrationId()))
-            .collect(Collectors.toSet());
+    public RelyingPartyRegistration getRelyingPartyRegistration(String idpKey) {
+        if (relyingPartyRegistrations == null) {
+            try {
+                String idpMetadataUrl = getAssertingPartyMetadataUrl(idpKey);
+                return toRelyingPartyRegistration(idpMetadataUrl);
+            } catch (IOException | CertificateException | URISyntaxException e) {
+                throw new RuntimeException("error building registration: " + e.getMessage());
+            }
+        }
+        String registrationId = encodeRegistrationId(evalRelyingPartyRegistrationId(idpKey));
+        return relyingPartyRegistrations
+                .stream()
+                .filter(reg -> reg.getRegistrationId().equals(registrationId))
+                .findAny()
+                .orElse(null);
     }
 
-    // generate a registration (an RP/AP pair as defined by OpenSaml) for _each_
-    // configured upstream idps
+    // generate a registration (an RP/AP pair as defined by OpenSaml) for each configured upstream idps
     private Set<RelyingPartyRegistration> toRelyingPartyRegistrations() throws IOException, CertificateException {
         Set<RelyingPartyRegistration> registrations = new HashSet<>();
         try {
@@ -219,14 +324,209 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             );
         }
 
-        // add a global registration for metadata
-        RelyingPartyRegistration metadataRegistration = RelyingPartyRegistration
-            .withRelyingPartyRegistration(registrations.iterator().next())
-            .registrationId(getMetadataRegistrationId())
-            .build();
-        registrations.add(metadataRegistration);
-
         return registrations;
+    }
+
+    // create a relying party registration with placeholder ap configuration.
+    private RelyingPartyRegistration toBareRelyingPartyRegistration() throws IOException, CertificateException {
+        RelyingPartyRegistration.Builder builder = RelyingPartyRegistration
+            .withRegistrationId(getMetadataRegistrationId())
+            .entityId(getEntityId())
+            .assertionConsumerServiceLocation(getConsumerUrl())
+            .assertionConsumerServiceBinding(Saml2MessageBinding.POST)
+            .singleLogoutServiceLocation(getLogoutUrl());
+        
+        builder.assertingPartyDetails(party -> 
+            party
+                .entityId("http://placeholder.entity.id")
+                .singleSignOnServiceLocation("http://placeholder.sso.location")
+        );
+
+        String signingKey = configMap.getSigningKey();
+        String signingCertificate = configMap.getSigningCertificate();
+        if (StringUtils.hasText(signingKey) && StringUtils.hasText(signingCertificate)) {
+            // only RSA keys are supported
+            Saml2X509Credential credential = CertificateParser.genCredentials(
+                signingKey,
+                signingCertificate,
+                Saml2X509Credential.Saml2X509CredentialType.SIGNING,
+                Saml2X509Credential.Saml2X509CredentialType.DECRYPTION
+            );
+            builder.signingX509Credentials(c -> c.add(credential));
+        }
+
+        return builder.build();
+    }
+
+    // create a relying party registration for an upstream idp; only ap autoconfiguration is supported,
+    // hence function parameters require an idp metadata url
+    private RelyingPartyRegistration toRelyingPartyRegistration(String idpMetadataUrl) throws IOException, CertificateException, URISyntaxException {
+        // start from ap autoconfiguration ...
+        String registrationId = encodeRegistrationId(evalRelyingPartyRegistrationId(evalIdpKeyIdentifier(idpMetadataUrl)));
+        RelyingPartyRegistration.Builder builder = RelyingPartyRegistrations
+            .fromMetadataLocation(idpMetadataUrl)
+            .registrationId(registrationId);
+
+        // ... then expand with rp configuration (i.e. ourself)
+        builder
+            .entityId(getEntityId())
+            .assertionConsumerServiceLocation(getConsumerUrl())
+            .assertionConsumerServiceBinding(Saml2MessageBinding.POST)
+            .singleLogoutServiceLocation(getLogoutUrl());
+
+        String signingKey = configMap.getSigningKey();
+        String signingCertificate = configMap.getSigningCertificate();
+        if (StringUtils.hasText(signingKey) && StringUtils.hasText(signingCertificate)) {
+            // only RSA keys are supported
+            Saml2X509Credential credential = CertificateParser.genCredentials(
+                signingKey,
+                signingCertificate,
+                Saml2X509Credential.Saml2X509CredentialType.SIGNING,
+                Saml2X509Credential.Saml2X509CredentialType.DECRYPTION
+            );
+            builder.signingX509Credentials(c -> c.add(credential));
+        }
+
+        return builder.build();
+    }
+
+    // yield a unique key per upstream metadata (url)
+    // the key is fetched from configuration file (is present), otherwise host is used
+    // the function might throws an exception if the provided the metadata url is not
+    // a valid uri
+    public String evalIdpKeyIdentifier(String idpMetadataUrl) throws URISyntaxException {
+        Optional<SpidRegistration> reg =
+            this.identityProviders.values().stream().filter(r -> r.getMetadataUrl().equals(idpMetadataUrl)).findFirst();
+        if (reg.isPresent()) {
+            return reg.get().getEntityId();
+        }
+        return new URI(idpMetadataUrl).getHost();
+    }
+
+    // obtain an allegedly unique identifier from an idp key; this identifier can be used
+    // to identify a relying party registration
+    public String evalRelyingPartyRegistrationId(String idpKeyIdentifier) {
+        // NOTE: this function is 'inverted' by getProviderId(..)
+        return getProvider() + "|" + idpKeyIdentifier;
+    }
+
+    public String getConsumerUrl() {
+        return "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "sso/" + getMetadataRegistrationId();
+    }
+
+    public String getLogoutUrl() {
+        return "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "slo/" + getMetadataRegistrationId();
+    }
+
+    private String getMetadataRegistrationId() {
+        return encodeRegistrationId(getProvider());
+    }
+
+    public static String encodeRegistrationId(String regId) {
+        return Base64.getUrlEncoder().encodeToString(regId.getBytes());
+    }
+
+    public static String decodeRegistrationId(String encodedRegId) {
+        return new String(Base64.getUrlDecoder().decode(encodedRegId), StandardCharsets.UTF_8);
+    }
+
+    @JsonIgnore
+    public List<Credential> getRelyingPartySigningCredentials() {
+        List<Credential> credentials = new ArrayList<>();
+        RelyingPartyRegistration rp = getBareRelyingPartyRegistration();
+        if (rp == null) {
+            return credentials;
+        }
+        for (Saml2X509Credential x509Credential : rp.getSigningX509Credentials()) {
+            X509Certificate certificate = x509Credential.getCertificate();
+            PrivateKey privateKey = x509Credential.getPrivateKey();
+            BasicCredential credential = CredentialSupport.getSimpleCredential(certificate, privateKey);
+            credential.setEntityId(rp.getEntityId());
+            credential.setUsageType(UsageType.SIGNING);
+            credentials.add(credential);
+        }
+        return credentials;
+    }
+
+    // additional properties not supported by stock model
+    public Boolean getRelyingPartyRegistrationIsForceAuthn() {
+        // According to specs, ForceAuthn cannot be chosen for SpidL2 or SpidL3
+
+        // return always true due to check in spid validator
+        return true;
+    }
+
+    public String getEntityId() {
+        return metadataConfiguration.getEntityId() != null
+            ? metadataConfiguration.getEntityId()
+            : getMetadataUrl();
+    }
+
+    public Set<SpidAttributeConsumingService> getAttributeConsumingServices() {
+        return metadataConfiguration.getAttributeConsumingServices() != null
+            ? metadataConfiguration.getAttributeConsumingServices()
+            : Collections.emptySet();
+    }
+
+    public String getOrganizationName() {
+        return metadataConfiguration.getOrganizationName();
+    }
+
+    public String getOrganizationDisplayName() {
+        return metadataConfiguration.getOrganizationDisplayName();
+    }
+
+    public String getOrganizationUrl() {
+        return metadataConfiguration.getOrganizationUrl();
+    }
+
+    public String getContactPersonEmailAddress() {
+        return metadataConfiguration.getContactPersonEmailAddress();
+    }
+
+    public String getContactPersonIPACode() {
+        return metadataConfiguration.getContactPersonIPACode();
+    }
+
+    public Boolean getUseAssertionConsumerServiceUrl() {
+        return configMap.getUseAssertionConsumerServiceUrl() != null
+            && configMap.getUseAssertionConsumerServiceUrl();
+    }
+
+    public Integer getAttributeConsumingServiceIndex() {
+        return configMap.getAttributeConsumingServiceIndex() != null
+            ? configMap.getAttributeConsumingServiceIndex()
+            : DEFAULT_ATTRIBUTE_CONSUMING_SERVICE_INDEX;
+    }
+
+    public Set<String> getRelyingPartyRegistrationAuthnContextClassRefs() {
+        return configMap.getAuthnContext() == null
+            ? Collections.emptySet()
+            : Collections.singleton(configMap.getAuthnContext().getValue());
+    }
+
+    public SpidUserAttribute getSubAttributeName() {
+        return configMap.getSubAttributeName();
+    }
+
+    public SpidUserAttribute getUsernameAttributeName() {
+        return configMap.getUsernameAttributeName();
+    }
+
+    public Set<String> getRelyingPartyRegistrationIds() {
+        Set<String> idpMetadataUrls = getAssertingPartyMetadataUrls();
+        Set<String> ids = idpMetadataUrls
+            .stream()
+            .map(u -> {
+                try {
+                    return encodeRegistrationId(evalRelyingPartyRegistrationId(evalIdpKeyIdentifier(u)));
+                } catch (URISyntaxException e) {
+                    throw new IllegalArgumentException("invalid metadata uri " + e.getMessage());
+                }
+            })
+            .collect(Collectors.toSet());
+        ids.add(getMetadataRegistrationId());
+        return ids;
     }
 
     // returns the list of metadata urls of upstream idps
@@ -261,166 +561,227 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         return idpMetadataUrls;
     }
 
-    // yield a unique key per upstream metadata (url)
-    // the key is fetched from configuration file (is present), otherwise host is used
-    // the function might throws an exception if the provided the metadata url is not
-    // a valid uri
-    public String evalIdpKeyIdentifier(String idpMetadataUrl) throws URISyntaxException {
-        Optional<SpidRegistration> reg =
-            this.identityProviders.values().stream().filter(r -> r.getMetadataUrl().equals(idpMetadataUrl)).findFirst();
-        if (reg.isPresent()) {
-            //            return reg.get().getEntityLabel();
-            return reg.get().getEntityId();
+    private String getAssertingPartyMetadataUrl(String idpKey) {
+        // idp urls must be defined by either in configMap or application config (and passed to this.idps)
+        if (StringUtils.hasText(configMap.getIdpMetadataUrl())) {
+            // single idp via url
+            return configMap.getIdpMetadataUrl();
         }
-        // TODO: rimozione fallback strategy?
-        return new URI(idpMetadataUrl).getHost();
+        return identityProviders.get(idpKey).getMetadataUrl();
     }
 
-    // obtain an allegedly unique identifier from an idp key; this identifier can be used
-    // to identify a relying party registration
-    public String evalRelyingPartyRegistrationId(String idpKeyIdentifier) {
-        // NOTE: this function is 'inverted' by getProviderId(..)
-        return getProvider() + "|" + idpKeyIdentifier;
-    }
-
-    public String getConsumerUrl() {
-        return "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "sso/" + getMetadataRegistrationId();
-    }
-
-    public String getLogoutUrl() {
-        return "{baseUrl}" + SpidIdentityAuthority.AUTHORITY_URL + "slo/" + getMetadataRegistrationId();
-    }
-
-    // create a relying party registration for an upstream idp; only ap autoconfiguration
-    // is supported, hence function parameters require an idp metadata url
-    private RelyingPartyRegistration toRelyingPartyRegistration(String idpMetadataUrl)
-        throws IOException, CertificateException, URISyntaxException {
-        // start from ap autoconfiguration ...
-        String key = evalIdpKeyIdentifier(idpMetadataUrl);
-        String registrationId = encodeRegistrationId(evalRelyingPartyRegistrationId(key));
-        RelyingPartyRegistration.Builder builder = RelyingPartyRegistrations
-            .fromMetadataLocation(idpMetadataUrl)
-            .registrationId(registrationId);
-
-        // ... then expand with rp configuration (i.e. ourself)
-        builder
-            .entityId(getEntityId())
-            .assertionConsumerServiceLocation(getConsumerUrl())
-            .assertionConsumerServiceBinding(Saml2MessageBinding.POST)
-            .singleLogoutServiceLocation(getLogoutUrl());
-
-        String signingKey = configMap.getSigningKey();
-        String signingCertificate = configMap.getSigningCertificate();
-        if (StringUtils.hasText(signingKey) && StringUtils.hasText(signingCertificate)) {
-            // only RSA keys are supported
-            Saml2X509Credential credential = CertificateParser.genCredentials(
-                signingKey,
-                signingCertificate,
-                Saml2X509Credential.Saml2X509CredentialType.SIGNING,
-                Saml2X509Credential.Saml2X509CredentialType.DECRYPTION
+    private void loadMetadataConfiguration() {
+        if (StringUtils.hasText(configMap.getMetadataUrl())) {
+            try {
+                this.metadataConfiguration = getMetadataConfigurationFromUrl(configMap.getMetadataUrl());
+            } catch (IOException e) {
+                throw new IllegalArgumentException("failed to download metadata from URL: " + e.getMessage(), e);
+            }
+        } else if (StringUtils.hasText(configMap.getMetadataXML())) {
+            this.metadataConfiguration = getMetadataConfigurationFromXML(configMap.getMetadataXML());
+        } else {
+            Set<SpidAttributeConsumingService> attributeConsumingServices = new HashSet<>();
+            if (configMap.getSpidAttributes() != null) {
+                attributeConsumingServices.add(new SpidAttributeConsumingService(
+                    DEFAULT_ATTRIBUTE_CONSUMING_SERVICE_INDEX,
+                    DEFAULT_ATTRIBUTE_CONSUMING_SERVICE_NAME,
+                    configMap.getSpidAttributes()
+                ));
+            }
+            this.metadataConfiguration = new SpidMetadataConfiguration(
+                configMap.getEntityId(),
+                attributeConsumingServices,
+                configMap.getOrganizationName(),
+                configMap.getOrganizationDisplayName(),
+                configMap.getOrganizationUrl(),
+                configMap.getContactPersonEmailAddress(),
+                configMap.getContactPersonIPACode()
             );
-            builder.signingX509Credentials(c -> c.add(credential));
         }
 
-        return builder.build();
-    }
-
-    @JsonIgnore
-    public List<Credential> getRelyingPartySigningCredentials() {
-        List<Credential> credentials = new ArrayList<>();
-        RelyingPartyRegistration rp = getRelyingPartyRegistrations().stream().findFirst().orElse(null);
-        if (rp == null) {
-            return credentials;
+        if (this.metadataConfiguration == null) {
+            throw new IllegalArgumentException("empty metadata configuration");
         }
-        for (Saml2X509Credential x509Credential : rp.getSigningX509Credentials()) {
-            X509Certificate certificate = x509Credential.getCertificate();
-            PrivateKey privateKey = x509Credential.getPrivateKey();
-            BasicCredential credential = CredentialSupport.getSimpleCredential(certificate, privateKey);
-            credential.setEntityId(rp.getEntityId());
-            credential.setUsageType(UsageType.SIGNING);
-            credentials.add(credential);
+    }
+
+    private SpidMetadataConfiguration getMetadataConfigurationFromUrl(String url) throws IOException {
+        if (!StringUtils.hasText(url)) {
+            throw new IllegalArgumentException("metadata url is blank");
         }
-        return credentials;
+        ResponseEntity<String> response = getRestTemplate().exchange(url, HttpMethod.GET, null, String.class);
+        if (response == null || response.getStatusCode() == null) {
+            throw new IOException("failed to fetch metadata, empty response");
+        }
+        if (!response.getStatusCode().is2xxSuccessful()) {
+            throw new IOException("failed to fetch metadata, status: " + response.getStatusCode());
+        }
+        String xml = response.getBody();
+        if (!StringUtils.hasText(xml)) {
+            throw new IOException("empty metadata response body");
+        }
+        return getMetadataConfigurationFromXML(xml);
     }
 
-    // additional properties not supported by stock model
-    public Boolean getRelyingPartyRegistrationIsForceAuthn() {
-        // According to specs, ForceAuthn cannot be chosen for SpidL2 or SpidL3
+    private SpidMetadataConfiguration getMetadataConfigurationFromXML(String xml) {
+        SpidMetadataConfiguration metadataConfiguration = new SpidMetadataConfiguration();
+        try {
+            Document doc = parseMetadataXml(xml);
+            XPath xpath = newXPath();
+            String entityId = (String) xpath.evaluate(XPATH_EXPRESSION_ENTITY_ID, doc, XPathConstants.STRING);
+            String organizationName = (String) xpath.evaluate(XPATH_EXPRESSION_ORGANIZATION_NAME, doc, XPathConstants.STRING);
+            String organizationDisplayName = (String) xpath.evaluate(XPATH_EXPRESSION_ORGANIZATION_DISPLAY_NAME, doc, XPathConstants.STRING);
+            String organizationURL = (String) xpath.evaluate(XPATH_EXPRESSION_ORGANIZATION_URL, doc, XPathConstants.STRING);
+            String contactPersonEmailAddress = (String) xpath.evaluate(XPATH_EXPRESSION_CONTACT_PERSON_EMAIL_ADDRESS, doc, XPathConstants.STRING);
+            String contactPersonIPACode = (String) xpath.evaluate(XPATH_EXPRESSION_CONTACT_PERSON_IPA_CODE, doc, XPathConstants.STRING);
+            
+            Set<SpidAttributeConsumingService> attributeConsumingServices = Collections.emptySet();
+            NodeList acsList = (NodeList) xpath.evaluate(XPATH_EXPRESSION_ATTRIBUTE_CONSUMING_SERVICES, doc, XPathConstants.NODESET);
+            if (acsList != null && acsList.getLength() > 0) {
+                attributeConsumingServices = parseAttributeConsumingServicesFromMetadata(acsList, xpath);
+            }
 
-        // return always true due to check in spid validator
-        return true;
+            metadataConfiguration.setEntityId(entityId);
+            metadataConfiguration.setAttributeConsumingServices(attributeConsumingServices);
+            metadataConfiguration.setOrganizationName(organizationName);
+            metadataConfiguration.setOrganizationDisplayName(organizationDisplayName);
+            metadataConfiguration.setOrganizationUrl(organizationURL);
+            metadataConfiguration.setContactPersonEmailAddress(contactPersonEmailAddress);
+            metadataConfiguration.setContactPersonIPACode(contactPersonIPACode);
+
+            // verify metadata X509Certificate against configured signingCertificate
+            verifyX509Certificate(doc, xpath);
+            
+        } catch (Exception e) {
+            throw new IllegalArgumentException("invalid metadata XML: " + e.getMessage(), e);
+        }
+
+        return metadataConfiguration;
     }
 
-    public Set<SpidAttribute> getSpidAttributes() {
-        return configMap.getSpidAttributes() == null ? Collections.emptySet() : configMap.getSpidAttributes();
-    }
+    private Set<SpidAttributeConsumingService> parseAttributeConsumingServicesFromMetadata(NodeList acsList, XPath xpath) throws XPathExpressionException {
+        Set<SpidAttributeConsumingService> attributeConsumingServices = new HashSet<>();
 
-    public Boolean getUseAssertionConsumerServiceUrl() {
-        return configMap.getUseAssertionConsumerServiceUrl() != null
-            ? configMap.getUseAssertionConsumerServiceUrl()
-            : Boolean.FALSE;
-    }
+        for (int i = 0; i < acsList.getLength(); i++) {
+            Element acs = (Element) acsList.item(i);
+            
+            String index = acs.getAttribute("index");
+            String serviceName = (String) xpath.evaluate(XPATH_EXPRESSION_ACS_SERVICE_NAME, acs, XPathConstants.STRING);
 
-    public Set<String> getRelyingPartyRegistrationAuthnContextClassRefs() {
-        return configMap.getAuthnContext() == null
-            ? Collections.emptySet()
-            : Collections.singleton(configMap.getAuthnContext().getValue());
-    }
+            Set<SpidAttribute> attributes = new HashSet<>();
+            NodeList attrList = (NodeList) xpath.evaluate(XPATH_EXPRESSION_ACS_REQUESTED_ATTRIBUTE, acs, XPathConstants.NODESET);
+            for (int j = 0; j < attrList.getLength(); j++) {
+                Element attr = (Element) attrList.item(j);
 
-    public SpidUserAttribute getSubAttributeName() {
-        return configMap.getSubAttributeName();
-    }
-
-    public SpidUserAttribute getUsernameAttributeName() {
-        return configMap.getUsernameAttributeName();
-    }
-
-    public Set<String> getRelyingPartyRegistrationIds() {
-        Set<String> idpMetadataUrls = getAssertingPartyMetadataUrls();
-        Set<String> ids = idpMetadataUrls
-            .stream()
-            .map(u -> {
-                try {
-                    return encodeRegistrationId(evalRelyingPartyRegistrationId(evalIdpKeyIdentifier(u)));
-                } catch (URISyntaxException e) {
-                    throw new IllegalArgumentException("invalid metadata uri " + e.getMessage());
+                String name = attr.getAttribute("Name");
+                SpidAttribute attribute = SpidAttribute.parse(name);
+                if (attribute != null) {
+                    attributes.add(attribute);
                 }
-            })
-            .collect(Collectors.toSet());
-        ids.add(getMetadataRegistrationId());
-        return ids;
+            }
+
+            SpidAttributeConsumingService attributeConsumingService = new SpidAttributeConsumingService(Integer.parseInt(index), serviceName, attributes);
+            attributeConsumingServices.add(attributeConsumingService);
+        }
+
+        Integer index = getAttributeConsumingServiceIndex();
+        Boolean indexExists = attributeConsumingServices.stream().anyMatch(acs -> index.equals(acs.getIndex()));
+        if (!indexExists) {
+            throw new IllegalArgumentException("configured attribute consuming service index not present in metadata attribute consuming services");
+        }
+
+        return attributeConsumingServices;
     }
 
-    private String getMetadataRegistrationId() {
-        return encodeRegistrationId(getProvider());
+    private void verifyX509Certificate(Document doc, XPath xpath) throws XPathExpressionException {
+        NodeList metaCertList = (NodeList) xpath.evaluate(XPATH_EXPRESSION_SIGNING_CERTIFICATES, doc, XPathConstants.NODESET);
+        if (metaCertList == null || metaCertList.getLength() == 0) {
+            throw new IllegalArgumentException("empty signing certificate in metadata");
+        }
+
+        Set<String> metaCertNormalizedList = new HashSet<>();
+        for (int i = 0; i < metaCertList.getLength(); i++) {
+            String metaCert = metaCertList.item(i).getTextContent();
+            String metaCertNormalized = stripPem(metaCert);
+            if (StringUtils.hasText(metaCertNormalized)) {
+                metaCertNormalizedList.add(metaCertNormalized);
+            }
+        }
+        if (metaCertNormalizedList.isEmpty()) {
+            throw new IllegalArgumentException("no valid signing certificates found in metadata");
+        }
+        
+        String confCert = configMap.getSigningCertificate();
+        String confCertNormalized = stripPem(confCert);
+        if (!metaCertNormalizedList.contains(confCertNormalized)) {
+            throw new IllegalArgumentException("configured signingCertificate not present in metadata signing X509Certificate");
+        }
     }
 
-    /*
-     * getRelyingPartyRegistration yields a _single_ relying party registration with id equals to providerId.
-     * This is required for cases where the registration does not require any asserting party details,
-     * such as SPID metadata.
-     */
-    @JsonIgnore
-    public RelyingPartyRegistration getRelyingPartyRegistration() {
-        return getRelyingPartyRegistrations()
-            .stream()
-            .findAny()
-            .map(r ->
-                RelyingPartyRegistration
-                    .withRelyingPartyRegistration(r)
-                    .registrationId(getMetadataRegistrationId())
-                    .build()
-            )
-            .orElse(null);
+    private Document parseMetadataXml(String xml) throws ParserConfigurationException, IOException, SAXException {
+        if (!StringUtils.hasText(xml)) {
+            throw new IllegalArgumentException("no metadata XML configured");
+        }
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        dbf.setNamespaceAware(true);
+        DocumentBuilder db = dbf.newDocumentBuilder();
+        try (ByteArrayInputStream bais = new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8))) {
+            return db.parse(bais);
+        }
     }
 
-    public static String encodeRegistrationId(String regId) {
-        //        return URLEncoder.encode(regId, StandardCharsets.UTF_8);
-        return Base64.getUrlEncoder().encodeToString(regId.getBytes());
+    private XPath newXPath() {
+        XPathFactory xpf = XPathFactory.newInstance();
+        XPath xpath = xpf.newXPath();
+        xpath.setNamespaceContext(new NamespaceContext() {
+            @Override
+            public String getNamespaceURI(String prefix) {
+                switch (prefix) {
+                    case "md":
+                        return "urn:oasis:names:tc:SAML:2.0:metadata";
+                    case "ds":
+                        return "http://www.w3.org/2000/09/xmldsig#";
+                    case "spid":
+                        return "https://spid.gov.it/saml-extensions";
+                    case "xml":
+                        return "http://www.w3.org/XML/1998/namespace";
+                    default:
+                        return javax.xml.XMLConstants.NULL_NS_URI;
+                }
+            }
+
+            @Override
+            public String getPrefix(String namespaceURI) {
+                return null;
+            }
+
+            @Override
+            public Iterator<String> getPrefixes(String namespaceURI) {
+                return null;
+            }
+        });
+        return xpath;
     }
 
-    public static String decodeRegistrationId(String encodedRegId) {
-        //        return URLDecoder.decode(encodedRegId, StandardCharsets.UTF_8);
-        return new String(Base64.getUrlDecoder().decode(encodedRegId), StandardCharsets.UTF_8);
+    private String stripPem(String cert) {
+        if (cert == null) return null;
+        return cert
+            .replaceAll("-----BEGIN CERTIFICATE-----", "")
+            .replaceAll("-----END CERTIFICATE-----", "")
+            .replaceAll("\\s+", "");
+    }
+
+    private RestTemplate getRestTemplate() {
+        if (restTemplate == null) {
+            RequestConfig rconfig = RequestConfig
+                .custom()
+                .setConnectTimeout(DEFAULT_TIMEOUT)
+                .setConnectionRequestTimeout(DEFAULT_TIMEOUT)
+                .setSocketTimeout(DEFAULT_TIMEOUT)
+                .build();
+            CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(rconfig).build();
+            HttpComponentsClientHttpRequestFactory clientHttpRequestFactory = new HttpComponentsClientHttpRequestFactory(client);
+            restTemplate = new RestTemplate(clientHttpRequestFactory);
+        }
+        return restTemplate;
     }
 }
