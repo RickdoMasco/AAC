@@ -63,7 +63,7 @@ public class SpidRelyingPartyRegistrationRepository implements RelyingPartyRegis
                 return null;
             }
 
-            return providerConfig.getBareRelyingPartyRegistration();
+            return providerConfig.getRelyingPartyRegistration();
         }
         // registrationId is base64 url encode({providerId}|{entityLabel})
         // s[0], s[1] = providerId, entityLabel
