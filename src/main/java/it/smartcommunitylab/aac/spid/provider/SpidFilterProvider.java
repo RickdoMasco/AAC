@@ -101,7 +101,8 @@ public class SpidFilterProvider implements FilterProvider, ApplicationEventPubli
 
         SpidMetadataFilter metadataFilter = new SpidMetadataFilter(
             providerConfigRepository,
-            relyingPartyRegistrationRepository
+            relyingPartyRegistrationRepository,
+            buildFilterUrl("metadata/{registrationId}")
         );
 
         filters.add(requestFilter);

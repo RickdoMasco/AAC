@@ -200,7 +200,7 @@ public class SpidMetadataResolver implements Saml2MetadataResolver {
             throw new Saml2Exception(e);
         }
         // add signature to element
-        return SerializeSupport.nodeToString(element);
+        return SerializeSupport.prettyPrintXML(element);
     }
 
     // build an the Metadata root element, which is a single Entity Descriptor, except for signature

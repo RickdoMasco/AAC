@@ -154,9 +154,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     public SpidIdentityProviderStatusMap getStatusMap() {
         if (statusMap == null) {
             statusMap = new SpidIdentityProviderStatusMap();
-            if (!StringUtils.hasText(configMap.getMetadataUrl()) && ! StringUtils.hasText(configMap.getMetadataXML())) {
-                statusMap.setMetadataUrl(getMetadataUrl());
-            }
+            statusMap.setMetadataUrl(getMetadataUrl());
             statusMap.setAssertionConsumerUrl(getAssertionConsumerUrl());
             statusMap.setMetadataConfiguration(getMetadataConfiguration());
         }
