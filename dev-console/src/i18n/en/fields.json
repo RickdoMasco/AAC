@@ -635,6 +635,14 @@
         "name": "AuthN Context Comparison",
         "helperText": ""
     },
+    "metadataUrl": {
+        "name": "Metadata URL",
+        "helperText": "If set, the metadata configuration will be loaded automatically and no local metadata will be exposed."
+    },
+    "metadataXML": {
+        "name": "Metadata XML",
+        "helperText": "If set, the metadata configuration will be loaded automatically and no local metadata will be exposed."
+    },
     "organizationDisplayName": {
         "name": "Organization Display Name",
         "helperText": "Organization information"
@@ -643,21 +651,17 @@
         "name": "Organization Url",
         "helperText": "Organization information"
     },
-    "contactPerson_EmailAddress": {
+    "contactPersonEmailAddress": {
         "name": "Contact person email",
-        "helperText": "Contact person information"
+        "helperText": "ContactPerson information"
     },
-    "contactPerson_IPACode": {
+    "contactPersonIPACode": {
         "name": "Contact person IPAcode",
-        "helperText": "Contact person information"
+        "helperText": "ContactPerson information"
     },
-    "contactPerson_Type": {
-        "name": "Contact person phone",
-        "helperText": "Contact person information"
-    },
-    "contactPerson_Public": {
-        "name": "Contact person Public",
-        "helperText": "Contact person information"
+    "spidAttributes": {
+        "name": "Spid user attributes",
+        "helperText": "List of attributes to be requested to Idp"
     },
     "idps": {
         "name": "Identity Providers",
@@ -667,13 +671,13 @@
         "name": "IdP Metadata Discovery URL",
         "helperText": "IdP Configuration"
     },
-    "spidAttributes": {
-        "name": "Spid user attributes",
-        "helperText": "List of attribute names to be requested to Idp"
-    },
     "useAssertionConsumerServiceUrl": {
         "name": "Use Assertion Consumer Service URL",
-        "helperText": "Enable to use the AssertionConsumerServiceURL attribute in the request instead of the AssertionConsumerServiceIndex attribute"
+        "helperText": "Use the AssertionConsumerServiceURL attribute in AuthN requests instead of the AssertionConsumerServiceIndex attribute"
+    },
+    "attributeConsumingServiceIndex": {
+        "name": "Attribute Consuming Service Index",
+        "helperText": "Index of the Attribute Consuming Service to use in AuthN requests"
     },
     "spidLevel": {
         "name": "Spid level",

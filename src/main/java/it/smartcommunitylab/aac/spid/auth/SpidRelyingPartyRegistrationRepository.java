@@ -72,11 +72,6 @@ public class SpidRelyingPartyRegistrationRepository implements RelyingPartyRegis
             return null;
         }
 
-        return providerConfig
-            .getRelyingPartyRegistrations()
-            .stream()
-            .filter(reg -> reg.getRegistrationId().equals(registrationId))
-            .findAny()
-            .orElse(null);
+        return providerConfig.getRelyingPartyRegistration(s[1]);
     }
 }

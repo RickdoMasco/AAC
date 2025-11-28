@@ -178,7 +178,7 @@ public class SpidAuthenticationRequestContextConverter
             auth.setAssertionConsumerServiceIndex(0);
         }
         
-        auth.setAttributeConsumingServiceIndex(0);
+        auth.setAttributeConsumingServiceIndex(providerConfig.getAttributeConsumingServiceIndex());
 
         //        Scoping scoping = new ScopingBuilder().buildObject();
         //        scoping.setProxyCount(0);

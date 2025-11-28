@@ -20,54 +20,56 @@ import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
 import it.smartcommunitylab.aac.spid.SpidIdentityAuthority;
 import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderConfig;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.springframework.core.convert.converter.Converter;
+
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.lang.Nullable;
-import org.springframework.security.saml2.provider.service.metadata.OpenSamlMetadataResolver;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistrationRepository;
 import org.springframework.security.saml2.provider.service.web.DefaultRelyingPartyRegistrationResolver;
 import org.springframework.security.saml2.provider.service.web.RelyingPartyRegistrationResolver;
-import org.springframework.security.saml2.provider.service.web.Saml2MetadataFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-/*
- * SpidMetadataFilter is a wrapper around Saml2MetadataFilter that defines a custom registration resolver
- * and custom metadata resolver to comply with SPID peculiarities.
- * In the context of metadata, registrationId is providerId.
- */
 public class SpidMetadataFilter extends OncePerRequestFilter {
 
     public static final String DEFAULT_FILTER_URI = SpidIdentityAuthority.AUTHORITY_URL + "metadata/{registrationId}";
+    public static final String DEFAULT_METADATA_FILE_NAME = "spid-{registrationId}-metadata.xml";
 
-    private final Saml2MetadataFilter samlMetadataFilter;
+    private final RelyingPartyRegistrationResolver relyingPartyRegistrationResolver;
+	private final SpidMetadataResolver metadataResolver;
+    private final RequestMatcher requestMatcher;
+    private String metadataFilename = DEFAULT_METADATA_FILE_NAME;
 
     public SpidMetadataFilter(
         ProviderConfigRepository<SpidIdentityProviderConfig> configRepository,
         RelyingPartyRegistrationRepository relyingPartyRegistrationRepository
     ) {
+        this(configRepository, relyingPartyRegistrationRepository, DEFAULT_FILTER_URI);
+    }
+
+    public SpidMetadataFilter(
+        ProviderConfigRepository<SpidIdentityProviderConfig> configRepository,
+        RelyingPartyRegistrationRepository relyingPartyRegistrationRepository,
+        String filterProcessingUrl
+    ) {
         Assert.notNull(configRepository, "provider registration repository cannot be null");
         Assert.notNull(relyingPartyRegistrationRepository, "relyingPartyRegistrationRepository cannot be null");
-        RelyingPartyRegistrationResolver registrationResolver = new DefaultRelyingPartyRegistrationResolver(
+
+        this.relyingPartyRegistrationResolver = new DefaultRelyingPartyRegistrationResolver(
             relyingPartyRegistrationRepository
         );
-
-        RequestMatcher requestMatcher = new AntPathRequestMatcher(DEFAULT_FILTER_URI);
-        SpidMetadataResolver metadataResolver = new SpidMetadataResolver(configRepository);
-
-        samlMetadataFilter = new Saml2MetadataFilter(registrationResolver, metadataResolver);
-
-        samlMetadataFilter.setRequestMatcher(requestMatcher);
-        samlMetadataFilter.setBeanName("SamlMetadataFilter" + "." + SpidIdentityAuthority.AUTHORITY_URL);
-        samlMetadataFilter.setMetadataFilename("spid-{registrationId}-metadata.xml");
+        this.metadataResolver = new SpidMetadataResolver(configRepository);
+        this.requestMatcher = new AntPathRequestMatcher(filterProcessingUrl);
     }
 
     @Nullable
@@ -77,8 +79,31 @@ public class SpidMetadataFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-        throws ServletException, IOException {
-        // delegate
-        samlMetadataFilter.doFilter(request, response, filterChain);
+            throws ServletException, IOException {
+        RequestMatcher.MatchResult matcher = this.requestMatcher.matcher(request);
+		if (!matcher.isMatch()) {
+			filterChain.doFilter(request, response);
+			return;
+		}
+		String registrationId = matcher.getVariables().get("registrationId");
+		RelyingPartyRegistration relyingPartyRegistration = relyingPartyRegistrationResolver.resolve(request, registrationId);
+		if (relyingPartyRegistration == null) {
+			response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+			return;
+		}
+		String metadata = metadataResolver.resolve(relyingPartyRegistration);
+		writeMetadataToResponse(response, relyingPartyRegistration.getRegistrationId(), metadata);
     }
+
+    private void writeMetadataToResponse(HttpServletResponse response, String registrationId, String metadata) 
+            throws IOException {
+        response.setContentType(MediaType.APPLICATION_XML_VALUE);
+		String fileName = metadataFilename.replace("{registrationId}", registrationId);
+		String encodedFileName = URLEncoder.encode(fileName, StandardCharsets.UTF_8.name());
+		String format = "attachment; filename=\"%s\"; filename*=UTF-8''%s";
+		response.setHeader(HttpHeaders.CONTENT_DISPOSITION, String.format(format, fileName, encodedFileName));
+		response.setContentLength(metadata.getBytes(StandardCharsets.UTF_8).length);
+		response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+		response.getWriter().write(metadata);
+	}
 }

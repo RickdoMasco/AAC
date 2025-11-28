@@ -16,8 +16,6 @@
 
 package it.smartcommunitylab.aac.spid.provider;
 
-import static javax.swing.UIManager.put;
-
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.accounts.persistence.UserAccountService;
 import it.smartcommunitylab.aac.claims.ScriptExecutionService;
@@ -88,7 +86,7 @@ public class SpidAuthenticationProvider
 
         this.openSamlProvider = new OpenSaml4AuthenticationProvider();
         SpidProviderAssertionValidatorBuilder assertionValidatorBuilder = new SpidProviderAssertionValidatorBuilder(
-            config.getSpidAttributes()
+            config.getAttributeConsumingServices()
         );
         this.openSamlProvider.setAssertionValidator(assertionValidatorBuilder.build());
         SpidProviderResponseValidatorBuilder responseValidatorBuilder = new SpidProviderResponseValidatorBuilder();
