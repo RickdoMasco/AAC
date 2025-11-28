@@ -39,7 +39,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.provider.AuthorizationRequest;
-import org.springframework.security.saml2.provider.service.registration.RelyingPartyRegistration;
 import org.springframework.util.StringUtils;
 
 public class SpidIdentityProvider
@@ -159,27 +158,13 @@ public class SpidIdentityProvider
         lp.setLoginUrl(getLoginUrl());
         
         List<SpidLoginProvider.SpidIdpButton> spidIdpsLogin = new LinkedList<>();
-        for (RelyingPartyRegistration reg : config.getUpstreamRelyingPartyRegistrations()) {
-            String loginUrl = buildAuthenticationUrl(reg.getRegistrationId());
-
-            SpidRegistration spidReg = getConfig()
-                .getIdentityProviders()
-                .get(reg.getAssertingPartyDetails().getEntityId());
-
-            if (spidReg == null) {
-                // log and skip faulty providers (for example, they might be offline)
-                // TODO: verifica se questo comportamento è ok
-                logger.error(
-                    "unable to associate the registration " +
-                    reg.getRegistrationId() +
-                    " with a SPID provider in the local registry"
-                );
-                continue;
-            }
+        for (SpidRegistration spidReg : config.getIdentityProviders()) {
+            String registrationId = SpidIdentityProviderConfig.encodeRegistrationId(config.evalRelyingPartyRegistrationId(spidReg.getEntityId()));
+            String loginUrl = buildAuthenticationUrl(registrationId);
 
             spidIdpsLogin.add(
                 new SpidLoginProvider.SpidIdpButton(
-                    reg.getAssertingPartyDetails().getEntityId(),
+                    spidReg.getEntityId(),
                     spidReg.getEntityName(),
                     spidReg.getMetadataUrl(),
                     spidReg.getEntityLabel(),

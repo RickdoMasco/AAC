@@ -63,18 +63,20 @@ public class SpidIdentityConfigurationProvider
 
     @Override
     protected SpidIdentityProviderConfig buildConfig(ConfigurableIdentityProvider cp) {
-        SpidIdentityProviderConfig spidConfig = new SpidIdentityProviderConfig(
+        SpidIdentityProviderConfig p = new SpidIdentityProviderConfig(
             cp,
             getSettingsMap(cp.getSettings()),
             getConfigMap(cp.getConfiguration())
         );
         // TODO: how do I _know_ that local registry has been set by the time we invoke the buildConfig?
         //  Check architecture and relationship with IdentityAuthority
-        if (this.localRegistry != null) {
-            spidConfig.setIdentityProviders(this.localRegistry);
-            spidConfig.setBaseUrl(applicationProperties.getUrl());
+        p.setIdentityProviders(this.localRegistry);
+
+        if (applicationProperties != null) {
+            p.setBaseUrl(applicationProperties.getUrl());
         }
-        return spidConfig;
+
+        return p;
     }
 
     public void setLocalRegistry(Collection<SpidRegistration> localRegistry) {

@@ -29,6 +29,8 @@ import it.smartcommunitylab.aac.core.model.ConfigMap;
 import it.smartcommunitylab.aac.oidc.provider.OIDCIdentityProviderStatusMap;
 import it.smartcommunitylab.aac.repository.SchemaGeneratorFactory;
 import it.smartcommunitylab.aac.saml.provider.SamlIdentityProviderStatusMap;
+import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderStatusMap;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +41,7 @@ import java.util.Map;
     {
         @Type(value = OIDCIdentityProviderStatusMap.class, name = OIDCIdentityProviderStatusMap.RESOURCE_TYPE),
         @Type(value = SamlIdentityProviderStatusMap.class, name = SamlIdentityProviderStatusMap.RESOURCE_TYPE),
+        @Type(value = SpidIdentityProviderStatusMap.class, name = SpidIdentityProviderStatusMap.RESOURCE_TYPE),
     }
 )
 public abstract class AbstractStatusMap implements ConfigMap, Serializable {

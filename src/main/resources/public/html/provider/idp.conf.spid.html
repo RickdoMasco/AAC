@@ -18,13 +18,6 @@
                 </div>
             </div>        
         </div>
-        <div class="row">
-             <div class="form-group col">
-                <label for="entityId">Entity ID</label>
-                <input type="text" name="entityId" class="form-control form-control-sm" id="entityId"
-                    ng-model="idp.configuration.entityId">
-            </div>
-        </div>
         <div class="py-3">Signing</div>
         <div class="row">
             <div class="form-group col ">
@@ -44,28 +37,47 @@
     <fieldset>
         <legend class="mb-4">SPID Registration</legend>
         <div class="row">
+             <div class="form-group col">
+                <label for="metadataUrl">Metadata Url</label>
+                <input type="text" name="metadataUrl" class="form-control form-control-sm" id="metadataUrl"
+                    ng-model="idp.configuration.metadataUrl">
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col ">
+                <label for="metadataXML">Metadata XML</label>
+                <textarea rows="5" id="metadataXML" name="metadataXML"
+                    ng-model="idp.configuration.metadataXML"></textarea>
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col">
+                <label for="entityId">Entity ID</label>
+                <input type="text" name="entityId" class="form-control form-control-sm" id="entityId"
+                    ng-model="idp.configuration.entityId">
+            </div>
+        </div>
+        <div class="row">
             <div class="pt-0 mb-4 col-md-12"> Organization information </div>
             <div class="form-group col">
                 <div class="input-group">
                     <label for="organizationName">Organization name</label>
-                    <input type="text" required class="form-control" id="organizationName"
+                    <input type="text" class="form-control" id="organizationName"
                         ng-model="idp.configuration.organizationName">
                 </div>
             </div>
             <div class="form-group col">
                 <div class="input-group">
-                    <label for="organizationUrl">Organization url</label>
-                    <input type="text" required class="form-control" id="organizationUrl"
-                        ng-model="idp.configuration.organizationUrl">
+                    <label for="organizationDisplayName">Organization display name</label>
+                    <input type="text" class="form-control" id="organizationDisplayName"
+                        ng-model="idp.configuration.organizationDisplayName">
                 </div>
             </div>
-        </div>
-        <div class="row">
             <div class="form-group col">
                 <div class="input-group">
-                    <label for="organizationDisplayName">Organization display name</label>
-                    <input type="text" required class="form-control" id="organizationDisplayName"
-                        ng-model="idp.configuration.organizationDisplayName">
+                    <label for="organizationUrl">Organization url</label>
+                    <input type="text" class="form-control" id="organizationUrl"
+                        ng-model="idp.configuration.organizationUrl">
                 </div>
             </div>
         </div>
@@ -74,28 +86,37 @@
             <div class="form-group col">
                 <div class="input-group">
                     <label for="contactPersonEmailAddress">Contact person email</label>
-                    <input type="text" required class="form-control" id="contactPersonEmailAddress"
-                        ng-model="idp.configuration.contactPerson_EmailAddress">
-                </div>
-            </div>
-            <div class="form-group col">
-                <div class="input-group">
-                    <label for="contactPersonTelephoneNumber">Contact person phone</label>
-                    <input type="text" class="form-control" id="contactPersonTelephoneNumber"
-                        ng-model="idp.configuration.contactPerson_Telephone">
+                    <input type="text" class="form-control" id="contactPersonEmailAddress"
+                        ng-model="idp.configuration.contactPersonEmailAddress">
                 </div>
             </div>
             <div class="form-group col">
                 <div class="input-group">
                     <label for="contactPersonIPACode">Contact person IPAcode</label>
-                    <input type="text" required class="form-control" id="contactPersonIPACode"
-                           ng-model="idp.configuration.contactPerson_IPACode">
+                    <input type="text" class="form-control" id="contactPersonIPACode"
+                           ng-model="idp.configuration.contactPersonIPACode">
                 </div>
             </div>
         </div>
     </fieldset>
     <fieldset>
         <legend class="mb-4">SPID Advanced Configuration</legend>
+        <div class="row">
+            <div class="form-group col">
+                <div class="form-check">
+                    <label for="useAssertionConsumerServiceUrl">Use Assertion Consumer Service Url</label>
+                    <input type="checkbox" class="form-check-input" id="useAssertionConsumerServiceUrl" name="useAssertionConsumerServiceUrl"
+                        ng-model="idp.configuration.useAssertionConsumerServiceUrl">
+                </div>
+            </div>
+            <div class="form-group col">
+                <div class="form-check">
+                    <label for="attributeConsumingServiceIndex">Attribute Consuming Service Index</label>
+                    <input type="number" name="attributeConsumingServiceIndex" min="0" class="form-control form-control-sm"
+                        id="attributeConsumingServiceIndex" ng-model="idp.configuration.attributeConsumingServiceIndex">
+                </div>
+            </div>
+        </div>
         <div class="row">
             <div class="form-group col">
                 <div class="bootstrap-select-wrapper border-bottom-0">

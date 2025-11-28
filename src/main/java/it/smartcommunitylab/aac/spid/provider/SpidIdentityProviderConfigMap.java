@@ -44,31 +44,24 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         SystemKeys.ID_SEPARATOR +
         SystemKeys.AUTHORITY_SPID;
 
-    // core
-    private String entityId;
-
     // <Signature> options
     private String signingKey;
-
     private String signingCertificate; // for <KeyDescriptor use="signing"><KeyInfo>
 
-    // <Organization> options (suggested but not mandatory)
-    private String organizationDisplayName;
-
+    private String metadataUrl;
+    private String metadataXML;
+    
+    private String entityId;
     private String organizationName;
-
+    private String organizationDisplayName;
     private String organizationUrl;
 
-    // <ContactPerson> options, only public SP is currently supported
     @Pattern(regexp = SystemKeys.EMAIL_PATTERN)
-    private String contactPerson_EmailAddress;
-
+    private String contactPersonEmailAddress;
     @Pattern(regexp = "^[A-Za-z0-9_]*$")
-    private String contactPerson_IPACode;
+    private String contactPersonIPACode;
 
-    private Boolean contactPerson_Public; // Public/Private
-
-    private String contactPerson_Type; // "other" (mandatory), optionally includes "billing" (unless private SP, in which case "billing" is also mandatory)
+    private Set<SpidAttribute> spidAttributes;
 
     // AAC options
     // NOTE: only one among {idps, idpMetadataUrl} can be non null
@@ -76,21 +69,13 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
     //  to be used for testing purposes. If both are null, the full local SPID registry will be used instead.
     private Set<String> idps; // optional (see note above)
     private String idpMetadataUrl; // optional (see note above)
-    private Set<SpidAttribute> spidAttributes; // optional
 
     private Boolean useAssertionConsumerServiceUrl;
+    private Integer attributeConsumingServiceIndex;
     private SpidAuthnContext authnContext;
 
     private SpidUserAttribute subAttributeName; // optional
     private SpidUserAttribute usernameAttributeName; // optional
-
-    public String getEntityId() {
-        return entityId;
-    }
-
-    public void setEntityId(String entityId) {
-        this.entityId = entityId;
-    }
 
     public String getSigningKey() {
         return signingKey;
@@ -108,44 +93,28 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         this.signingCertificate = signingCertificate;
     }
 
-    public String getContactPerson_EmailAddress() {
-        return contactPerson_EmailAddress;
+    public String getMetadataUrl() {
+        return metadataUrl;
     }
 
-    public void setContactPerson_EmailAddress(String contactPerson_EmailAddress) {
-        this.contactPerson_EmailAddress = contactPerson_EmailAddress;
+    public void setMetadataUrl(String metadataUrl) {
+        this.metadataUrl = metadataUrl;
     }
 
-    public String getContactPerson_IPACode() {
-        return contactPerson_IPACode;
+    public String getMetadataXML() {
+        return metadataXML;
     }
 
-    public void setContactPerson_IPACode(String contactPerson_IPACode) {
-        this.contactPerson_IPACode = contactPerson_IPACode;
+    public void setMetadataXML(String metadataXML) {
+        this.metadataXML = metadataXML;
     }
 
-    public Boolean getContactPerson_Public() {
-        return contactPerson_Public;
+    public String getEntityId() {
+        return entityId;
     }
 
-    public void setContactPerson_Public(Boolean contactPerson_Public) {
-        this.contactPerson_Public = contactPerson_Public;
-    }
-
-    public String getContactPerson_Type() {
-        return contactPerson_Type;
-    }
-
-    public void setContactPerson_Type(String contactPerson_Type) {
-        this.contactPerson_Type = contactPerson_Type;
-    }
-
-    public String getOrganizationDisplayName() {
-        return organizationDisplayName;
-    }
-
-    public void setOrganizationDisplayName(String organizationDisplayName) {
-        this.organizationDisplayName = organizationDisplayName;
+    public void setEntityId(String entityId) {
+        this.entityId = entityId;
     }
 
     public String getOrganizationName() {
@@ -156,12 +125,44 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         this.organizationName = organizationName;
     }
 
+    public String getOrganizationDisplayName() {
+        return organizationDisplayName;
+    }
+
+    public void setOrganizationDisplayName(String organizationDisplayName) {
+        this.organizationDisplayName = organizationDisplayName;
+    }
+
     public String getOrganizationUrl() {
         return organizationUrl;
     }
 
     public void setOrganizationUrl(String organizationUrl) {
         this.organizationUrl = organizationUrl;
+    }
+
+    public String getContactPersonEmailAddress() {
+        return contactPersonEmailAddress;
+    }
+
+    public void setContactPersonEmailAddress(String contactPersonEmailAddress) {
+        this.contactPersonEmailAddress = contactPersonEmailAddress;
+    }
+
+    public String getContactPersonIPACode() {
+        return contactPersonIPACode;
+    }
+
+    public void setContactPersonIPACode(String contactPersonIPACode) {
+        this.contactPersonIPACode = contactPersonIPACode;
+    }
+
+    public Set<SpidAttribute> getSpidAttributes() {
+        return spidAttributes;
+    }
+
+    public void setSpidAttributes(Set<SpidAttribute> spidAttributes) {
+        this.spidAttributes = spidAttributes;
     }
 
     public Set<String> getIdps() {
@@ -180,20 +181,20 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         this.idpMetadataUrl = idpMetadataUrl;
     }
 
-    public Set<SpidAttribute> getSpidAttributes() {
-        return spidAttributes;
-    }
-
-    public void setSpidAttributes(Set<SpidAttribute> spidAttributes) {
-        this.spidAttributes = spidAttributes;
-    }
-
     public Boolean getUseAssertionConsumerServiceUrl() {
         return useAssertionConsumerServiceUrl;
     }
 
     public void setUseAssertionConsumerServiceUrl(Boolean useAssertionConsumerServiceUrl) {
         this.useAssertionConsumerServiceUrl = useAssertionConsumerServiceUrl;
+    }
+
+    public Integer getAttributeConsumingServiceIndex() {
+        return attributeConsumingServiceIndex;
+    }
+
+    public void setAttributeConsumingServiceIndex(Integer attributeConsumingServiceIndex) {
+        this.attributeConsumingServiceIndex = attributeConsumingServiceIndex;
     }
 
     public SpidAuthnContext getAuthnContext() {
@@ -222,20 +223,21 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     @JsonIgnore
     public void setConfiguration(SpidIdentityProviderConfigMap map) {
-        this.entityId = map.getEntityId();
         this.signingKey = map.getSigningKey();
-        this.signingCertificate = map.getSigningKey();
-        this.contactPerson_EmailAddress = map.getContactPerson_EmailAddress();
-        this.contactPerson_IPACode = map.getContactPerson_IPACode();
-        this.contactPerson_Public = map.getContactPerson_Public();
-        this.contactPerson_Type = map.getContactPerson_Type();
-        this.organizationDisplayName = map.getOrganizationDisplayName();
+        this.signingCertificate = map.getSigningCertificate();
+        this.metadataUrl = map.getMetadataUrl();
+        this.metadataXML = map.getMetadataXML();
+        this.entityId = map.getEntityId();
         this.organizationName = map.getOrganizationName();
+        this.organizationDisplayName = map.getOrganizationDisplayName();
         this.organizationUrl = map.getOrganizationUrl();
+        this.contactPersonEmailAddress = map.getContactPersonEmailAddress();
+        this.contactPersonIPACode = map.getContactPersonIPACode();
+        this.spidAttributes = map.getSpidAttributes();
         this.idps = map.getIdps();
         this.idpMetadataUrl = map.getIdpMetadataUrl();
-        this.spidAttributes = map.getSpidAttributes();
         this.useAssertionConsumerServiceUrl = map.getUseAssertionConsumerServiceUrl();
+        this.attributeConsumingServiceIndex = map.getAttributeConsumingServiceIndex();
         this.authnContext = map.getAuthnContext();
         this.subAttributeName = map.getSubAttributeName();
         this.usernameAttributeName = map.getUsernameAttributeName();
