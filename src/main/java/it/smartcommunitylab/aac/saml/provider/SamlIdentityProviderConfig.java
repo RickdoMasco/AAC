@@ -26,6 +26,8 @@ import java.io.StringReader;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.bouncycastle.asn1.pkcs.PrivateKeyInfo;
@@ -49,6 +51,7 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         SystemKeys.RESOURCE_PROVIDER + SystemKeys.ID_SEPARATOR + SamlIdentityProviderConfigMap.RESOURCE_TYPE;
 
     private transient RelyingPartyRegistration relyingPartyRegistration;
+    private transient RelyingPartyRegistration metadataRelyingPartyRegistration;
     private transient SamlIdentityProviderStatusMap statusMap;
     private String baseUrl;
 
@@ -59,6 +62,7 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     public SamlIdentityProviderConfig(String authority, String provider, String realm) {
         super(authority, provider, realm, new IdentityProviderSettingsMap(), new SamlIdentityProviderConfigMap());
         this.relyingPartyRegistration = null;
+        this.metadataRelyingPartyRegistration = null;
     }
 
     public SamlIdentityProviderConfig(
@@ -103,6 +107,19 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         return relyingPartyRegistration;
     }
 
+    @JsonIgnore
+    public RelyingPartyRegistration getMetadataRelyingPartyRegistration() {
+        if (metadataRelyingPartyRegistration == null) {
+            try {
+                metadataRelyingPartyRegistration = toMetadataRelyingPartyRegistration();
+            } catch (IOException | CertificateException e) {
+                throw new RuntimeException("error building registration: " + e.getMessage());
+            }
+        }
+
+        return metadataRelyingPartyRegistration;
+    }
+
     // TODO throws exception if configuration is invalid
     private RelyingPartyRegistration toRelyingPartyRegistration() throws IOException, CertificateException {
         // set base parameters
@@ -111,8 +128,28 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
         // read rp parameters from map
         // note: only RSA keys supported
-        String signingKey = configMap.getSigningKey();
-        String signingCertificate = configMap.getSigningCertificate();
+        List<SigningCredential> signingCredentialList =
+                (configMap.getSigningCredentials() != null ? configMap.getSigningCredentials() : Collections.emptyList());
+
+        String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
+
+        SigningCredential signingCredential = null;
+        String signingKey = null;
+        String signingCertificate = null;
+
+        if (!signingCredentialList.isEmpty()) {
+            if (StringUtils.hasText(activeSigningCredentialId)) {
+                signingCredential = signingCredentialList.stream()
+                        .filter(c -> StringUtils.hasText(c.getCredentialId()) && c.getCredentialId().equals(activeSigningCredentialId))
+                        .findFirst()
+                        .orElse(signingCredentialList.get(0));
+            } else {
+                signingCredential = signingCredentialList.get(0);
+            }
+
+            signingKey = signingCredential.getSigningKey();
+            signingCertificate = signingCredential.getSigningCertificate();
+        }
 
         // ap autoconfiguration
         String idpMetadataLocation = configMap.getIdpMetadataUrl();
@@ -169,6 +206,82 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             );
             // add for signature
             builder.signingX509Credentials(c -> c.add(signingCredentials));
+        }
+
+        return builder.build();
+    }
+
+    // TODO throws exception if configuration is invalid
+    private RelyingPartyRegistration toMetadataRelyingPartyRegistration() throws IOException, CertificateException {
+        // set base parameters
+        String entityId = getEntityId();
+        String assertionConsumerServiceLocation = assertionConsumerUrlTemplate();
+
+        // read rp parameters from map
+        // note: only RSA keys supported
+        List<SigningCredential> signingCredentialList =
+                (configMap.getSigningCredentials() != null ? configMap.getSigningCredentials() : Collections.emptyList());
+
+        // ap autoconfiguration
+        String idpMetadataLocation = configMap.getIdpMetadataUrl();
+        // ap manual configuration (only if not metadata)
+        String assertingPartyEntityId = configMap.getIdpEntityId();
+        String ssoLoginServiceLocation = configMap.getWebSsoUrl();
+        String ssoLogoutServiceLocation = configMap.getWebLogoutUrl();
+        boolean signAuthNRequest =
+                (configMap.getSignAuthNRequest() != null ? configMap.getSignAuthNRequest().booleanValue() : true);
+        String verificationCertificate = configMap.getVerificationCertificate();
+        Saml2MessageBinding ssoServiceBinding = getServiceBinding(configMap.getSsoServiceBinding());
+
+        // via builder
+        // providerId is unique, use as registrationId
+        String registrationId = getProvider();
+        RelyingPartyRegistration.Builder builder = RelyingPartyRegistration.withRegistrationId(registrationId);
+
+        if (StringUtils.hasText(idpMetadataLocation)) {
+            // read metadata to autoconfigure
+            builder = RelyingPartyRegistrations.fromMetadataLocation(idpMetadataLocation).registrationId(
+                    registrationId
+            );
+        } else {
+            // set manually
+            builder.assertingPartyDetails(party ->
+                    party
+                            .entityId(assertingPartyEntityId)
+                            .singleSignOnServiceLocation(ssoLoginServiceLocation)
+                            .wantAuthnRequestsSigned(signAuthNRequest)
+                            .singleSignOnServiceBinding(ssoServiceBinding)
+            );
+
+            if (StringUtils.hasText(verificationCertificate)) {
+                Saml2X509Credential verificationCredentials = getVerificationCertificate(verificationCertificate);
+                builder.assertingPartyDetails(party ->
+                        party.verificationX509Credentials(c -> c.add(verificationCredentials))
+                );
+            }
+        }
+
+        // set fixed config params
+        builder.entityId(entityId).assertionConsumerServiceLocation(assertionConsumerServiceLocation);
+
+        for (SigningCredential signingCredential : signingCredentialList) {
+            String signingKey = signingCredential.getSigningKey();
+            String signingCertificate = signingCredential.getSigningCertificate();
+
+            // check if sign credentials are provided
+            if (StringUtils.hasText(signingKey) && StringUtils.hasText(signingCertificate)) {
+                //            // cleanup pem
+                //            signingCertificate = cleanupPem("CERTIFICATE", signingCertificate);
+
+                Saml2X509Credential signingCredentials = getCredentials(
+                        signingKey,
+                        signingCertificate,
+                        Saml2X509CredentialType.SIGNING,
+                        Saml2X509CredentialType.DECRYPTION
+                );
+                // add for signature
+                builder.signingX509Credentials(c -> c.add(signingCredentials));
+            }
         }
 
         return builder.build();
