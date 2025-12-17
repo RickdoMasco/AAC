@@ -579,6 +579,18 @@
         "name": "Entity ID",
         "helperText": ""
     },
+    "signingCredentials": {
+        "name": "Signing Credentials",
+        "helperText": "List of Signing Credentials"
+    },
+    "credentialId": {
+        "name": "Signing Credential Id",
+        "helperText": "Unique identifier for the credential"
+    },
+    "activeSigningCredentialId": {
+        "name": "Active Signing Credential Id",
+        "helperText": "If not specified or incorrect, the first credential will be selected"
+    },
     "signingKey": {
         "name": "Signing Key",
         "helperText": "Key (PEM)"

@@ -20,6 +20,7 @@ import it.smartcommunitylab.aac.core.provider.FilterProvider;
 import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
 import it.smartcommunitylab.aac.saml.auth.Saml2AuthenticationRequestRepository;
 import it.smartcommunitylab.aac.saml.auth.SamlMetadataFilter;
+import it.smartcommunitylab.aac.saml.auth.SamlMetadataRelyingPartyRegistrationRepository;
 import it.smartcommunitylab.aac.saml.auth.SamlRelyingPartyRegistrationRepository;
 import it.smartcommunitylab.aac.saml.auth.SamlWebSsoAuthenticationFilter;
 import it.smartcommunitylab.aac.saml.auth.SamlWebSsoAuthenticationRequestFilter;
@@ -42,6 +43,7 @@ public class SamlFilterProvider implements FilterProvider, ApplicationEventPubli
 
     private final ProviderConfigRepository<SamlIdentityProviderConfig> registrationRepository;
     private final SamlRelyingPartyRegistrationRepository relyingPartyRegistrationRepository;
+    private final SamlMetadataRelyingPartyRegistrationRepository metadataRelyingPartyRegistrationRepository;
 
     private AuthenticationManager authManager;
     private ApplicationEventPublisher eventPublisher;
@@ -49,6 +51,7 @@ public class SamlFilterProvider implements FilterProvider, ApplicationEventPubli
     public SamlFilterProvider(
         String authorityId,
         SamlRelyingPartyRegistrationRepository relyingPartyRegistrationRepository,
+        SamlMetadataRelyingPartyRegistrationRepository metadataRelyingPartyRegistrationRepository,
         ProviderConfigRepository<SamlIdentityProviderConfig> registrationRepository
     ) {
         Assert.hasText(authorityId, "authority can not be null or empty");
@@ -57,6 +60,7 @@ public class SamlFilterProvider implements FilterProvider, ApplicationEventPubli
 
         this.authorityId = authorityId;
         this.relyingPartyRegistrationRepository = relyingPartyRegistrationRepository;
+        this.metadataRelyingPartyRegistrationRepository = metadataRelyingPartyRegistrationRepository;
         this.registrationRepository = registrationRepository;
     }
 
@@ -103,7 +107,7 @@ public class SamlFilterProvider implements FilterProvider, ApplicationEventPubli
 
         SamlMetadataFilter metadataFilter = new SamlMetadataFilter(
             authorityId,
-            relyingPartyRegistrationRepository,
+            metadataRelyingPartyRegistrationRepository,
             buildFilterUrl("metadata/{registrationId}")
         );
 
