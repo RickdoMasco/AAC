@@ -312,12 +312,6 @@ export const uiSchemaSpidIdp: UiSchema = {
         'subAttributeName',
         'usernameAttributeName',
     ],
-    signingKey: {
-        'ui:widget': 'textarea',
-    },
-    signingCertificate: {
-        'ui:widget': 'textarea',
-    },
     metadataXML: {
         'ui:widget': 'textarea',
     },
