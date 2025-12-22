@@ -455,17 +455,17 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         return builder.build();
     }
 
-    private RelyingPartyRegistration.Builder buildSigningCredentials (RelyingPartyRegistration.Builder builder, Boolean onlyActiveCredential) throws IOException, CertificateException {
+    private RelyingPartyRegistration.Builder buildSigningCredentials(RelyingPartyRegistration.Builder builder, Boolean onlyActiveCredential) throws IOException, CertificateException {
         List<SigningCredential> signingCredentialList = getSigningCredentials();
 
         if (onlyActiveCredential) {
             String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
-            signingCredentialList
+            signingCredentialList = getSigningCredentials()
                 .stream()
                 .filter(c -> StringUtils.hasText(c.getCredentialId()) && c.getCredentialId().equals(activeSigningCredentialId))
                 .findFirst().map(c -> List.of(c))
                 .orElseGet(
-                    () -> signingCredentialList.isEmpty() ? Collections.emptyList() : List.of(signingCredentialList.get(0))
+                    () -> getSigningCredentials().isEmpty() ? Collections.emptyList() : List.of(getSigningCredentials().get(0))
                 );
         }
 
