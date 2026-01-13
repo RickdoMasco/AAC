@@ -144,12 +144,35 @@ public class UserAuthenticationEventListener extends AbstractAuthenticationAudit
             data.put("details", auth.getWebAuthenticationDetails());
         }
 
+        Map<String, Object> authentication = new HashMap<>();
+        authentication.put("authorities", auth.getAuthorities());
+        authentication.put("authenticated", auth.isAuthenticated());
+        authentication.put("principal", auth.getPrincipal());
+        authentication.put("realm", auth.getRealm());
+        authentication.put("createAt", auth.getCreatedAt());
+        authentication.put("expired", auth.isExpired());
+        authentication.put("name", auth.getName());
+        authentication.put("subjectId", auth.getSubjectId());
+        authentication.put("age", auth.getAge());
+
+        if (SystemKeys.EVENTS_LEVEL_MINIMAL.equals(level)) {
+            data.put("authentication", authentication);
+        }
+
+        if (SystemKeys.EVENTS_LEVEL_DETAILS.equals(level)) {
+            auth.eraseCredentials();
+            authentication.put("details", auth.getDetails());
+            data.put("authentication", authentication);
+        }
+
         if (SystemKeys.EVENTS_LEVEL_FULL.equals(level)) {
             // persist full authentication token
             // TODO add export
             // make sure credentials are cleared from this context
             auth.eraseCredentials();
-            data.put("authentication", auth);
+            authentication.put("details", auth.getDetails());
+            authentication.put("authentications", auth.getAuthentications());
+            data.put("authentication", authentication);
             //TODO store full event
 
         }
