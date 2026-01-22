@@ -49,6 +49,9 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
     private List<SigningCredential> signingCredentials;
     private String activeSigningCredentialId;
 
+    private String signingKey;
+    private String signingCertificate;
+
     private String metadataUrl;
     private String metadataXML;
     
@@ -84,6 +87,22 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     public void setSigningCredentials(List<SigningCredential> signingCredentials) {
         this.signingCredentials = signingCredentials;
+    }
+
+    public String getSigningKey() {
+        return signingKey;
+    }
+
+    public void setSigningKey(String signingKey) {
+        this.signingKey = signingKey;
+    }
+
+    public String getSigningCertificate() {
+        return signingCertificate;
+    }
+
+    public void setSigningCertificate(String signingCertificate) {
+        this.signingCertificate = signingCertificate;
     }
 
     public String getActiveSigningCredentialId() {
@@ -224,6 +243,8 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     @JsonIgnore
     public void setConfiguration(SpidIdentityProviderConfigMap map) {
+        this.signingKey = map.getSigningKey();
+        this.signingCertificate = map.getSigningCertificate();
         this.signingCredentials = map.getSigningCredentials();
         this.activeSigningCredentialId = map.getActiveSigningCredentialId();
         this.metadataUrl = map.getMetadataUrl();

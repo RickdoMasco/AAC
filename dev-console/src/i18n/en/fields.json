@@ -599,6 +599,14 @@
         "name": "Signing Certificate",
         "helperText": "Certificate (PEM) "
     },
+    "signingKeyDeprecated": {
+        "name": "Signing Key (Deprecated)",
+        "helperText": "Key (PEM)"
+    },
+    "signingCertificateDeprecated": {
+        "name": "Signing Certificate (Deprecated)",
+        "helperText": "Certificate (PEM) "
+    },
     "idpEntityId": {
         "name": "Idp Entity Id",
         "helperText": "EntityId"

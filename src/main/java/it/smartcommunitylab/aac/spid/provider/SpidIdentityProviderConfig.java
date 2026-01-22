@@ -458,7 +458,13 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         List<SigningCredential> signingCredentialList = getSigningCredentials();
 
         if (onlyActiveCredential) {
-            String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
+            String activeSigningCredentialId;
+            if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
+                activeSigningCredentialId = "legacy-default";
+            }else{
+                activeSigningCredentialId = configMap.getActiveSigningCredentialId();
+            }
+
             signingCredentialList = getSigningCredentials()
                 .stream()
                 .filter(c -> StringUtils.hasText(c.getCredentialId()) && c.getCredentialId().equals(activeSigningCredentialId))
@@ -557,9 +563,20 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     }
 
     public List<SigningCredential> getSigningCredentials() {
-        return configMap.getSigningCredentials() != null 
-            ? configMap.getSigningCredentials() 
-            : Collections.emptyList();
+        List<SigningCredential> allSigningCredentials = new ArrayList<>();
+
+        String legacySigningKey = configMap.getSigningKey();
+        String legacySigningCertificate = configMap.getSigningCertificate();
+
+        if (StringUtils.hasText(legacySigningKey) && StringUtils.hasText(legacySigningCertificate)) {
+            allSigningCredentials.add(new SigningCredential("legacy-default", legacySigningKey, legacySigningCertificate));
+            configMap.setActiveSigningCredentialId("legacy-default");
+        }
+
+        if (configMap.getSigningCredentials() != null) {
+            allSigningCredentials.addAll(configMap.getSigningCredentials());
+        }
+        return allSigningCredentials;
     }
 
     public String getEntityId() {
