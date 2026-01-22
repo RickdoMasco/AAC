@@ -175,11 +175,13 @@ export const uiSchemaWebAuthnIdp: UiSchema = {
 
 export const uiSchemaSamlIdp: UiSchema = {
     'ui:layout': [
-        12, 12, 12, 12, 12, 6, 6, 6, 6, 12, 6, 6, 8, 4, 8, 12, 4, 4, 4, 6,
+        12, 6, 6, 12, 12, 12, 12, 6, 6, 6, 6, 12, 6, 6, 8, 4, 8, 12, 4, 4, 4, 6,
         6,
     ],
     'ui:order': [
         'entityId',
+        'signingKey',
+        'signingCertificate',
         'signingCredentials',
         'activeSigningCredentialId',
         'idpMetadataUrl',
@@ -211,6 +213,16 @@ export const uiSchemaSamlIdp: UiSchema = {
         items: {
             'ui:label': false,
         },
+    },
+    signingKey: {
+        'ui:widget': 'textarea',
+        'ui:title': 'field.signingKeyDeprecated.name',
+        'ui:description': 'field.signingKeyDeprecated.helperText',
+    },
+    signingCertificate: {
+        'ui:widget': 'textarea',
+        'ui:title': 'field.signingCertificateDeprecated.name',
+        'ui:description': 'field.signingCertificateDeprecated.helperText',
     },
     signingCredentials: {
         items: {

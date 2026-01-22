@@ -26,7 +26,8 @@ import java.io.StringReader;
 import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.Collections;
+import java.util.ArrayList;
+import  java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -128,10 +129,14 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
         // read rp parameters from map
         // note: only RSA keys supported
-        List<SigningCredential> signingCredentialList =
-                (configMap.getSigningCredentials() != null ? configMap.getSigningCredentials() : Collections.emptyList());
+        List<SigningCredential> signingCredentialList = getSigningCredentials();
 
-        String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
+        String activeSigningCredentialId;
+        if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
+            activeSigningCredentialId = "legacy-default";
+        }else{
+            activeSigningCredentialId = configMap.getActiveSigningCredentialId();
+        }
 
         SigningCredential signingCredential = null;
         String signingKey = null;
@@ -219,8 +224,7 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
         // read rp parameters from map
         // note: only RSA keys supported
-        List<SigningCredential> signingCredentialList =
-                (configMap.getSigningCredentials() != null ? configMap.getSigningCredentials() : Collections.emptyList());
+        List<SigningCredential> signingCredentialList = getSigningCredentials();
 
         // ap autoconfiguration
         String idpMetadataLocation = configMap.getIdpMetadataUrl();
@@ -309,6 +313,23 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             return builder.buildAndExpand(Map.of("baseUrl", baseUrl, "registrationId", getProvider())).toUriString();
         }
         return null;
+    }
+
+    public List<SigningCredential> getSigningCredentials() {
+        List<SigningCredential> allSigningCredentials = new ArrayList<>();
+
+        String legacySigningKey = configMap.getSigningKey();
+        String legacySigningCertificate = configMap.getSigningCertificate();
+
+        if (StringUtils.hasText(legacySigningKey) && StringUtils.hasText(legacySigningCertificate)) {
+            allSigningCredentials.add(new SigningCredential("legacy-default", legacySigningKey, legacySigningCertificate));
+            configMap.setActiveSigningCredentialId("legacy-default");
+        }
+
+        if (configMap.getSigningCredentials() != null) {
+            allSigningCredentials.addAll(configMap.getSigningCredentials());
+        }
+        return allSigningCredentials;
     }
 
     public String getEntityId() {

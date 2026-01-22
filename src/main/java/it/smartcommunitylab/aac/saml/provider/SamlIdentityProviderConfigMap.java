@@ -47,6 +47,9 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
     private List<SigningCredential> signingCredentials;
     private String activeSigningCredentialId;
 
+    private String signingKey;
+    private String signingCertificate;
+
     // ap autoconfiguration
     private String idpMetadataUrl;
 
@@ -79,6 +82,22 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     public void setSigningCredentials(List<SigningCredential> signingCredentials) {
         this.signingCredentials = signingCredentials;
+    }
+
+    public String getSigningKey() {
+        return signingKey;
+    }
+
+    public void setSigningKey(String signingKey) {
+        this.signingKey = signingKey;
+    }
+
+    public String getSigningCertificate() {
+        return signingCertificate;
+    }
+
+    public void setSigningCertificate(String signingCertificate) {
+        this.signingCertificate = signingCertificate;
     }
 
     public String getActiveSigningCredentialId() { return activeSigningCredentialId; }
@@ -242,6 +261,8 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     @JsonIgnore
     public void setConfiguration(SamlIdentityProviderConfigMap map) {
+        this.signingKey = map.getSigningKey();
+        this.signingCertificate = map.getSigningCertificate();
         this.signingCredentials = map.getSigningCredentials();
         this.activeSigningCredentialId = map.getActiveSigningCredentialId();
 
