@@ -20,6 +20,7 @@ import it.smartcommunitylab.aac.identity.provider.IdentityProviderSettingsMap;
 import it.smartcommunitylab.aac.internal.provider.InternalIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.oidc.apple.provider.AppleIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.oidc.provider.OIDCIdentityProviderConfigMap;
+import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.password.provider.PasswordIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.saml.provider.SamlIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderConfigMap;
@@ -45,6 +46,9 @@ public class IdentityAuthoritiesProperties {
 
     @NestedConfigurationProperty
     private OIDCIdentityProviderConfigMap oidc;
+
+    @NestedConfigurationProperty
+    private OpenIdFedIdentityProviderConfigMap openidfed;
 
     @NestedConfigurationProperty
     private SamlIdentityProviderConfigMap saml;
@@ -97,6 +101,10 @@ public class IdentityAuthoritiesProperties {
     public void setOidc(OIDCIdentityProviderConfigMap oidc) {
         this.oidc = oidc;
     }
+
+    public OpenIdFedIdentityProviderConfigMap getOpenidfed() { return openidfed; }
+
+    public void setOpenidfed(OpenIdFedIdentityProviderConfigMap openidfed) { this.openidfed = openidfed; }
 
     public SamlIdentityProviderConfigMap getSaml() {
         return saml;

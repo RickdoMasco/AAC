@@ -34,6 +34,7 @@ import it.smartcommunitylab.aac.oidc.auth.OIDCIdTokenDecoderFactory;
 import it.smartcommunitylab.aac.oidc.model.OIDCUserAccount;
 import it.smartcommunitylab.aac.oidc.model.OIDCUserAuthenticatedPrincipal;
 import it.smartcommunitylab.aac.openidfed.auth.OpenIdFedAuthorizationCodeTokenResponseClient;
+import it.smartcommunitylab.aac.openidfed.model.OpenIdFedUserAuthenticatedPrincipal;
 import it.smartcommunitylab.aac.openidfed.service.OpenIdFedOidcUserService;
 import java.io.Serializable;
 import java.time.Instant;
@@ -60,7 +61,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 public class OpenIdFedAuthenticationProvider
-    extends ExtendedAuthenticationProvider<OIDCUserAuthenticatedPrincipal, OIDCUserAccount> {
+    extends ExtendedAuthenticationProvider<OpenIdFedUserAuthenticatedPrincipal, OIDCUserAccount> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -228,7 +229,7 @@ public class OpenIdFedAuthenticationProvider
     }
 
     @Override
-    protected OIDCUserAuthenticatedPrincipal createUserPrincipal(Object principal) {
+    protected OpenIdFedUserAuthenticatedPrincipal createUserPrincipal(Object principal) {
         // we need to unpack user and fetch properties
         OAuth2User oauthDetails = (OAuth2User) principal;
 
@@ -246,8 +247,7 @@ public class OpenIdFedAuthenticationProvider
         // everything else
 
         // bind principal to ourselves
-        OIDCUserAuthenticatedPrincipal user = new OIDCUserAuthenticatedPrincipal(
-            getAuthority(),
+        OpenIdFedUserAuthenticatedPrincipal user = new OpenIdFedUserAuthenticatedPrincipal(
             getProvider(),
             getRealm(),
             userId,
