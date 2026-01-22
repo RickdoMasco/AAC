@@ -25,6 +25,7 @@ import it.smartcommunitylab.aac.core.service.ResourceEntityService;
 import it.smartcommunitylab.aac.identity.base.AbstractIdentityProviderAuthority;
 import it.smartcommunitylab.aac.oidc.model.OIDCUserAccount;
 import it.smartcommunitylab.aac.oidc.model.OIDCUserIdentity;
+import it.smartcommunitylab.aac.openidfed.model.OpenIdFedUserIdentity;
 import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedFilterProvider;
 import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedIdentityConfigurationProvider;
 import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedIdentityProvider;
@@ -40,7 +41,7 @@ import org.springframework.util.Assert;
 @Service
 @ConditionalOnProperty(value = "authorities.identity.openidfed.enable", havingValue = "true")
 public class OpenIdFedIdentityAuthority
-    extends AbstractIdentityProviderAuthority<OpenIdFedIdentityProvider, OIDCUserIdentity, OpenIdFedIdentityProviderConfig, OpenIdFedIdentityProviderConfigMap>
+    extends AbstractIdentityProviderAuthority<OpenIdFedIdentityProvider, OpenIdFedUserIdentity, OpenIdFedIdentityProviderConfig, OpenIdFedIdentityProviderConfigMap>
     implements ApplicationEventPublisherAware {
 
     public static final String AUTHORITY_URL = "/auth/" + SystemKeys.AUTHORITY_OPENIDFED + "/";
@@ -114,7 +115,6 @@ public class OpenIdFedIdentityAuthority
         String id = config.getProvider();
 
         OpenIdFedIdentityProvider idp = new OpenIdFedIdentityProvider(
-            authorityId,
             id,
             accountService,
             config,
