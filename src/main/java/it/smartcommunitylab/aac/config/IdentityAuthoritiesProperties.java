@@ -20,7 +20,6 @@ import it.smartcommunitylab.aac.identity.provider.IdentityProviderSettingsMap;
 import it.smartcommunitylab.aac.internal.provider.InternalIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.oidc.apple.provider.AppleIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.oidc.provider.OIDCIdentityProviderConfigMap;
-import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.password.provider.PasswordIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.saml.provider.SamlIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.spid.provider.SpidIdentityProviderConfigMap;
