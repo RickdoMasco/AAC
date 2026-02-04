@@ -60,7 +60,7 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 public class OpenIdFedAuthenticationProvider
-        extends ExtendedAuthenticationProvider<OIDCUserAuthenticatedPrincipal, OIDCUserAccount> {
+    extends ExtendedAuthenticationProvider<OIDCUserAuthenticatedPrincipal, OIDCUserAccount> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
