@@ -50,7 +50,7 @@ import org.springframework.security.oauth2.provider.AuthorizationRequest;
 import org.springframework.util.StringUtils;
 
 public class OpenIdFedIdentityProvider
-        extends AbstractIdentityProvider<OIDCUserIdentity, OIDCUserAccount, OIDCUserAuthenticatedPrincipal, OpenIdFedIdentityProviderConfigMap, OpenIdFedIdentityProviderConfig> {
+    extends AbstractIdentityProvider<OIDCUserIdentity, OIDCUserAccount, OIDCUserAuthenticatedPrincipal, OpenIdFedIdentityProviderConfigMap, OpenIdFedIdentityProviderConfig> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -71,11 +71,11 @@ public class OpenIdFedIdentityProvider
     }
 
     public OpenIdFedIdentityProvider(
-            String authority,
-            String providerId,
-            UserAccountService<OIDCUserAccount> userAccountService,
-            OpenIdFedIdentityProviderConfig config,
-            String realm
+        String authority,
+        String providerId,
+        UserAccountService<OIDCUserAccount> userAccountService,
+        OpenIdFedIdentityProviderConfig config,
+        String realm
     ) {
         super(authority, providerId, config, realm);
         logger.debug(
@@ -95,7 +95,7 @@ public class OpenIdFedIdentityProvider
 
         this.attributeProvider = new OIDCAttributeProvider(authority, providerId, realm);
         this.subjectResolver =
-                new OIDCSubjectResolver(authority, providerId, userAccountService, config.getRepositoryId(), realm);
+            new OIDCSubjectResolver(authority, providerId, userAccountService, config.getRepositoryId(), realm);
         this.subjectResolver.setLinkable(config.isLinkable());
 
         // build custom authenticator
