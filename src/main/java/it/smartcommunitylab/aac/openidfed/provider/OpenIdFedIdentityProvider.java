@@ -27,10 +27,13 @@ import it.smartcommunitylab.aac.core.ClientDetails;
 import it.smartcommunitylab.aac.core.service.ResourceEntityService;
 import it.smartcommunitylab.aac.identity.base.AbstractIdentityProvider;
 import it.smartcommunitylab.aac.oidc.model.OIDCUserAccount;
+import it.smartcommunitylab.aac.oidc.model.OIDCUserAuthenticatedPrincipal;
+import it.smartcommunitylab.aac.oidc.model.OIDCUserIdentity;
+import it.smartcommunitylab.aac.oidc.provider.OIDCAccountPrincipalConverter;
+import it.smartcommunitylab.aac.oidc.provider.OIDCAttributeProvider;
+import it.smartcommunitylab.aac.oidc.provider.OIDCSubjectResolver;
 import it.smartcommunitylab.aac.openidfed.auth.OpenIdFedClientRegistrationRepository;
 import it.smartcommunitylab.aac.openidfed.model.OpenIdFedLogin;
-import it.smartcommunitylab.aac.openidfed.model.OpenIdFedUserAuthenticatedPrincipal;
-import it.smartcommunitylab.aac.openidfed.model.OpenIdFedUserIdentity;
 import it.smartcommunitylab.aac.openidfed.service.OpenIdProviderDiscoveryService;
 import java.net.MalformedURLException;
 import java.util.Collection;
@@ -47,16 +50,16 @@ import org.springframework.security.oauth2.provider.AuthorizationRequest;
 import org.springframework.util.StringUtils;
 
 public class OpenIdFedIdentityProvider
-    extends AbstractIdentityProvider<OpenIdFedUserIdentity, OIDCUserAccount, OpenIdFedUserAuthenticatedPrincipal, OpenIdFedIdentityProviderConfigMap, OpenIdFedIdentityProviderConfig> {
+        extends AbstractIdentityProvider<OIDCUserIdentity, OIDCUserAccount, OIDCUserAuthenticatedPrincipal, OpenIdFedIdentityProviderConfigMap, OpenIdFedIdentityProviderConfig> {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     // providers
     private final OpenIdFedAccountService accountService;
-    private final OpenIdFedAccountPrincipalConverter principalConverter;
-    private final OpenIdFedAttributeProvider attributeProvider;
+    private final OIDCAccountPrincipalConverter principalConverter;
+    private final OIDCAttributeProvider attributeProvider;
     private final OpenIdFedAuthenticationProvider authenticationProvider;
-    private final OpenIdFedSubjectResolver subjectResolver;
+    private final OIDCSubjectResolver subjectResolver;
 
     public OpenIdFedIdentityProvider(
         String providerId,
@@ -64,10 +67,20 @@ public class OpenIdFedIdentityProvider
         OpenIdFedIdentityProviderConfig config,
         String realm
     ) {
-        super(SystemKeys.AUTHORITY_OPENIDFED, providerId, config, realm);
+        this(SystemKeys.AUTHORITY_OPENIDFED, providerId, userAccountService, config, realm);
+    }
+
+    public OpenIdFedIdentityProvider(
+            String authority,
+            String providerId,
+            UserAccountService<OIDCUserAccount> userAccountService,
+            OpenIdFedIdentityProviderConfig config,
+            String realm
+    ) {
+        super(authority, providerId, config, realm);
         logger.debug(
             "create openid federation provider for authority {} with id {}",
-            String.valueOf(SystemKeys.AUTHORITY_OPENIDFED),
+            String.valueOf(authority),
             String.valueOf(providerId)
         );
 
@@ -76,13 +89,13 @@ public class OpenIdFedIdentityProvider
         this.accountService =
             new OpenIdFedAccountService(providerId, userAccountService, configConverter.convert(config), realm);
 
-        this.principalConverter = new OpenIdFedAccountPrincipalConverter(providerId, config, realm);
+        this.principalConverter = new OIDCAccountPrincipalConverter(authority, providerId, userAccountService, realm);
         this.principalConverter.setTrustEmailAddress(config.trustEmailAddress());
         this.principalConverter.setAlwaysTrustEmailAddress(config.alwaysTrustEmailAddress());
 
-        this.attributeProvider = new OpenIdFedAttributeProvider(providerId, config, realm);
+        this.attributeProvider = new OIDCAttributeProvider(authority, providerId, realm);
         this.subjectResolver =
-            new OpenIdFedSubjectResolver(providerId, userAccountService, config.getRepositoryId(), realm);
+                new OIDCSubjectResolver(authority, providerId, userAccountService, config.getRepositoryId(), realm);
         this.subjectResolver.setLinkable(config.isLinkable());
 
         // build custom authenticator
@@ -134,28 +147,28 @@ public class OpenIdFedIdentityProvider
     }
 
     @Override
-    public OpenIdFedAccountPrincipalConverter getAccountPrincipalConverter() {
+    public OIDCAccountPrincipalConverter getAccountPrincipalConverter() {
         return principalConverter;
     }
 
     @Override
-    public OpenIdFedAttributeProvider getAttributeProvider() {
+    public OIDCAttributeProvider getAttributeProvider() {
         return attributeProvider;
     }
 
     @Override
-    public OpenIdFedSubjectResolver getSubjectResolver() {
+    public OIDCSubjectResolver getSubjectResolver() {
         return subjectResolver;
     }
 
     @Override
-    protected OpenIdFedUserIdentity buildIdentity(
+    protected OIDCUserIdentity buildIdentity(
         OIDCUserAccount account,
-        OpenIdFedUserAuthenticatedPrincipal principal,
+        OIDCUserAuthenticatedPrincipal principal,
         Collection<UserAttributes> attributes
     ) {
         // build identity
-        OpenIdFedUserIdentity identity = new OpenIdFedUserIdentity(getAuthority(), getProvider(), getRealm(), account, principal);
+        OIDCUserIdentity identity = new OIDCUserIdentity(getAuthority(), getProvider(), getRealm(), account, principal);
         identity.setAttributes(attributes);
 
         return identity;

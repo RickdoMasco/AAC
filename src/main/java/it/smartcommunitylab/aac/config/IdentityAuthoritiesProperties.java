@@ -48,9 +48,6 @@ public class IdentityAuthoritiesProperties {
     private OIDCIdentityProviderConfigMap oidc;
 
     @NestedConfigurationProperty
-    private OpenIdFedIdentityProviderConfigMap openidfed;
-
-    @NestedConfigurationProperty
     private SamlIdentityProviderConfigMap saml;
 
     @NestedConfigurationProperty
@@ -101,10 +98,6 @@ public class IdentityAuthoritiesProperties {
     public void setOidc(OIDCIdentityProviderConfigMap oidc) {
         this.oidc = oidc;
     }
-
-    public OpenIdFedIdentityProviderConfigMap getOpenidfed() { return openidfed; }
-
-    public void setOpenidfed(OpenIdFedIdentityProviderConfigMap openidfed) { this.openidfed = openidfed; }
 
     public SamlIdentityProviderConfigMap getSaml() {
         return saml;
