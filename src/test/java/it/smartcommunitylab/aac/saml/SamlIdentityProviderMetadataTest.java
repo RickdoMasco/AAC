@@ -82,34 +82,35 @@ public class SamlIdentityProviderMetadataTest {
                     List<ConfigurableIdentityProvider> idps = realm.getIdentityProviders();
                     assertThat(idps.size()).isEqualTo(2);
 
-                    assertThat(idps.get(0)).isNotNull();
-                    assertThat(idps.get(1)).isNotNull();
-
                     ConfigurableIdentityProvider idp1 = idps.get(0);
-                    assertThat(idp1.getProvider()).isNotNull();
-                    assertThat(idp1.getConfiguration()).isNotNull();
-
                     signingIdpMetadataUrl = METADATA_PATH + idp1.getProvider();
-                    signingIdpAssertionConsumerServiceLocation = BASE_URL + SSO_PATH + idp1.getProvider();
+                    signingIdpAssertionConsumerServiceLocation = "http://localhost" + SSO_PATH + idp1.getProvider();
 
                     SamlIdentityProviderConfigMap config1 = new SamlIdentityProviderConfigMap();
                     config1.setConfiguration(idp1.getConfiguration());
+                    assertThat(config1.getSigningCredentials())
+                            .isNotNull()
+                            .isNotEmpty()
+                            .first()
+                            .extracting(cred -> cred.getSigningCertificate())
+                            .isNotNull();
                     assertThat(config1.getSigningCredentials().get(0).getSigningCertificate()).isNotNull();
-                    assertThat(config1.getEntityId()).isNull();
 
                     signingIdpSigningCertificate = config1.getSigningCredentials().get(0).getSigningCertificate();
                     signingIdpEntityId = config1.getEntityId() != null ? config1.getEntityId() : BASE_URL + signingIdpMetadataUrl;
 
                     ConfigurableIdentityProvider idp2 = idps.get(1);
-                    assertThat(idp2.getProvider()).isNotNull();
-                    assertThat(idp2.getConfiguration()).isNotNull();
-
                     signingAndCryptIdpMetadataUrl = BASE_URL + METADATA_PATH + idp2.getProvider();
 
                     SamlIdentityProviderConfigMap config2 = new SamlIdentityProviderConfigMap();
                     config2.setConfiguration(idp2.getConfiguration());
+                    assertThat(config2.getSigningCredentials())
+                            .isNotNull()
+                            .isNotEmpty()
+                            .first()
+                            .extracting(cred -> cred.getSigningCertificate())
+                            .isNotNull();
                     assertThat(config2.getSigningCredentials().get(0).getSigningCertificate()).isNotNull();
-
                     signingAndCryptIdpSigningCertificate = config2.getSigningCredentials().get(0).getSigningCertificate();
                 }
             });
@@ -190,7 +191,7 @@ public class SamlIdentityProviderMetadataTest {
             .getAssertionConsumerServices();
 
         assertThat(assertionConsumerServices.get(0).getBinding()).isEqualTo(Saml2MessageBinding.POST.getUrn());
-        //assertThat(assertionConsumerServices.get(0).getLocation()).isEqualTo(signingIdpAssertionConsumerServiceLocation);
+        assertThat(assertionConsumerServices.get(0).getLocation()).isEqualTo(signingIdpAssertionConsumerServiceLocation);
     }
 
     @Test

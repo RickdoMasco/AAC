@@ -216,13 +216,13 @@ export const uiSchemaSamlIdp: UiSchema = {
     },
     signingKey: {
         'ui:widget': 'textarea',
-        'ui:title': 'field.signingKeyDeprecated.name',
-        'ui:description': 'field.signingKeyDeprecated.helperText',
+        'ui:title': 'field.signingKey.name',
+        'ui:description': 'field.signingKey.helperText',
     },
     signingCertificate: {
         'ui:widget': 'textarea',
-        'ui:title': 'field.signingCertificateDeprecated.name',
-        'ui:description': 'field.signingCertificateDeprecated.helperText',
+        'ui:title': 'field.signingKey.name',
+        'ui:description': 'field.signingKey.helperText',
     },
     signingCredentials: {
         items: {

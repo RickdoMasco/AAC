@@ -78,7 +78,9 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     public SamlIdentityProviderConfigMap() {}
 
-    public List<SigningCredential> getSigningCredentials() { return signingCredentials; }
+    public List<SigningCredential> getSigningCredentials() {
+        return signingCredentials;
+    }
 
     public void setSigningCredentials(List<SigningCredential> signingCredentials) {
         this.signingCredentials = signingCredentials;
@@ -100,7 +102,9 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
         this.signingCertificate = signingCertificate;
     }
 
-    public String getActiveSigningCredentialId() { return activeSigningCredentialId; }
+    public String getActiveSigningCredentialId() {
+        return activeSigningCredentialId;
+    }
 
     public void setActiveSigningCredentialId(String activeSigningCredentialId) {
         this.activeSigningCredentialId = activeSigningCredentialId;

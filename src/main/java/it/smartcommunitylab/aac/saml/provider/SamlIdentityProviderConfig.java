@@ -121,40 +121,10 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         return metadataRelyingPartyRegistration;
     }
 
-    // TODO throws exception if configuration is invalid
-    private RelyingPartyRegistration toRelyingPartyRegistration() throws IOException, CertificateException {
+    private RelyingPartyRegistration.Builder relyingPartyRegistrationBuilder() throws IOException, CertificateException {
         // set base parameters
         String entityId = getEntityId();
         String assertionConsumerServiceLocation = assertionConsumerUrlTemplate();
-
-        // read rp parameters from map
-        // note: only RSA keys supported
-        List<SigningCredential> signingCredentialList = getSigningCredentials();
-
-        String activeSigningCredentialId;
-        if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
-            activeSigningCredentialId = "legacy-default";
-        }else{
-            activeSigningCredentialId = configMap.getActiveSigningCredentialId();
-        }
-
-        SigningCredential signingCredential = null;
-        String signingKey = null;
-        String signingCertificate = null;
-
-        if (!signingCredentialList.isEmpty()) {
-            if (StringUtils.hasText(activeSigningCredentialId)) {
-                signingCredential = signingCredentialList.stream()
-                        .filter(c -> StringUtils.hasText(c.getCredentialId()) && c.getCredentialId().equals(activeSigningCredentialId))
-                        .findFirst()
-                        .orElse(signingCredentialList.get(0));
-            } else {
-                signingCredential = signingCredentialList.get(0);
-            }
-
-            signingKey = signingCredential.getSigningKey();
-            signingCertificate = signingCredential.getSigningCertificate();
-        }
 
         // ap autoconfiguration
         String idpMetadataLocation = configMap.getIdpMetadataUrl();
@@ -198,75 +168,56 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         // set fixed config params
         builder.entityId(entityId).assertionConsumerServiceLocation(assertionConsumerServiceLocation);
 
-        // check if sign credentials are provided
-        if (StringUtils.hasText(signingKey) && StringUtils.hasText(signingCertificate)) {
-            //            // cleanup pem
-            //            signingCertificate = cleanupPem("CERTIFICATE", signingCertificate);
+        return builder;
+    }
 
-            Saml2X509Credential signingCredentials = getCredentials(
-                signingKey,
-                signingCertificate,
-                Saml2X509CredentialType.SIGNING,
-                Saml2X509CredentialType.DECRYPTION
-            );
-            // add for signature
-            builder.signingX509Credentials(c -> c.add(signingCredentials));
-        }
-
+    private RelyingPartyRegistration toRelyingPartyRegistration() throws IOException, CertificateException {
+        RelyingPartyRegistration.Builder builder = relyingPartyRegistrationBuilder();
+        builder = buildSigningCredentials(builder, true);
         return builder.build();
     }
 
     // TODO throws exception if configuration is invalid
     private RelyingPartyRegistration toMetadataRelyingPartyRegistration() throws IOException, CertificateException {
-        // set base parameters
-        String entityId = getEntityId();
-        String assertionConsumerServiceLocation = assertionConsumerUrlTemplate();
+        RelyingPartyRegistration.Builder builder = relyingPartyRegistrationBuilder();
+        builder = buildSigningCredentials(builder, false);
+        return builder.build();
+    }
 
+    private RelyingPartyRegistration.Builder buildSigningCredentials(RelyingPartyRegistration.Builder builder, Boolean onlyActiveCredential) throws IOException, CertificateException {
         // read rp parameters from map
         // note: only RSA keys supported
-        List<SigningCredential> signingCredentialList = getSigningCredentials();
+        List<SigningCredential> signingCredentialList = new ArrayList<>();
 
-        // ap autoconfiguration
-        String idpMetadataLocation = configMap.getIdpMetadataUrl();
-        // ap manual configuration (only if not metadata)
-        String assertingPartyEntityId = configMap.getIdpEntityId();
-        String ssoLoginServiceLocation = configMap.getWebSsoUrl();
-        String ssoLogoutServiceLocation = configMap.getWebLogoutUrl();
-        boolean signAuthNRequest =
-                (configMap.getSignAuthNRequest() != null ? configMap.getSignAuthNRequest().booleanValue() : true);
-        String verificationCertificate = configMap.getVerificationCertificate();
-        Saml2MessageBinding ssoServiceBinding = getServiceBinding(configMap.getSsoServiceBinding());
+        if (onlyActiveCredential) {
+            if(StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())){
+                signingCredentialList.add(new SigningCredential("legacy-default", configMap.getSigningKey(), configMap.getSigningCertificate()));
+            } else {
+                String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
+                List<SigningCredential> allCredentials = configMap.getSigningCredentials();
 
-        // via builder
-        // providerId is unique, use as registrationId
-        String registrationId = getProvider();
-        RelyingPartyRegistration.Builder builder = RelyingPartyRegistration.withRegistrationId(registrationId);
+                if (allCredentials != null && !allCredentials.isEmpty()) {
+                    SigningCredential credential = allCredentials.stream()
+                            .filter(c -> StringUtils.hasText(activeSigningCredentialId) && activeSigningCredentialId.equals(c.getCredentialId()))
+                            .findFirst()
+                            .orElse(allCredentials.get(0));
 
-        if (StringUtils.hasText(idpMetadataLocation)) {
-            // read metadata to autoconfigure
-            builder = RelyingPartyRegistrations.fromMetadataLocation(idpMetadataLocation).registrationId(
-                    registrationId
-            );
-        } else {
-            // set manually
-            builder.assertingPartyDetails(party ->
-                    party
-                            .entityId(assertingPartyEntityId)
-                            .singleSignOnServiceLocation(ssoLoginServiceLocation)
-                            .wantAuthnRequestsSigned(signAuthNRequest)
-                            .singleSignOnServiceBinding(ssoServiceBinding)
-            );
+                    signingCredentialList.add(credential);
+                }
+            }
+        }else{
+            if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
+                signingCredentialList.add(new SigningCredential("legacy-default", configMap.getSigningKey(), configMap.getSigningCertificate()));
 
-            if (StringUtils.hasText(verificationCertificate)) {
-                Saml2X509Credential verificationCredentials = getVerificationCertificate(verificationCertificate);
-                builder.assertingPartyDetails(party ->
-                        party.verificationX509Credentials(c -> c.add(verificationCredentials))
-                );
+                if (configMap.getSigningCredentials() != null) {
+                    signingCredentialList.addAll(configMap.getSigningCredentials());
+                }
+            } else {
+                signingCredentialList = (configMap.getSigningCredentials() != null)
+                        ? configMap.getSigningCredentials()
+                        : Collections.emptyList();
             }
         }
-
-        // set fixed config params
-        builder.entityId(entityId).assertionConsumerServiceLocation(assertionConsumerServiceLocation);
 
         for (SigningCredential signingCredential : signingCredentialList) {
             String signingKey = signingCredential.getSigningKey();
@@ -288,7 +239,7 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             }
         }
 
-        return builder.build();
+        return builder;
     }
 
     public String metadataUrlTemplate() {
@@ -313,23 +264,6 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             return builder.buildAndExpand(Map.of("baseUrl", baseUrl, "registrationId", getProvider())).toUriString();
         }
         return null;
-    }
-
-    public List<SigningCredential> getSigningCredentials() {
-        List<SigningCredential> allSigningCredentials = new ArrayList<>();
-
-        String legacySigningKey = configMap.getSigningKey();
-        String legacySigningCertificate = configMap.getSigningCertificate();
-
-        if (StringUtils.hasText(legacySigningKey) && StringUtils.hasText(legacySigningCertificate)) {
-            allSigningCredentials.add(new SigningCredential("legacy-default", legacySigningKey, legacySigningCertificate));
-            configMap.setActiveSigningCredentialId("legacy-default");
-        }
-
-        if (configMap.getSigningCredentials() != null) {
-            allSigningCredentials.addAll(configMap.getSigningCredentials());
-        }
-        return allSigningCredentials;
     }
 
     public String getEntityId() {

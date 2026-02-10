@@ -214,6 +214,54 @@ realms:
         name: saml-provider-name-1
         type: identity
         configuration:
+          signingKey: |-
+            -----BEGIN PRIVATE KEY-----
+            MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDAjeMQNwq+vbfi
+            w646a4SsZwr4623cyxgZYjhHO0wcNDdf3+CCFK8kFZGiUYXeopOyZiwGYhLb3sNP
+            IAJQrXDRN1wUAuqA60N75wO/+SsgzVTcLHfRWRTiZ7pHL3FFQXthAL5rW4CnyIv1
+            C5NQYpKW415tztVPj+bOMV9tVkp+s61jdxY5fbYUcjLWWhgB/bkWbJBuOwMZRSFJ
+            Sh5XkJCynbqxipOYqjjgZdtnYEQmQf0HGrV+rQTBh4Lg6dSRg18zYrRKl8lO/A/m
+            IS83190gGgIEYvLVH0621Rk+h+kRxNnWUmKHNNlKhqFPqXLYf9k0Wg4e0ZAUDQYP
+            cnk0FmzpAgMBAAECggEABWnn1KdLhCCG40IFARZP87NDoHXUEAAIydaUW6er5I4b
+            nB80q3ZD6f6OP+iisXyo15GeUsFJTkkQJ4ZwR47ndrEOWRoE4wIvp/Pki9jy+2Ld
+            LCyMONn+55JVhICtuANW4fEN/tbi14ogqeTSVpFS6u7yaHbHJ2EVyD3PSkkXDUKu
+            VL96oHV0nuUmDns8RL6JkvqoG+xAPwQoBQp512xgSCddzLX6hgXuosx2gN+8zolR
+            TMeKfDUxqBG8AVj81no0gqpBBiWsETUX57o7H7cZ4uLXAbjO4f9oBeCnpLuNN3Sd
+            WqGX0vaDmqEgde7SAICY60BT1CD/8RYE9FMlPP+A4QKBgQDg0Nd1cOqB7ycjyYm/
+            hG9Mm2OTh++uhkS1ziUPZMmvzC8BhwiwPIp5yJL/XGr486vP7N/8Kh2stiSIhcA8
+            43/I8H+HM5sCSRO6eEEe7xwuLEwJPBlff1jUBCdKdWj+X9c8NzuteIp0xhwu2KdZ
+            bcPrhFrdKM9n0sFHTVdoXPrlWQKBgQDbQ3H4b+w9F9BT4tONgjnfQCERwIL/LzmQ
+            SHf8Al2DiwEHWk8NMNQhxkoj0GL4PQBGrR4lxQDToCq12X2NnJ4zWINUrUzAUxk8
+            IhQjgs/ExFmSB/UE0HkT7WmNhljHYZy8R8loUovjFDpoxwTjFUZpYlgTXLqJruL1
+            iDDG+eaCEQKBgANCQ71KE7wqcVDNfRevncVogzsCP3EyNRDFmjfs6BeKSCwnfvK/
+            DerSA398IXjWX2k2L9EB80gro7/u4GiBi7qn8dFN6DNSR9zuHVOLd8cbkUaY/m0p
+            9WmtXbxwk0MMtJwE2PKcyrUCoinzrglX0/03//EwxEDnBzI3Zsr2fhSRAoGAN9Qp
+            fdeJsFiS6/kSYrKo56ZdhTaeZDlzD8DUBC/Z/bd0EJo3DKXFLcBeelYCDTEDE/va
+            dEWAG2Jp3Zm+NUOOqIY+El5573J5N2158TzKiFByehNamNo4KhHGUYnGqyW4kdw5
+            dT2nbq9k2+7o2KU/I3At+ugeexYzpc8ClHdm8PECgYA9BUBcvBMORDROUYwChziV
+            +WjpBq3llA4WDmxRGzW9gpZ6QFiTL077Zk602Dy7pJo57DYnZQXBjvkNUFb7ffA+
+            YrF59rq5fLXpDqaFt6aLvD6yJSRKUoKA+5ufBZUTCQ8q92tFr4swXcKtRbnk0Tm0
+            vIpt54Gpg6r7Mg0DqRj9dg==
+            -----END PRIVATE KEY-----
+          signingCertificate: |-
+            -----BEGIN CERTIFICATE-----
+            MIIC+zCCAeOgAwIBAgIUbwRP5ovhTkyMNj6o6Dnu0kvI/3AwDQYJKoZIhvcNAQEL
+            BQAwDTELMAkGA1UEBhMCSVQwHhcNMjMwOTI3MDkyODA5WhcNMjQwOTI2MDkyODA5
+            WjANMQswCQYDVQQGEwJJVDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
+            AMCN4xA3Cr69t+LDrjprhKxnCvjrbdzLGBliOEc7TBw0N1/f4IIUryQVkaJRhd6i
+            k7JmLAZiEtvew08gAlCtcNE3XBQC6oDrQ3vnA7/5KyDNVNwsd9FZFOJnukcvcUVB
+            e2EAvmtbgKfIi/ULk1BikpbjXm3O1U+P5s4xX21WSn6zrWN3Fjl9thRyMtZaGAH9
+            uRZskG47AxlFIUlKHleQkLKdurGKk5iqOOBl22dgRCZB/QcatX6tBMGHguDp1JGD
+            XzNitEqXyU78D+YhLzfX3SAaAgRi8tUfTrbVGT6H6RHE2dZSYoc02UqGoU+pcth/
+            2TRaDh7RkBQNBg9yeTQWbOkCAwEAAaNTMFEwHQYDVR0OBBYEFLyhkQpli2W2oTo8
+            8iZUEm8yYGttMB8GA1UdIwQYMBaAFLyhkQpli2W2oTo88iZUEm8yYGttMA8GA1Ud
+            EwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAITKkqb8V61I+7vRiy+dRd8G
+            Ir6RAMLYwgdKtOK5OHmk/QxWksm0Ug6HJ8I73KbCv5Xz6WR9sCWWZoQjaFkEkJ2T
+            S4dhPlXeYc3+2XskDarCtDqoZrO9bPWzf1yrW8FTLrB1xLQPAMyw/M3FrP7O0ur+
+            G4Z0q2KbQrmuzws8vKxKjNwqX9fv83zm7Er5Rd8dEwDfPWEeN5EH4DQ92UDiLgas
+            MBPr0H8ENL3ngin0CG/OCh/2CNrLvbOqYGcO9VWxDCDEyOJzGVzIe8OqjSHwBLRq
+            D86q3+yDhVPHT8rAUdDdwxMWC+Tmxj8b+mJ6hy6+80+KbmM3nauz1U31qEzLwBo=
+            -----END CERTIFICATE-----
           signingCredentials:
             - credentialId: active
               signingKey: |-
@@ -306,6 +354,54 @@ realms:
         name: saml-provider-name-2
         type: identity
         configuration:
+          signingKey: |-
+            -----BEGIN PRIVATE KEY-----
+            MIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQDAjeMQNwq+vbfi
+            w646a4SsZwr4623cyxgZYjhHO0wcNDdf3+CCFK8kFZGiUYXeopOyZiwGYhLb3sNP
+            IAJQrXDRN1wUAuqA60N75wO/+SsgzVTcLHfRWRTiZ7pHL3FFQXthAL5rW4CnyIv1
+            C5NQYpKW415tztVPj+bOMV9tVkp+s61jdxY5fbYUcjLWWhgB/bkWbJBuOwMZRSFJ
+            Sh5XkJCynbqxipOYqjjgZdtnYEQmQf0HGrV+rQTBh4Lg6dSRg18zYrRKl8lO/A/m
+            IS83190gGgIEYvLVH0621Rk+h+kRxNnWUmKHNNlKhqFPqXLYf9k0Wg4e0ZAUDQYP
+            cnk0FmzpAgMBAAECggEABWnn1KdLhCCG40IFARZP87NDoHXUEAAIydaUW6er5I4b
+            nB80q3ZD6f6OP+iisXyo15GeUsFJTkkQJ4ZwR47ndrEOWRoE4wIvp/Pki9jy+2Ld
+            LCyMONn+55JVhICtuANW4fEN/tbi14ogqeTSVpFS6u7yaHbHJ2EVyD3PSkkXDUKu
+            VL96oHV0nuUmDns8RL6JkvqoG+xAPwQoBQp512xgSCddzLX6hgXuosx2gN+8zolR
+            TMeKfDUxqBG8AVj81no0gqpBBiWsETUX57o7H7cZ4uLXAbjO4f9oBeCnpLuNN3Sd
+            WqGX0vaDmqEgde7SAICY60BT1CD/8RYE9FMlPP+A4QKBgQDg0Nd1cOqB7ycjyYm/
+            hG9Mm2OTh++uhkS1ziUPZMmvzC8BhwiwPIp5yJL/XGr486vP7N/8Kh2stiSIhcA8
+            43/I8H+HM5sCSRO6eEEe7xwuLEwJPBlff1jUBCdKdWj+X9c8NzuteIp0xhwu2KdZ
+            bcPrhFrdKM9n0sFHTVdoXPrlWQKBgQDbQ3H4b+w9F9BT4tONgjnfQCERwIL/LzmQ
+            SHf8Al2DiwEHWk8NMNQhxkoj0GL4PQBGrR4lxQDToCq12X2NnJ4zWINUrUzAUxk8
+            IhQjgs/ExFmSB/UE0HkT7WmNhljHYZy8R8loUovjFDpoxwTjFUZpYlgTXLqJruL1
+            iDDG+eaCEQKBgANCQ71KE7wqcVDNfRevncVogzsCP3EyNRDFmjfs6BeKSCwnfvK/
+            DerSA398IXjWX2k2L9EB80gro7/u4GiBi7qn8dFN6DNSR9zuHVOLd8cbkUaY/m0p
+            9WmtXbxwk0MMtJwE2PKcyrUCoinzrglX0/03//EwxEDnBzI3Zsr2fhSRAoGAN9Qp
+            fdeJsFiS6/kSYrKo56ZdhTaeZDlzD8DUBC/Z/bd0EJo3DKXFLcBeelYCDTEDE/va
+            dEWAG2Jp3Zm+NUOOqIY+El5573J5N2158TzKiFByehNamNo4KhHGUYnGqyW4kdw5
+            dT2nbq9k2+7o2KU/I3At+ugeexYzpc8ClHdm8PECgYA9BUBcvBMORDROUYwChziV
+            +WjpBq3llA4WDmxRGzW9gpZ6QFiTL077Zk602Dy7pJo57DYnZQXBjvkNUFb7ffA+
+            YrF59rq5fLXpDqaFt6aLvD6yJSRKUoKA+5ufBZUTCQ8q92tFr4swXcKtRbnk0Tm0
+            vIpt54Gpg6r7Mg0DqRj9dg==
+            -----END PRIVATE KEY-----
+          signingCertificate: |-
+            -----BEGIN CERTIFICATE-----
+            MIIC+zCCAeOgAwIBAgIUbwRP5ovhTkyMNj6o6Dnu0kvI/3AwDQYJKoZIhvcNAQEL
+            BQAwDTELMAkGA1UEBhMCSVQwHhcNMjMwOTI3MDkyODA5WhcNMjQwOTI2MDkyODA5
+            WjANMQswCQYDVQQGEwJJVDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEB
+            AMCN4xA3Cr69t+LDrjprhKxnCvjrbdzLGBliOEc7TBw0N1/f4IIUryQVkaJRhd6i
+            k7JmLAZiEtvew08gAlCtcNE3XBQC6oDrQ3vnA7/5KyDNVNwsd9FZFOJnukcvcUVB
+            e2EAvmtbgKfIi/ULk1BikpbjXm3O1U+P5s4xX21WSn6zrWN3Fjl9thRyMtZaGAH9
+            uRZskG47AxlFIUlKHleQkLKdurGKk5iqOOBl22dgRCZB/QcatX6tBMGHguDp1JGD
+            XzNitEqXyU78D+YhLzfX3SAaAgRi8tUfTrbVGT6H6RHE2dZSYoc02UqGoU+pcth/
+            2TRaDh7RkBQNBg9yeTQWbOkCAwEAAaNTMFEwHQYDVR0OBBYEFLyhkQpli2W2oTo8
+            8iZUEm8yYGttMB8GA1UdIwQYMBaAFLyhkQpli2W2oTo88iZUEm8yYGttMA8GA1Ud
+            EwEB/wQFMAMBAf8wDQYJKoZIhvcNAQELBQADggEBAITKkqb8V61I+7vRiy+dRd8G
+            Ir6RAMLYwgdKtOK5OHmk/QxWksm0Ug6HJ8I73KbCv5Xz6WR9sCWWZoQjaFkEkJ2T
+            S4dhPlXeYc3+2XskDarCtDqoZrO9bPWzf1yrW8FTLrB1xLQPAMyw/M3FrP7O0ur+
+            G4Z0q2KbQrmuzws8vKxKjNwqX9fv83zm7Er5Rd8dEwDfPWEeN5EH4DQ92UDiLgas
+            MBPr0H8ENL3ngin0CG/OCh/2CNrLvbOqYGcO9VWxDCDEyOJzGVzIe8OqjSHwBLRq
+            D86q3+yDhVPHT8rAUdDdwxMWC+Tmxj8b+mJ6hy6+80+KbmM3nauz1U31qEzLwBo=
+            -----END CERTIFICATE-----
           signingCredentials:
             - credentialId: active
               signingKey: |-

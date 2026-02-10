@@ -135,6 +135,8 @@ public class SamlIdentityProviderConfigurationTest {
         Map<String, Serializable> rawCfgMap = new HashMap<>();
         rawCfgMap.put("type", SamlIdentityProviderConfigMap.RESOURCE_TYPE);
         rawCfgMap.put("entityId", ENTITY_ID);
+        rawCfgMap.put("signingKey", SIGN_PRIV_KEY);
+        rawCfgMap.put("signingCertificate", SIGN_CERTIFICATE);
         ArrayList<SigningCredential> signingCredentialList = new ArrayList<>();
         signingCredentialList.add(
                 new SigningCredential( ACTIVE_SIGN_CREDENTIAL_ID, SIGN_PRIV_KEY, SIGN_CERTIFICATE )
@@ -165,6 +167,8 @@ public class SamlIdentityProviderConfigurationTest {
         idpCfgMap.setConfiguration(rawCfgMap);
 
         assertThat(idpCfgMap.getEntityId()).isEqualTo(rawCfgMap.get("entityId"));
+        assertThat(idpCfgMap.getSigningKey()).isEqualTo(rawCfgMap.get("signingKey"));
+        assertThat(idpCfgMap.getSigningCertificate()).isEqualTo(rawCfgMap.get("signingCertificate"));
         assertThat(idpCfgMap.getSigningCredentials())
                 .usingRecursiveComparison()
                 .isEqualTo(rawCfgMap.get("signingCredentials"));
@@ -201,6 +205,8 @@ public class SamlIdentityProviderConfigurationTest {
         Map<String, Serializable> rawCfgMap = new HashMap<>();
         rawCfgMap.put("type", SamlIdentityProviderConfigMap.RESOURCE_TYPE);
         rawCfgMap.put("entityId", ENTITY_ID);
+        rawCfgMap.put("signingKey", SIGN_PRIV_KEY);
+        rawCfgMap.put("signingCertificate", SIGN_CERTIFICATE);
         ArrayList<SigningCredential> signingCredentialList = new ArrayList<>();
         signingCredentialList.add(
                 new SigningCredential( ACTIVE_SIGN_CREDENTIAL_ID, SIGN_PRIV_KEY, SIGN_CERTIFICATE )
@@ -313,6 +319,8 @@ public class SamlIdentityProviderConfigurationTest {
         Map<String, Serializable> rawCfgMap = new HashMap<>();
         rawCfgMap.put("type", SamlIdentityProviderConfigMap.RESOURCE_TYPE);
         rawCfgMap.put("entityId", ENTITY_ID);
+        rawCfgMap.put("signingKey", SIGN_PRIV_KEY);
+        rawCfgMap.put("signingCertificate", SIGN_CERTIFICATE);
         ArrayList<SigningCredential> signingCredentialList = new ArrayList<>();
         signingCredentialList.add(
                 new SigningCredential( ACTIVE_SIGN_CREDENTIAL_ID, SIGN_PRIV_KEY, SIGN_CERTIFICATE )
