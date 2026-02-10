@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package it.smartcommunitylab.aac.openidfed.service;
+package it.smartcommunitylab.aac.openidfed;
 
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.accounts.AccountServiceAuthority;
@@ -34,7 +34,6 @@ import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedAccountServiceConfig
 import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedIdentityProviderConfig;
 import it.smartcommunitylab.aac.openidfed.provider.OpenIdFedIdentityProviderConfigMap;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
@@ -53,7 +52,15 @@ public class OpenIdFedAccountServiceAuthority
         UserAccountService<OIDCUserAccount> userAccountService,
         ProviderConfigRepository<OpenIdFedIdentityProviderConfig> registrationRepository
     ) {
-        super(SystemKeys.AUTHORITY_OPENIDFED, new OpenIdFedConfigTranslatorRepository(registrationRepository));
+        this(SystemKeys.AUTHORITY_OPENIDFED, userAccountService, registrationRepository);
+    }
+
+    public OpenIdFedAccountServiceAuthority(
+        String authorityId,
+        UserAccountService<OIDCUserAccount> userAccountService,
+        ProviderConfigRepository<OpenIdFedIdentityProviderConfig> registrationRepository
+    ) {
+        super(authorityId, new OpenIdFedConfigTranslatorRepository(registrationRepository));
         Assert.notNull(userAccountService, "account service is mandatory");
 
         this.accountService = userAccountService;
