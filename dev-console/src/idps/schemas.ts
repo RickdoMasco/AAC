@@ -327,14 +327,14 @@ export const uiSchemaSpidIdp: UiSchema = {
         'ui:description': 'field.spidLevel.helperText',
     },
     signingKey: {
-        'ui:widget': 'textarea',
-        'ui:title': 'field.signingKeyDeprecated.name',
-        'ui:description': 'field.signingKeyDeprecated.helperText',
+        "ui:widget": "textarea",
+        'ui:title': 'field.signingKey.name',
+        'ui:description': 'field.signingKey.helperText',
     },
     signingCertificate: {
-        'ui:widget': 'textarea',
-        'ui:title': 'field.signingCertificateDeprecated.name',
-        'ui:description': 'field.signingCertificateDeprecated.helperText',
+        "ui:widget": "textarea",
+        'ui:title': 'field.signingCertificate.name',
+        'ui:description': 'field.signingCertificate.helperText',
     },
     signingCredentials: {
         items: {
