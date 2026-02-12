@@ -135,6 +135,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         SpidIdentityProviderConfigMap configs
     ) {
         super(cp, settings, configs);
+        loadSigningCredentials();
         loadMetadataConfiguration();
     }
 
@@ -454,37 +455,35 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         return builder.build();
     }
 
-    private RelyingPartyRegistration.Builder buildSigningCredentials(RelyingPartyRegistration.Builder builder, Boolean onlyActiveCredential) throws IOException, CertificateException {
+    private RelyingPartyRegistration.Builder buildSigningCredentials(RelyingPartyRegistration.Builder builder, boolean onlyActiveCredential) throws IOException, CertificateException {
         List<SigningCredential> signingCredentialList = new ArrayList<>();
 
-        if (onlyActiveCredential) {
-            if(StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())){
-                signingCredentialList.add(new SigningCredential("legacy-default", configMap.getSigningKey(), configMap.getSigningCertificate()));
-            } else {
-                String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
-                List<SigningCredential> allCredentials = configMap.getSigningCredentials();
+        if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
+            signingCredentialList.add(new SigningCredential(null, configMap.getSigningKey(), configMap.getSigningCertificate()));
+        }
 
-                if (allCredentials != null && !allCredentials.isEmpty()) {
-                    SigningCredential credential = allCredentials.stream()
-                            .filter(c -> StringUtils.hasText(activeSigningCredentialId) && activeSigningCredentialId.equals(c.getCredentialId()))
-                            .findFirst()
-                            .orElse(allCredentials.get(0));
+        if (onlyActiveCredential && signingCredentialList.isEmpty() && configMap.getSigningCredentials() != null && !configMap.getSigningCredentials().isEmpty()) {
+            String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
+            List<SigningCredential> allCredentials = configMap.getSigningCredentials();
 
-                    signingCredentialList.add(credential);
-                }
+            SigningCredential credential = allCredentials.stream()
+                    .filter(c -> StringUtils.hasText(activeSigningCredentialId) && activeSigningCredentialId.equals(c.getCredentialId()))
+                    .findFirst()
+                    .orElse(null);
+
+            if(credential == null){
+                credential = allCredentials.get(0);
             }
-        }else{
-            if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
-                signingCredentialList.add(new SigningCredential("legacy-default", configMap.getSigningKey(), configMap.getSigningCertificate()));
 
-                if (configMap.getSigningCredentials() != null) {
-                    signingCredentialList.addAll(configMap.getSigningCredentials());
-                }
-            } else {
-                signingCredentialList = (configMap.getSigningCredentials() != null)
-                        ? configMap.getSigningCredentials()
-                        : Collections.emptyList();
+            signingCredentialList.add(credential);
+        }else if (!onlyActiveCredential){
+            if (configMap.getSigningCredentials() != null) {
+                signingCredentialList.addAll(configMap.getSigningCredentials());
             }
+        }
+
+        if (signingCredentialList.isEmpty()) {
+            throw new IllegalArgumentException("CRITICAL: No valid SPID signing credentials found during registration build.");
         }
 
         for (SigningCredential signingCredential : signingCredentialList) {
@@ -685,6 +684,41 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
         if (this.metadataConfiguration == null) {
             throw new IllegalArgumentException("empty metadata configuration");
+        }
+    }
+
+    private void loadSigningCredentials() {
+        if (StringUtils.hasText(configMap.getSigningKey()) || StringUtils.hasText(configMap.getSigningCertificate())) {
+            if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
+                return;
+            }
+            throw new IllegalArgumentException("CRITICAL: Missing SPID signing credentials. " +
+                    "The Service Provider cannot establish a Circle of Trust with IdPs " +
+                    "as required by AgID technical regulations (Binding HTTP-POST/Redirect).");
+        }
+
+        if (configMap.getSigningCredentials() == null || configMap.getSigningCredentials().isEmpty()) {
+            throw new IllegalArgumentException("CRITICAL: Missing SPID signing credentials. " +
+                    "The Service Provider cannot establish a Circle of Trust with IdPs " +
+                    "as required by AgID technical regulations (Binding HTTP-POST/Redirect).");
+        }
+
+        String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
+        List<SigningCredential> allCredentials = configMap.getSigningCredentials();
+
+        SigningCredential credential = allCredentials.stream()
+                .filter(c -> StringUtils.hasText(activeSigningCredentialId) && activeSigningCredentialId.equals(c.getCredentialId()))
+                .findFirst()
+                .orElse(null);
+
+        if(credential == null){
+            credential = allCredentials.get(0);
+        }
+
+        if (!StringUtils.hasText(credential.getSigningKey()) || !StringUtils.hasText(credential.getSigningCertificate())) {
+            throw new IllegalArgumentException("CRITICAL: The selected SPID signing credential (ID: "
+                    + (credential.getCredentialId() != null ? credential.getCredentialId() : "default/first")
+                    + ") is incomplete. Both key and certificate are required.");
         }
     }
 
