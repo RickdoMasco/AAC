@@ -184,38 +184,32 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         return builder.build();
     }
 
-    private RelyingPartyRegistration.Builder buildSigningCredentials(RelyingPartyRegistration.Builder builder, Boolean onlyActiveCredential) throws IOException, CertificateException {
+    private RelyingPartyRegistration.Builder buildSigningCredentials(RelyingPartyRegistration.Builder builder, boolean onlyActiveCredential) throws IOException, CertificateException {
         // read rp parameters from map
         // note: only RSA keys supported
         List<SigningCredential> signingCredentialList = new ArrayList<>();
 
-        if (onlyActiveCredential) {
-            if(StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())){
-                signingCredentialList.add(new SigningCredential("legacy-default", configMap.getSigningKey(), configMap.getSigningCertificate()));
-            } else {
-                String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
-                List<SigningCredential> allCredentials = configMap.getSigningCredentials();
+        if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
+            signingCredentialList.add(new SigningCredential(null, configMap.getSigningKey(), configMap.getSigningCertificate()));
+        }
 
-                if (allCredentials != null && !allCredentials.isEmpty()) {
-                    SigningCredential credential = allCredentials.stream()
-                            .filter(c -> StringUtils.hasText(activeSigningCredentialId) && activeSigningCredentialId.equals(c.getCredentialId()))
-                            .findFirst()
-                            .orElse(allCredentials.get(0));
+        if (onlyActiveCredential && signingCredentialList.isEmpty() && configMap.getSigningCredentials() != null && !configMap.getSigningCredentials().isEmpty()) {
+            String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
+            List<SigningCredential> allCredentials = configMap.getSigningCredentials();
 
-                    signingCredentialList.add(credential);
-                }
+            SigningCredential credential = allCredentials.stream()
+                .filter(c -> StringUtils.hasText(activeSigningCredentialId) && activeSigningCredentialId.equals(c.getCredentialId()))
+                .findFirst()
+                .orElse(null);
+
+            if(credential == null){
+                credential = allCredentials.get(0);
             }
-        }else{
-            if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
-                signingCredentialList.add(new SigningCredential("legacy-default", configMap.getSigningKey(), configMap.getSigningCertificate()));
 
-                if (configMap.getSigningCredentials() != null) {
-                    signingCredentialList.addAll(configMap.getSigningCredentials());
-                }
-            } else {
-                signingCredentialList = (configMap.getSigningCredentials() != null)
-                        ? configMap.getSigningCredentials()
-                        : Collections.emptyList();
+            signingCredentialList.add(credential);
+        }else if (!onlyActiveCredential){
+            if (configMap.getSigningCredentials() != null) {
+                signingCredentialList.addAll(configMap.getSigningCredentials());
             }
         }
 
