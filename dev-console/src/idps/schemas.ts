@@ -221,8 +221,8 @@ export const uiSchemaSamlIdp: UiSchema = {
     },
     signingCertificate: {
         'ui:widget': 'textarea',
-        'ui:title': 'field.signingKey.name',
-        'ui:description': 'field.signingKey.helperText',
+        'ui:title': 'field.signingCertificate.name',
+        'ui:description': 'field.signingCertificate.helperText',
     },
     signingCredentials: {
         items: {
