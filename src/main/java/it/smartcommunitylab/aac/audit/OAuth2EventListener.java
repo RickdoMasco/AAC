@@ -157,10 +157,13 @@ public class OAuth2EventListener implements ApplicationListener<OAuth2Event>, Ap
             String type = auth.getUserAuthentication() == null ? "client" : "user";
 
             Map<String, Object> data = new HashMap<>();
+            Map<String, Object> webAuthenticationDetails = new HashMap<>();
 
             if (authUser != null && authUser.getDetails() != null) {
-                data.put("webAuthenticationDetailsUser", authUser.getDetails());
+                webAuthenticationDetails.put("user", authUser.getDetails());
             }
+
+            data.put("webAuthenticationDetails", webAuthenticationDetails);
 
             data.put("type", type);
             data.put("token", token.getValue());
