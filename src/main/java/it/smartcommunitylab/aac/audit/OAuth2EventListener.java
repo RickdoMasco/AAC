@@ -34,6 +34,7 @@ import org.springframework.boot.actuate.audit.listener.AuditApplicationEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 import org.springframework.context.ApplicationListener;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.common.exceptions.OAuth2Exception;
 import org.springframework.security.oauth2.provider.AuthorizationRequest;
 import org.springframework.security.oauth2.provider.OAuth2Authentication;
@@ -144,6 +145,7 @@ public class OAuth2EventListener implements ApplicationListener<OAuth2Event>, Ap
         if (event.getToken() instanceof AACOAuth2AccessToken) {
             AACOAuth2AccessToken token = (AACOAuth2AccessToken) event.getToken();
             OAuth2Authentication auth = event.getAuthentication();
+            Authentication authUser = auth.getUserAuthentication();
 
             //            String principal = auth.getName();
             String principal = token.getSubject();
@@ -155,6 +157,14 @@ public class OAuth2EventListener implements ApplicationListener<OAuth2Event>, Ap
             String type = auth.getUserAuthentication() == null ? "client" : "user";
 
             Map<String, Object> data = new HashMap<>();
+            Map<String, Object> webAuthenticationDetails = new HashMap<>();
+
+            if (authUser != null && authUser.getDetails() != null) {
+                webAuthenticationDetails.put("user", authUser.getDetails());
+            }
+
+            data.put("webAuthenticationDetails", webAuthenticationDetails);
+
             data.put("type", type);
             data.put("token", token.getValue());
             data.put("scope", token.getScope());
