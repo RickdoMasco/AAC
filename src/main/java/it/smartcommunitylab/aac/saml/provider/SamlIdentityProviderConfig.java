@@ -27,7 +27,6 @@ import java.security.PrivateKey;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
-import  java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -206,10 +205,12 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
                 credential = allCredentials.get(0);
             }
 
-            signingCredentialList.add(credential);
+            checkValidSigningCredential(signingCredentialList, credential);
         }else if (!onlyActiveCredential){
             if (configMap.getSigningCredentials() != null) {
-                signingCredentialList.addAll(configMap.getSigningCredentials());
+                for(SigningCredential credential: configMap.getSigningCredentials()){
+                    checkValidSigningCredential(signingCredentialList, credential);
+                }
             }
         }
 
@@ -234,6 +235,12 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         }
 
         return builder;
+    }
+
+    private void checkValidSigningCredential(List<SigningCredential> signingCredentialList, SigningCredential credential){
+        if (StringUtils.hasText(credential.getSigningKey()) && StringUtils.hasText(credential.getSigningCertificate())) {
+            signingCredentialList.add(credential);
+        }
     }
 
     public String metadataUrlTemplate() {
