@@ -136,7 +136,6 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     ) {
         super(cp, settings, configs);
         validateSigningCredentials();
-        //List<SigningCredential> signingCredentialList = signingCredentialList(true);
         loadMetadataConfiguration();
     }
 
