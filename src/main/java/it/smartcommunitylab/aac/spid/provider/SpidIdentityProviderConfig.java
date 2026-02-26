@@ -418,7 +418,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     }
 
     // create a relying party registration with placeholder ap configuration.
-    private RelyingPartyRegistration toBareRelyingPartyRegistration(Boolean onlyActiveCredential) throws IOException, CertificateException {
+    private RelyingPartyRegistration toBareRelyingPartyRegistration(boolean onlyActiveCredential) throws IOException, CertificateException {
         RelyingPartyRegistration.Builder builder = RelyingPartyRegistration
             .withRegistrationId(getMetadataRegistrationId())
             .entityId(getEntityId())
@@ -438,7 +438,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
     // create a relying party registration for an upstream idp; only ap autoconfiguration is supported,
     // hence function parameters require an idp metadata url
-    private RelyingPartyRegistration toRelyingPartyRegistration(String registrationId, String idpMetadataUrl, Boolean onlyActiveCredential) throws IOException, CertificateException {
+    private RelyingPartyRegistration toRelyingPartyRegistration(String registrationId, String idpMetadataUrl, boolean onlyActiveCredential) throws IOException, CertificateException {
         // start from ap autoconfiguration ...
         RelyingPartyRegistration.Builder builder = RelyingPartyRegistrations
             .fromMetadataLocation(idpMetadataUrl)
@@ -800,7 +800,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         return attributeConsumingServices;
     }
 
-    private void verifyX509Certificate(Document doc, XPath xpath) throws XPathExpressionException {
+    private void verifyX509Certificate(Document doc, XPath xpath) throws XPathExpressionException, CertificateException, IOException {
         NodeList metaCertList = (NodeList) xpath.evaluate(XPATH_EXPRESSION_SIGNING_CERTIFICATES, doc, XPathConstants.NODESET);
         if (metaCertList == null || metaCertList.getLength() == 0) {
             throw new IllegalArgumentException("empty signing certificate in metadata");
@@ -818,21 +818,8 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             throw new IllegalArgumentException("no valid signing certificates found in metadata");
         }
 
-        List<SigningCredential> signingCredentialList;
+        List<SigningCredential> signingCredentialList = signingCredentialList(false);
 
-        if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
-            signingCredentialList = new ArrayList<>();
-            signingCredentialList.add(new SigningCredential("legacy-default", configMap.getSigningKey(), configMap.getSigningCertificate()));
-
-            if (configMap.getSigningCredentials() != null) {
-                signingCredentialList.addAll(configMap.getSigningCredentials());
-            }
-        } else {
-            signingCredentialList = (configMap.getSigningCredentials() != null)
-                    ? configMap.getSigningCredentials()
-                    : Collections.emptyList();
-        }
-        
         Set<String> confCertNormalizedList = signingCredentialList
             .stream()
             .map(SigningCredential::getSigningCertificate)
