@@ -135,7 +135,8 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         SpidIdentityProviderConfigMap configs
     ) {
         super(cp, settings, configs);
-        loadSigningCredentials();
+        validateSigningCredentials();
+        //List<SigningCredential> signingCredentialList = signingCredentialList(true);
         loadMetadataConfiguration();
     }
 
@@ -456,6 +457,29 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     }
 
     private RelyingPartyRegistration.Builder buildSigningCredentials(RelyingPartyRegistration.Builder builder, boolean onlyActiveCredential) throws IOException, CertificateException {
+
+        List<SigningCredential> signingCredentialList = signingCredentialList(onlyActiveCredential);
+
+        for (SigningCredential signingCredential : signingCredentialList) {
+            String signingKey = signingCredential.getSigningKey();
+            String signingCertificate = signingCredential.getSigningCertificate();
+
+            if (StringUtils.hasText(signingKey) && StringUtils.hasText(signingCertificate)) {
+                // only RSA keys are supported
+                Saml2X509Credential credential = CertificateParser.genCredentials(
+                    signingKey,
+                    signingCertificate,
+                    Saml2X509Credential.Saml2X509CredentialType.SIGNING,
+                    Saml2X509Credential.Saml2X509CredentialType.DECRYPTION
+                );
+                builder.signingX509Credentials(c -> c.add(credential));
+            }
+        }
+
+        return builder;
+    }
+
+    private List<SigningCredential> signingCredentialList(boolean onlyActiveCredential) throws IOException, CertificateException {
         List<SigningCredential> signingCredentialList = new ArrayList<>();
 
         if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
@@ -475,34 +499,36 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
                 credential = allCredentials.get(0);
             }
 
-            signingCredentialList.add(credential);
+            checkValidSigningCredential(signingCredentialList, credential);
         }else if (!onlyActiveCredential){
             if (configMap.getSigningCredentials() != null) {
-                signingCredentialList.addAll(configMap.getSigningCredentials());
+                for(SigningCredential credential: configMap.getSigningCredentials()){
+                    checkValidSigningCredential(signingCredentialList, credential);
+                }
             }
         }
 
         if (signingCredentialList.isEmpty()) {
-            throw new IllegalArgumentException("CRITICAL: No valid SPID signing credentials found during registration build.");
+            throw new IllegalArgumentException("CRITICAL: Missing SPID signing credentials. " +
+                    "The Service Provider cannot establish a Circle of Trust with IdPs " +
+                    "as required by AgID technical regulations (Binding HTTP-POST/Redirect).");
         }
 
-        for (SigningCredential signingCredential : signingCredentialList) {
-            String signingKey = signingCredential.getSigningKey();
-            String signingCertificate = signingCredential.getSigningCertificate();
+        return signingCredentialList;
+    }
 
-            if (StringUtils.hasText(signingKey) && StringUtils.hasText(signingCertificate)) {
-                // only RSA keys are supported
-                Saml2X509Credential credential = CertificateParser.genCredentials(
-                    signingKey,
-                    signingCertificate,
-                    Saml2X509Credential.Saml2X509CredentialType.SIGNING,
-                    Saml2X509Credential.Saml2X509CredentialType.DECRYPTION
-                );
-                builder.signingX509Credentials(c -> c.add(credential));
-            }
+    private void checkValidSigningCredential(List<SigningCredential> signingCredentialList, SigningCredential credential){
+        if (StringUtils.hasText(credential.getSigningKey()) && StringUtils.hasText(credential.getSigningCertificate())) {
+            signingCredentialList.add(credential);
         }
+    }
 
-        return builder;
+    private void validateSigningCredentials() {
+        try {
+            signingCredentialList(true);
+        } catch (IOException | CertificateException e) {
+            throw new IllegalArgumentException("failed to validate SigningCredentials: " + e.getMessage(), e);
+        }
     }
 
     // yield a unique key per upstream metadata (url)
@@ -684,41 +710,6 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
 
         if (this.metadataConfiguration == null) {
             throw new IllegalArgumentException("empty metadata configuration");
-        }
-    }
-
-    private void loadSigningCredentials() {
-        if (StringUtils.hasText(configMap.getSigningKey()) || StringUtils.hasText(configMap.getSigningCertificate())) {
-            if (StringUtils.hasText(configMap.getSigningKey()) && StringUtils.hasText(configMap.getSigningCertificate())) {
-                return;
-            }
-            throw new IllegalArgumentException("CRITICAL: Missing SPID signing credentials. " +
-                    "The Service Provider cannot establish a Circle of Trust with IdPs " +
-                    "as required by AgID technical regulations (Binding HTTP-POST/Redirect).");
-        }
-
-        if (configMap.getSigningCredentials() == null || configMap.getSigningCredentials().isEmpty()) {
-            throw new IllegalArgumentException("CRITICAL: Missing SPID signing credentials. " +
-                    "The Service Provider cannot establish a Circle of Trust with IdPs " +
-                    "as required by AgID technical regulations (Binding HTTP-POST/Redirect).");
-        }
-
-        String activeSigningCredentialId = configMap.getActiveSigningCredentialId();
-        List<SigningCredential> allCredentials = configMap.getSigningCredentials();
-
-        SigningCredential credential = allCredentials.stream()
-                .filter(c -> StringUtils.hasText(activeSigningCredentialId) && activeSigningCredentialId.equals(c.getCredentialId()))
-                .findFirst()
-                .orElse(null);
-
-        if(credential == null){
-            credential = allCredentials.get(0);
-        }
-
-        if (!StringUtils.hasText(credential.getSigningKey()) || !StringUtils.hasText(credential.getSigningCertificate())) {
-            throw new IllegalArgumentException("CRITICAL: The selected SPID signing credential (ID: "
-                    + (credential.getCredentialId() != null ? credential.getCredentialId() : "default/first")
-                    + ") is incomplete. Both key and certificate are required.");
         }
     }
 
