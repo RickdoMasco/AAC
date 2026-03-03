@@ -604,7 +604,7 @@ public class AuthorizationEndpoint implements InitializingBean {
                 );
 
             // get token from granter, if flow is unsupported result will be null
-            accessToken = tokenGranter.grant(implicitTokenRequet.getGrantType(), implicitTokenRequet);
+            accessToken = tokenGranter.grant(implicitTokenRequet.getGrantType(), implicitTokenRequet, null);
             if (accessToken == null) {
                 throw new ServerErrorException("Unable to build response");
             }

@@ -59,7 +59,6 @@ import org.springframework.security.oauth2.provider.token.ResourceServerTokenSer
 import org.springframework.stereotype.Controller;
 import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -162,7 +161,7 @@ public class TokenEndpoint implements InitializingBean {
         oauth2RequestValidator.validate(tokenRequest, clientDetails);
 
         // get token from granter, if flow is unsupported result will be null
-        OAuth2AccessToken token = tokenGranter.grant(grantType, tokenRequest);
+        OAuth2AccessToken token = tokenGranter.grant(grantType, tokenRequest, clientAuth);
         if (token == null) {
             throw new UnsupportedGrantTypeException("Grant type not supported: " + grantType);
         }

@@ -23,6 +23,7 @@ import it.smartcommunitylab.aac.common.NoSuchScopeException;
 import it.smartcommunitylab.aac.common.SystemException;
 import it.smartcommunitylab.aac.model.ScopeType;
 import it.smartcommunitylab.aac.oauth.AACOAuth2AccessToken;
+import it.smartcommunitylab.aac.oauth.auth.OAuth2ClientAuthenticationToken;
 import it.smartcommunitylab.aac.oauth.service.OAuth2ClientDetailsService;
 import it.smartcommunitylab.aac.scope.Scope;
 import it.smartcommunitylab.aac.scope.ScopeApprover;
@@ -69,8 +70,8 @@ public class ClientCredentialsTokenGranter extends AbstractTokenGranter {
     }
 
     @Override
-    public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest) {
-        OAuth2AccessToken token = super.grant(grantType, tokenRequest);
+    public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest, OAuth2ClientAuthenticationToken clientAuth) {
+        OAuth2AccessToken token = super.grant(grantType, tokenRequest, clientAuth);
 
         if (token != null) {
             logger.trace(

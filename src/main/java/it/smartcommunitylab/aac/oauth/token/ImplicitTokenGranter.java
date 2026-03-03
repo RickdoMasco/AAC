@@ -17,6 +17,7 @@
 package it.smartcommunitylab.aac.oauth.token;
 
 import it.smartcommunitylab.aac.oauth.AACOAuth2AccessToken;
+import it.smartcommunitylab.aac.oauth.auth.OAuth2ClientAuthenticationToken;
 import it.smartcommunitylab.aac.oauth.service.OAuth2ClientDetailsService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,8 +58,8 @@ public class ImplicitTokenGranter extends AbstractTokenGranter {
     }
 
     @Override
-    public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest) {
-        OAuth2AccessToken token = super.grant(grantType, tokenRequest);
+    public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest, OAuth2ClientAuthenticationToken clientAuth) {
+        OAuth2AccessToken token = super.grant(grantType, tokenRequest, clientAuth);
         if (token != null) {
             logger.trace(
                 "grant access token for client " +

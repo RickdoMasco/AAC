@@ -48,7 +48,6 @@ import it.smartcommunitylab.aac.oauth.model.OAuth2ClientDetails;
 import it.smartcommunitylab.aac.oauth.request.OAuth2AuthorizationRequestFactory;
 import it.smartcommunitylab.aac.oauth.request.OAuth2TokenRequestFactory;
 import it.smartcommunitylab.aac.oauth.service.OAuth2ClientDetailsService;
-import it.smartcommunitylab.aac.oidc.OIDCKeys;
 import it.smartcommunitylab.aac.realms.service.RealmService;
 import it.smartcommunitylab.aac.scope.Scope;
 import it.smartcommunitylab.aac.scope.ScopeApprover;
@@ -775,7 +774,7 @@ public class DevManager {
                 clientDetails
             );
             ImplicitTokenRequest implicitRequest = new ImplicitTokenRequest(tokenRequest, storedOAuth2Request);
-            OAuth2AccessToken accessToken = oauth2TokenGranter.grant(grantType, implicitRequest);
+            OAuth2AccessToken accessToken = oauth2TokenGranter.grant(grantType, implicitRequest, null);
 
             return accessToken;
         } else {
@@ -800,7 +799,7 @@ public class DevManager {
             tokenParams.put("redirect_uri", authorizationParams.get("redirect_uri"));
 
             TokenRequest tokenRequest = oauth2TokenRequestFactory.createTokenRequest(tokenParams, clientDetails);
-            OAuth2AccessToken accessToken = oauth2TokenGranter.grant(grantType, tokenRequest);
+            OAuth2AccessToken accessToken = oauth2TokenGranter.grant(grantType, tokenRequest, null);
 
             return accessToken;
         }
@@ -813,7 +812,7 @@ public class DevManager {
     ) {
         // build request
         TokenRequest tokenRequest = oauth2TokenRequestFactory.createTokenRequest(tokenParams, clientDetails);
-        OAuth2AccessToken accessToken = oauth2TokenGranter.grant(tokenRequest.getGrantType(), tokenRequest);
+        OAuth2AccessToken accessToken = oauth2TokenGranter.grant(tokenRequest.getGrantType(), tokenRequest, null);
 
         return accessToken;
     }

@@ -17,6 +17,7 @@
 package it.smartcommunitylab.aac.audit;
 
 import it.smartcommunitylab.aac.oauth.AACOAuth2AccessToken;
+import it.smartcommunitylab.aac.oauth.auth.OAuth2ClientAuthenticationToken;
 import it.smartcommunitylab.aac.oauth.event.OAuth2AuthorizationExceptionEvent;
 import it.smartcommunitylab.aac.oauth.event.OAuth2Event;
 import it.smartcommunitylab.aac.oauth.event.OAuth2TokenExceptionEvent;
@@ -145,6 +146,7 @@ public class OAuth2EventListener implements ApplicationListener<OAuth2Event>, Ap
         if (event.getToken() instanceof AACOAuth2AccessToken) {
             AACOAuth2AccessToken token = (AACOAuth2AccessToken) event.getToken();
             OAuth2Authentication auth = event.getAuthentication();
+            OAuth2ClientAuthenticationToken authClient = event.getClientAuthentication();
             Authentication authUser = auth.getUserAuthentication();
 
             //            String principal = auth.getName();
@@ -159,6 +161,8 @@ public class OAuth2EventListener implements ApplicationListener<OAuth2Event>, Ap
             Map<String, Object> data = new HashMap<>();
             Map<String, Object> webAuthenticationDetails = new HashMap<>();
 
+            if (authClient != null && authClient.getWebAuthenticationDetails() != null) {
+                webAuthenticationDetails.put("client", authClient.getWebAuthenticationDetails());
             if (authUser != null && authUser.getDetails() != null) {
                 webAuthenticationDetails.put("user", authUser.getDetails());
             }

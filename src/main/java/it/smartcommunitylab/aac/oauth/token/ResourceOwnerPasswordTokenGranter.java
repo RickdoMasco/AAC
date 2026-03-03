@@ -28,6 +28,7 @@ import it.smartcommunitylab.aac.core.auth.UserAuthentication;
 import it.smartcommunitylab.aac.model.ScopeType;
 import it.smartcommunitylab.aac.model.User;
 import it.smartcommunitylab.aac.oauth.AACOAuth2AccessToken;
+import it.smartcommunitylab.aac.oauth.auth.OAuth2ClientAuthenticationToken;
 import it.smartcommunitylab.aac.oauth.model.OAuth2ClientDetails;
 import it.smartcommunitylab.aac.oauth.service.OAuth2ClientDetailsService;
 import it.smartcommunitylab.aac.password.auth.UsernamePasswordAuthenticationToken;
@@ -94,8 +95,8 @@ public class ResourceOwnerPasswordTokenGranter extends AbstractTokenGranter {
     }
 
     @Override
-    public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest) {
-        OAuth2AccessToken token = super.grant(grantType, tokenRequest);
+    public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest, OAuth2ClientAuthenticationToken clientAuth) {
+        OAuth2AccessToken token = super.grant(grantType, tokenRequest, clientAuth);
 
         if (token != null) {
             logger.trace(

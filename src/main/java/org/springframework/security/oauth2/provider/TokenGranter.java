@@ -16,6 +16,7 @@
 
 package org.springframework.security.oauth2.provider;
 
+import it.smartcommunitylab.aac.oauth.auth.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 
 /**
@@ -29,6 +30,6 @@ import org.springframework.security.oauth2.common.OAuth2AccessToken;
  */
 public interface TokenGranter {
 
-	OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest);
+	OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest, OAuth2ClientAuthenticationToken clientAuth);
 
 }

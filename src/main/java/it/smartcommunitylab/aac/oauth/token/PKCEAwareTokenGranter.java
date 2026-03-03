@@ -17,6 +17,7 @@
 package it.smartcommunitylab.aac.oauth.token;
 
 import it.smartcommunitylab.aac.oauth.AACOAuth2AccessToken;
+import it.smartcommunitylab.aac.oauth.auth.OAuth2ClientAuthenticationToken;
 import it.smartcommunitylab.aac.oauth.service.OAuth2ClientDetailsService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -82,14 +83,14 @@ public class PKCEAwareTokenGranter extends AbstractTokenGranter {
     }
 
     @Override
-    public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest) {
+    public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest, OAuth2ClientAuthenticationToken clientAuth) {
         // check if PKCE otherwise let another granter handle the request
         String codeVerifier = tokenRequest.getRequestParameters().get(PkceParameterNames.CODE_VERIFIER);
         if (codeVerifier == null) {
             return null;
         }
 
-        OAuth2AccessToken token = super.grant(grantType, tokenRequest);
+        OAuth2AccessToken token = super.grant(grantType, tokenRequest, clientAuth);
 
         if (token != null) {
             logger.trace(

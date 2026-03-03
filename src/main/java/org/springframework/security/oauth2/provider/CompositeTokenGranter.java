@@ -19,6 +19,7 @@ package org.springframework.security.oauth2.provider;
 import java.util.ArrayList;
 import java.util.List;
 
+import it.smartcommunitylab.aac.oauth.auth.OAuth2ClientAuthenticationToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
 
 /**
@@ -35,9 +36,9 @@ public class CompositeTokenGranter implements TokenGranter {
 		this.tokenGranters = new ArrayList<TokenGranter>(tokenGranters);
 	}
 	
-	public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest) {
+	public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest, OAuth2ClientAuthenticationToken clientAuth) {
 		for (TokenGranter granter : tokenGranters) {
-			OAuth2AccessToken grant = granter.grant(grantType, tokenRequest);
+			OAuth2AccessToken grant = granter.grant(grantType, tokenRequest, clientAuth);
 			if (grant!=null) {
 				return grant;
 			}
