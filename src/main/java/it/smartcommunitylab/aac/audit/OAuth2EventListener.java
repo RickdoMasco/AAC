@@ -163,6 +163,8 @@ public class OAuth2EventListener implements ApplicationListener<OAuth2Event>, Ap
 
             if (authClient != null && authClient.getWebAuthenticationDetails() != null) {
                 webAuthenticationDetails.put("client", authClient.getWebAuthenticationDetails());
+            }
+
             if (authUser != null && authUser.getDetails() != null) {
                 webAuthenticationDetails.put("user", authUser.getDetails());
             }
