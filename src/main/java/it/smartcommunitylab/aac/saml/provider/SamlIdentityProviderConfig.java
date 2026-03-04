@@ -205,11 +205,16 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
                 credential = allCredentials.get(0);
             }
 
-            checkValidSigningCredential(signingCredentialList, credential);
+            if (StringUtils.hasText(credential.getSigningKey()) && StringUtils.hasText(credential.getSigningCertificate())) {
+                signingCredentialList.add(credential);
+            }
+
         }else if (!onlyActiveCredential){
             if (configMap.getSigningCredentials() != null) {
                 for(SigningCredential credential: configMap.getSigningCredentials()){
-                    checkValidSigningCredential(signingCredentialList, credential);
+                    if (StringUtils.hasText(credential.getSigningKey()) && StringUtils.hasText(credential.getSigningCertificate())) {
+                        signingCredentialList.add(credential);
+                    }
                 }
             }
         }
@@ -235,12 +240,6 @@ public class SamlIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         }
 
         return builder;
-    }
-
-    private void checkValidSigningCredential(List<SigningCredential> signingCredentialList, SigningCredential credential){
-        if (StringUtils.hasText(credential.getSigningKey()) && StringUtils.hasText(credential.getSigningCertificate())) {
-            signingCredentialList.add(credential);
-        }
     }
 
     public String metadataUrlTemplate() {
