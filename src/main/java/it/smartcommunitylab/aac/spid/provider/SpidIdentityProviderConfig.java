@@ -498,11 +498,16 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
                 credential = allCredentials.get(0);
             }
 
-            checkValidSigningCredential(signingCredentialList, credential);
+            if (StringUtils.hasText(credential.getSigningKey()) && StringUtils.hasText(credential.getSigningCertificate())) {
+                signingCredentialList.add(credential);
+            }
+
         }else if (!onlyActiveCredential){
             if (configMap.getSigningCredentials() != null) {
                 for(SigningCredential credential: configMap.getSigningCredentials()){
-                    checkValidSigningCredential(signingCredentialList, credential);
+                    if (StringUtils.hasText(credential.getSigningKey()) && StringUtils.hasText(credential.getSigningCertificate())) {
+                        signingCredentialList.add(credential);
+                    }
                 }
             }
         }
@@ -514,12 +519,6 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
         }
 
         return signingCredentialList;
-    }
-
-    private void checkValidSigningCredential(List<SigningCredential> signingCredentialList, SigningCredential credential){
-        if (StringUtils.hasText(credential.getSigningKey()) && StringUtils.hasText(credential.getSigningCertificate())) {
-            signingCredentialList.add(credential);
-        }
     }
 
     private void validateSigningCredentials() {
@@ -826,9 +825,28 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             .filter(StringUtils::hasText)
             .map(c -> stripPem(c))
             .collect(Collectors.toSet());
-        
-        if (!metaCertNormalizedList.equals(confCertNormalizedList)) {
-            throw new IllegalArgumentException("configured signingCertificate not present in metadata signing X509Certificate");
+
+        // Check set equality via double inclusion:
+        // If (A ⊆ B) AND (B ⊆ A) => A = B (Set Identity)
+
+        // 1. Check if all certificates in metadata are present in configuration (metaCert ⊆ confCert)
+        if (!confCertNormalizedList.containsAll(metaCertNormalizedList)) {
+            Set<String> extraInMeta = new HashSet<>(metaCertNormalizedList);
+            extraInMeta.removeAll(confCertNormalizedList);
+            throw new IllegalArgumentException(
+                    "Signing certificate discrepancy: metadata contains certificates not found in local configuration. " +
+                            "Extra certificates found in metadata: " + extraInMeta
+            );
+        }
+
+        // 2. Check if all configured certificates are present in metadata (confCert ⊆ metaCert)
+        if (!metaCertNormalizedList.containsAll(confCertNormalizedList)) {
+            Set<String> missingInMeta = new HashSet<>(confCertNormalizedList);
+            missingInMeta.removeAll(metaCertNormalizedList);
+            throw new IllegalArgumentException(
+                    "Signing certificate discrepancy: configured certificates are missing from metadata. " +
+                            "Missing certificates from metadata: " + missingInMeta
+            );
         }
     }
 
