@@ -55,7 +55,21 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.maciejwalkowiak.wiremock.spring.ConfigureWireMock;
+import com.maciejwalkowiak.wiremock.spring.EnableWireMock;
+import com.maciejwalkowiak.wiremock.spring.InjectWireMock;
+import com.github.tomakehurst.wiremock.WireMockServer;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.URI;
 
 /*
  * OAuth 2.0 Authorization Code Grant
@@ -67,6 +81,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@EnableWireMock({ @ConfigureWireMock(name = "oauth-client") })
 public class AuthorizationCodeGrantTest {
 
     @Autowired
@@ -77,6 +92,9 @@ public class AuthorizationCodeGrantTest {
 
     @Autowired
     private BootstrapConfig config;
+
+    @InjectWireMock("oauth-client")
+    private WireMockServer mockClientServer;
 
     private String username;
     private String password;
@@ -1299,6 +1317,134 @@ public class AuthorizationCodeGrantTest {
 
         // there is no access token
         assertThat(response.get(OAuth2ParameterNames.ACCESS_TOKEN)).isNull();
+    }
+
+    @Test
+    @WithMockUserAuthentication(username = "test", realm = "test")
+    public void userAuthWithFormPostResponseModeAndIssuerTest() throws Exception {
+        // fetch issuer from metadata
+        MockHttpServletRequestBuilder metaReq = MockMvcRequestBuilders
+            .get("/.well-known/oauth-authorization-server")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MvcResult metaRes = this.mockMvc.perform(metaReq).andExpect(status().isOk()).andReturn();
+        String metaJson = metaRes.getResponse().getContentAsString();
+        Map<String, Serializable> metadata = mapper.readValue(metaJson, typeRef);
+
+        assertThat(metadata.get("issuer")).isNotNull().isInstanceOf(String.class);
+        String expectedIssuer = (String) metadata.get("issuer");
+        assertThat(expectedIssuer).isNotBlank();
+
+        // authorize request
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(OAuth2ParameterNames.RESPONSE_TYPE, ResponseType.CODE.toString());
+        params.add(OAuth2ParameterNames.CLIENT_ID, clientId);
+        params.add(OAuth2ParameterNames.SCOPE, "");
+        params.add("response_mode", "form_post");
+
+        MockHttpServletRequestBuilder req = MockMvcRequestBuilders
+            .get(AUTHORIZE_URL)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .params(params);
+
+        MvcResult res = this.mockMvc.perform(req).andExpect(status().isOk()).andReturn();
+
+        // expect a forward in response
+        assertThat(res.getResponse().getContentAsString()).isBlank();
+
+        String forwardedUrl = res.getResponse().getForwardedUrl();
+        assertThat(forwardedUrl).isNotNull().startsWith("/oauth/authorized_post");
+
+        // keep same session for whole request flow
+        MockHttpSession session = (MockHttpSession) res.getRequest().getSession();
+        assertThat(session).isNotNull();
+
+        // follow forward to fetch response
+        req = MockMvcRequestBuilders.get(forwardedUrl).session(session);
+        res = this.mockMvc.perform(req).andExpect(status().isOk()).andReturn();
+
+        // expect HTML form response
+        String htmlContent = res.getResponse().getContentAsString();
+        assertThat(htmlContent).isNotBlank();
+
+        // parse HTML form to extract parameters and validate compliance
+        Document doc = Jsoup.parse(htmlContent);
+        Element form = doc.select("form").first();
+        assertThat(form).isNotNull();
+
+        // verify form has POST method and correct action
+        assertThat(form.attr("method")).isEqualToIgnoringCase("post");
+        String formAction = form.attr("action");
+        assertThat(formAction).isEqualTo("http://localhost:9999");
+
+        // verify body has onload auto-submit as per OAuth2 form_post spec
+        Element body = doc.select("body").first();
+        assertThat(body).isNotNull();
+        assertThat(body.attr("onload")).contains("document.forms[0].submit()");
+
+        // verify noscript fallback for accessibility (check the one inside form)
+        Elements noscriptElements = doc.select("form noscript");
+        assertThat(noscriptElements).isNotEmpty();
+        Element formNoscript = noscriptElements.first();
+        Element submitButton = formNoscript.select("input[type=submit]").first();
+        assertThat(submitButton).isNotNull();
+
+        // extract hidden fields from form
+        Elements hiddenInputs = form.select("input[type=\"hidden\"]");
+        assertThat(hiddenInputs).isNotEmpty();
+
+        MultiValueMap<String, String> formParams = new LinkedMultiValueMap<>();
+        for (Element input : hiddenInputs) {
+            String name = input.attr("name");
+            String value = input.attr("value");
+            if (StringUtils.hasText(name) && StringUtils.hasText(value)) {
+                formParams.add(name, value);
+            }
+        }
+
+        // verify iss parameter is present in form
+        assertThat(formParams.get("iss")).isNotNull().isNotEmpty();
+        String formIssuer = formParams.get("iss").get(0);
+        assertThat(formIssuer).isEqualTo(expectedIssuer);
+
+        // setup mock client server to receive the POST
+        mockClientServer.stubFor(WireMock.post(WireMock.urlEqualTo("/"))
+            .willReturn(WireMock.aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "text/plain")
+                .withBody("POST received")));
+
+        // simulate client POST to mock server (using random port)
+        // Form action should still be http://localhost:9999 as per client config
+        String clientRedirectUri = mockClientServer.baseUrl();
+
+        // Build form data as URL-encoded string
+        StringBuilder formData = new StringBuilder();
+        for (Map.Entry<String, List<String>> entry : formParams.entrySet()) {
+            if (formData.length() > 0) {
+                formData.append("&");
+            }
+            formData.append(entry.getKey()).append("=").append(entry.getValue().get(0));
+        }
+
+        // Make actual HTTP POST to mock client server
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+            .uri(URI.create(clientRedirectUri))
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .POST(HttpRequest.BodyPublishers.ofString(formData.toString()))
+            .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        // verify POST response
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.body()).isEqualTo("POST received");
+
+        // verify that our mock server received the POST with correct parameters
+        mockClientServer.verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/"))
+            .withRequestBody(WireMock.containing("code=" + formParams.get("code").get(0)))
+            .withRequestBody(WireMock.containing("iss=" + expectedIssuer)));
     }
 
     private static final String AUTHORIZE_URL = AuthorizationEndpoint.AUTHORIZATION_URL;
