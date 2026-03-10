@@ -32,6 +32,7 @@ public abstract class OAuth2ClientAuthenticationConverter implements ClientAuthe
         // collect request details
         WebAuthenticationDetails webAuthenticationDetails = new WebAuthenticationDetails(request);
         token.setDetails(webAuthenticationDetails);
+        token.setWebAuthenticationDetails(webAuthenticationDetails);
 
         return token;
     }

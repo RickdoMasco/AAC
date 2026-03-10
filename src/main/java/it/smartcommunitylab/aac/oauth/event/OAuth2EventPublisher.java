@@ -16,6 +16,7 @@
 
 package it.smartcommunitylab.aac.oauth.event;
 
+import it.smartcommunitylab.aac.oauth.auth.OAuth2ClientAuthenticationToken;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationEventPublisher;
@@ -45,9 +46,9 @@ public class OAuth2EventPublisher implements ApplicationEventPublisherAware {
         this.applicationEventPublisher = applicationEventPublisher;
     }
 
-    public void publishTokenGrant(OAuth2AccessToken token, OAuth2Authentication authentication) {
+    public void publishTokenGrant(OAuth2AccessToken token, OAuth2Authentication authentication, OAuth2ClientAuthenticationToken clientAuth) {
         if (this.applicationEventPublisher != null) {
-            this.applicationEventPublisher.publishEvent(new TokenGrantEvent(token, authentication));
+            this.applicationEventPublisher.publishEvent(new TokenGrantEvent(token, authentication, clientAuth));
         }
     }
 
