@@ -16,6 +16,7 @@
 
 package it.smartcommunitylab.aac.oauth.token;
 
+import it.smartcommunitylab.aac.oauth.auth.OAuth2ClientAuthenticationToken;
 import it.smartcommunitylab.aac.oauth.event.OAuth2EventPublisher;
 import it.smartcommunitylab.aac.oauth.flow.FlowExtensionsService;
 import it.smartcommunitylab.aac.oauth.flow.OAuthFlowExtensions;
@@ -66,7 +67,7 @@ public abstract class AbstractTokenGranter implements TokenGranter {
         this.requestFactory = requestFactory;
     }
 
-    public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest) {
+    public OAuth2AccessToken grant(String grantType, TokenRequest tokenRequest, OAuth2ClientAuthenticationToken clientAuth) {
         if (!this.grantType.equals(grantType)) {
             return null;
         }
@@ -90,7 +91,7 @@ public abstract class AbstractTokenGranter implements TokenGranter {
 
         // audit
         if (eventPublisher != null) {
-            eventPublisher.publishTokenGrant(accessToken, authentication);
+            eventPublisher.publishTokenGrant(accessToken, authentication, clientAuth);
         }
 
         // check extensions
