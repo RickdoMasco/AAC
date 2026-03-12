@@ -104,7 +104,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     private static final String DEFAULT_ATTRIBUTE_CONSUMING_SERVICE_NAME = "default";
 
     private transient Set<RelyingPartyRegistration> relyingPartyRegistrations;
-    private transient Set<RelyingPartyRegistration> metadataRelyingPartyRegistrations;
+    private transient RelyingPartyRegistration metadataRelyingPartyRegistration;
 
     private Set<SpidRegistration> identityProviders;
     private SpidMetadataConfiguration metadataConfiguration;
@@ -123,7 +123,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             new SpidIdentityProviderConfigMap()
         );
         this.relyingPartyRegistrations = null;
-        this.metadataRelyingPartyRegistrations = null;
+        this.metadataRelyingPartyRegistration = null;
         this.identityProviders = Collections.emptySet();
         this.metadataConfiguration = null;
         this.restTemplate = null;
@@ -350,69 +350,28 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
     }
 
     /*
-     * getMetadataRelyingPartyRegistration yields a single relying party registration 
+     * getMetadataRelyingPartyRegistration provides a single relying party registration
      * with registration id equal to the encoded providerId.
-     * This is required for cases where the registration does not require any asserting party details,
-     * such as SPID metadata.
-     * It differs from getRelyingPartyRegistration as it uses the metadataRelyingPartyRegistrations set
-     * to store registrations built with the full set of signing certificates instead of the single active one.
+     * This is used for SPID metadata where asserting party details are not required.
+     * It differs from getRelyingPartyRegistration as it builds a registration
+     * using the full set of signing certificates instead of the single active one,
+     * ensuring valid metadata during rotations.
      */
     @JsonIgnore
     public RelyingPartyRegistration getMetadataRelyingPartyRegistration() {
-        if (metadataRelyingPartyRegistrations != null) {
+        if (metadataRelyingPartyRegistration != null) {
             String registrationId = getMetadataRegistrationId();
-            RelyingPartyRegistration r = metadataRelyingPartyRegistrations
-                .stream()
-                .filter(reg -> reg.getRegistrationId().equals(registrationId))
-                .findFirst().orElse(null);
-
-            if (r != null) {
-                return r;
+            if (metadataRelyingPartyRegistration.getRegistrationId().equals(registrationId)) {
+                return metadataRelyingPartyRegistration;
             }
         }
 
         try {
+            // Build the "bare" registration (single/provider-wide)
             RelyingPartyRegistration r = toBareRelyingPartyRegistration(false);
-            if (metadataRelyingPartyRegistrations == null) {
-                metadataRelyingPartyRegistrations = new HashSet<>();
-            }
-            metadataRelyingPartyRegistrations.add(r);
+            this.metadataRelyingPartyRegistration = r;
             return r;
         } catch (IOException | CertificateException e) {
-            throw new RuntimeException("error building registration: " + e.getMessage());
-        }
-    }
-
-    /*
-     * getMetadataRelyingPartyRegistration yields a single relying party registration 
-     * for the configured upstream identity provider associated to the input idpKey.
-     * It differs from getRelyingPartyRegistration as it uses the metadataRelyingPartyRegistrations set
-     * to store registrations built with the full set of signing certificates instead of the single active one.
-     */
-    @JsonIgnore
-    public RelyingPartyRegistration getMetadataRelyingPartyRegistration(String idpKey) {
-        if (metadataRelyingPartyRegistrations != null) {
-            String registrationId = encodeRegistrationId(evalRelyingPartyRegistrationId(idpKey));
-            RelyingPartyRegistration r = metadataRelyingPartyRegistrations
-                .stream()
-                .filter(reg -> reg.getRegistrationId().equals(registrationId))
-                .findFirst().orElse(null);
-
-            if (r != null) {
-                return r;
-            }
-        }
-
-        try {
-            String idpMetadataUrl = getAssertingPartyMetadataUrl(idpKey);
-            String registrationId = encodeRegistrationId(evalRelyingPartyRegistrationId(evalIdpKeyIdentifier(idpMetadataUrl)));
-            RelyingPartyRegistration r = toRelyingPartyRegistration(registrationId, idpMetadataUrl, false);
-            if (metadataRelyingPartyRegistrations == null) {
-                metadataRelyingPartyRegistrations = new HashSet<>();
-            }
-            metadataRelyingPartyRegistrations.add(r);
-            return r;
-        } catch (IOException | CertificateException | URISyntaxException e) {
             throw new RuntimeException("error building registration: " + e.getMessage());
         }
     }
