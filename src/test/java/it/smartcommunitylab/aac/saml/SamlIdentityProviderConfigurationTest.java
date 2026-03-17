@@ -13,14 +13,24 @@ import it.smartcommunitylab.aac.identity.model.ConfigurableIdentityProvider;
 import it.smartcommunitylab.aac.identity.provider.IdentityProviderSettingsMap;
 import it.smartcommunitylab.aac.saml.provider.SamlIdentityProviderConfig;
 import it.smartcommunitylab.aac.saml.provider.SamlIdentityProviderConfigMap;
-import java.io.*;
+
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.Serializable;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.security.spec.PKCS8EncodedKeySpec;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import javax.annotation.PostConstruct;
+
+import it.smartcommunitylab.aac.saml.provider.SigningCredential;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -48,6 +58,7 @@ public class SamlIdentityProviderConfigurationTest {
     private static final String ENTITY_ID = String.format("http://localhost:8080/auth/saml/metadata/%s", PROVIDER_ID);
 
     // key pair generated with openssl req -x509 -sha256 -nodes -days 365 -newkey rsa:2048 -keyout privateKey.key -out certificate.crt, using openssl version 1.1.1n
+    private static final String ACTIVE_SIGN_CREDENTIAL_ID = "active";
     private static final String SIGN_PRIV_KEY =
         "MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC2cpj1zbjBsr4NtvLa+3j8Kb1mwcHlRNwMjPrZQ1fVAFNKuSRgGU87aMavSxFUmQMNy8PEEb+X2IxgNt36JDIHqK6IaEiqOsdzUDXwbHGroFIM5utl6mD4zVqbuPt371QPMNPQUHLLb8QEnwLEeKSIlKLaNmCFeEvEykOSwbrtDxMLIa4Yw2SAvpynMrhSkmDxNzqbZSNPJ41/siSK9rsdNEF/S7pycz+QGXA3/DPkg/hLh+wyjVhBtV4fu6w/B7dyeQpeF5eNUD/wF0B01dxOEcXKWjsiDm/pU2EodX3+lwpPEnw9pDnvKbRdEbTb9Ise0cteDOG7NRg4lUb3DojZAgMBAAECggEAPNSqsVH9JwAMpA/6mw67gP/9uXQizOmPoNOkk6oDb+5i1wgx26S0qS8/B5U02wsFXKUyyX3Nbrhx3WaNzmghEjKotqxmhfOBKq50vYu6vql+kfSwSdPCr1HwwvkDRzLRyRrTlKIuFCxYo93Mk2tSGIPOZIk612WLhbqWmyjixUTv0aVr1h6/CYOwXObPo0fCTHEa5YqHtIwAKxyv1woslZE/Ler7nNOZdAX6hu4tI0LGSTrGBMc9NkiP7O4CMO1AddaYXx7D33JWF03OS6EurAGLUkZNjF+A/PmzMUroiLQp8mND6Io2hrx2sfMuMqAyEBgCM+gZt+bUIqI7HqB08QKBgQDqcpjVf68CLSiQpeStE5oGuYRHH1ay6ii1KMzcpGPIAhGqOybNZ/MDUJbaUkk0C6XdE8aIY/wdX3UcctnO7bwViKxoj4nexuJ0aV5CECAv3IyvBP7pZGAMrvp67R/xe892an58eagpe9rhd3nRzDwIFE2HQ+y+cp8FXbQSOd4e7QKBgQDHOECE9AKZCSvPbY5VW8Y/ztmz5Vcq02JllS2UPlMUebHRg8g2my/9vMr4cG2tPwqVn51QdTJkNfBgWl6KrPo3KJ5LQSezkiOj1nACcSJqUViTvpnlHd3X/ifU/IBrLygJiRxv0SDTz3y7jecVW/ZE38bjycaQW1Yv/I7e8lAoHQKBgGXUKl+o2qmWVaUl+MHX3rGHCFYf3XdOTyoIM5qt6AzqISQQFxVmTd2lti/TR6pMWNlCCpwY2Vskp+gYVlQTW/r6Zu/vUFGrjpZDYcZN3L0NDSnDgLh8eV9o7LBRp+sp/H0RWijUal7CRdpiG04tZ/GWZ+oVbZF2lW0uOtUjvz8tAoGBAKrJ1sYkSnXYHu7dBUC4ROU+9/P5kRjtz1U25rRIGgFbss3jJClsMWBeEcOa3uu/N9u90qe/UUwH0eNIlfRdBsVy1QG/AcI4bsVueOgfBVoQEtfWdyisyhr5kDxPm+hHrRM/sFlL99Cd+Fjx9kGhbSbukRuHR+tJ4kGRSwpmwcEhAoGBANZ8V4Rjs2/6ORLLwwHPcInV8j/gHFQT1ikiPHteBOcyC5Dv5Gd+wy6yuckTraqTcgbbjP19ViQoWO5chroAnUj+KoSkoxeZ0+KKJ4x1yAetmuf27mkLydO5Q8pYBzrDcQF2xEELn3BWXA/+h3MFWV0D+UPNbmZqr7XhwHzTVjOl";
     private static final String SIGN_CERTIFICATE =
@@ -126,6 +137,12 @@ public class SamlIdentityProviderConfigurationTest {
         rawCfgMap.put("entityId", ENTITY_ID);
         rawCfgMap.put("signingKey", SIGN_PRIV_KEY);
         rawCfgMap.put("signingCertificate", SIGN_CERTIFICATE);
+        ArrayList<SigningCredential> signingCredentialList = new ArrayList<>();
+        signingCredentialList.add(
+                new SigningCredential( ACTIVE_SIGN_CREDENTIAL_ID, SIGN_PRIV_KEY, SIGN_CERTIFICATE )
+        );
+        rawCfgMap.put("signingCredentials", signingCredentialList);
+        rawCfgMap.put("activeSigningCredentialId", ACTIVE_SIGN_CREDENTIAL_ID);
         rawCfgMap.put("idpMetadataUrl", IDP_METADATA_URL);
         rawCfgMap.put("idpEntityId", "ToyIdPEntityManualDiscovery");
         rawCfgMap.put("webSsoUrl", "toyWebSsoUrlManualDiscovery");
@@ -152,6 +169,10 @@ public class SamlIdentityProviderConfigurationTest {
         assertThat(idpCfgMap.getEntityId()).isEqualTo(rawCfgMap.get("entityId"));
         assertThat(idpCfgMap.getSigningKey()).isEqualTo(rawCfgMap.get("signingKey"));
         assertThat(idpCfgMap.getSigningCertificate()).isEqualTo(rawCfgMap.get("signingCertificate"));
+        assertThat(idpCfgMap.getSigningCredentials())
+                .usingRecursiveComparison()
+                .isEqualTo(rawCfgMap.get("signingCredentials"));
+        assertThat(idpCfgMap.getActiveSigningCredentialId()).isEqualTo(rawCfgMap.get("activeSigningCredentialId"));
 
         assertThat(idpCfgMap.getIdpMetadataUrl()).isEqualTo(rawCfgMap.get("idpMetadataUrl"));
         assertThat(idpCfgMap.getIdpEntityId()).isEqualTo(rawCfgMap.get("idpEntityId"));
@@ -186,6 +207,12 @@ public class SamlIdentityProviderConfigurationTest {
         rawCfgMap.put("entityId", ENTITY_ID);
         rawCfgMap.put("signingKey", SIGN_PRIV_KEY);
         rawCfgMap.put("signingCertificate", SIGN_CERTIFICATE);
+        ArrayList<SigningCredential> signingCredentialList = new ArrayList<>();
+        signingCredentialList.add(
+                new SigningCredential( ACTIVE_SIGN_CREDENTIAL_ID, SIGN_PRIV_KEY, SIGN_CERTIFICATE )
+        );
+        rawCfgMap.put("signingCredentials", signingCredentialList);
+        rawCfgMap.put("activeSigningCredentialId", ACTIVE_SIGN_CREDENTIAL_ID);
         rawCfgMap.put("idpMetadataUrl", IDP_METADATA_URL); // url checked for automatic relying party registration
         rawCfgMap.put("idpEntityId", null);
         rawCfgMap.put("webSsoUrl", null);
@@ -294,6 +321,12 @@ public class SamlIdentityProviderConfigurationTest {
         rawCfgMap.put("entityId", ENTITY_ID);
         rawCfgMap.put("signingKey", SIGN_PRIV_KEY);
         rawCfgMap.put("signingCertificate", SIGN_CERTIFICATE);
+        ArrayList<SigningCredential> signingCredentialList = new ArrayList<>();
+        signingCredentialList.add(
+                new SigningCredential( ACTIVE_SIGN_CREDENTIAL_ID, SIGN_PRIV_KEY, SIGN_CERTIFICATE )
+        );
+        rawCfgMap.put("signingCredentials", signingCredentialList);
+        rawCfgMap.put("activeSigningCredentialId", ACTIVE_SIGN_CREDENTIAL_ID);
         rawCfgMap.put("idpMetadataUrl", null);
         rawCfgMap.put("idpEntityId", IDP_ENTITY_ID);
         rawCfgMap.put("webSsoUrl", IDP_WEB_SSO_URL);

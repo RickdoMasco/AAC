@@ -24,6 +24,7 @@ import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.base.model.AbstractConfigMap;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.validation.Valid;
@@ -42,6 +43,9 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
         SystemKeys.AUTHORITY_SAML;
 
     private String entityId;
+
+    private List<SigningCredential> signingCredentials;
+    private String activeSigningCredentialId;
 
     private String signingKey;
     private String signingCertificate;
@@ -74,6 +78,14 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     public SamlIdentityProviderConfigMap() {}
 
+    public List<SigningCredential> getSigningCredentials() {
+        return signingCredentials;
+    }
+
+    public void setSigningCredentials(List<SigningCredential> signingCredentials) {
+        this.signingCredentials = signingCredentials;
+    }
+
     public String getSigningKey() {
         return signingKey;
     }
@@ -88,6 +100,14 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     public void setSigningCertificate(String signingCertificate) {
         this.signingCertificate = signingCertificate;
+    }
+
+    public String getActiveSigningCredentialId() {
+        return activeSigningCredentialId;
+    }
+
+    public void setActiveSigningCredentialId(String activeSigningCredentialId) {
+        this.activeSigningCredentialId = activeSigningCredentialId;
     }
 
     public String getIdpMetadataUrl() {
@@ -247,6 +267,8 @@ public class SamlIdentityProviderConfigMap extends AbstractConfigMap implements 
     public void setConfiguration(SamlIdentityProviderConfigMap map) {
         this.signingKey = map.getSigningKey();
         this.signingCertificate = map.getSigningCertificate();
+        this.signingCredentials = map.getSigningCredentials();
+        this.activeSigningCredentialId = map.getActiveSigningCredentialId();
 
         this.idpMetadataUrl = map.getIdpMetadataUrl();
 

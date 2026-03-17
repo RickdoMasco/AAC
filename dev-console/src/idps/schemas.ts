@@ -175,13 +175,15 @@ export const uiSchemaWebAuthnIdp: UiSchema = {
 
 export const uiSchemaSamlIdp: UiSchema = {
     'ui:layout': [
-        12, 6, 6, 12, 12, 6, 6, 6, 6, 12, 6, 6, 8, 4, 8, 12, 4, 4, 4, 6,
+        12, 6, 6, 12, 12, 12, 12, 6, 6, 6, 6, 12, 6, 6, 8, 4, 8, 12, 4, 4, 4, 6,
         6,
     ],
     'ui:order': [
         'entityId',
         'signingKey',
         'signingCertificate',
+        'signingCredentials',
+        'activeSigningCredentialId',
         'idpMetadataUrl',
         'idpEntityId',
         'webSsoUrl',
@@ -207,15 +209,39 @@ export const uiSchemaSamlIdp: UiSchema = {
         'userNameAttributeName',
         'subAttributeName',
     ],
-    signingKey: {
-        'ui:widget': 'textarea',
-    },
-    signingCertificate: {
-        'ui:widget': 'textarea',
-    },
     authnContextClasses: {
         items: {
             'ui:label': false,
+        },
+    },
+    signingKey: {
+        'ui:widget': 'textarea',
+        'ui:title': 'field.signingKey.name',
+        'ui:description': 'field.signingKey.helperText',
+    },
+    signingCertificate: {
+        'ui:widget': 'textarea',
+        'ui:title': 'field.signingCertificate.name',
+        'ui:description': 'field.signingCertificate.helperText',
+    },
+    signingCredentials: {
+        items: {
+            'ui:layout': [12, 6, 6],
+            'ui:order': ['credentialId', 'signingKey', 'signingCertificate'],
+            credentialId: {
+                'ui:title': 'field.credentialId.name',
+                'ui:description': 'field.credentialId.helperText',
+            },
+            signingKey: {
+                "ui:widget": "textarea",
+                'ui:title': 'field.signingKey.name',
+                'ui:description': 'field.signingKey.helperText',
+            },
+            signingCertificate: {
+                "ui:widget": "textarea",
+                'ui:title': 'field.signingCertificate.name',
+                'ui:description': 'field.signingCertificate.helperText',
+            },
         },
     },
 };

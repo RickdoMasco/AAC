@@ -1,14 +1,17 @@
 package it.smartcommunitylab.aac.saml;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import it.smartcommunitylab.aac.bootstrap.BootstrapConfig;
 import it.smartcommunitylab.aac.identity.model.ConfigurableIdentityProvider;
 import it.smartcommunitylab.aac.saml.provider.SamlIdentityProviderConfigMap;
-import java.io.*;
+import java.io.InputStream;
+import java.io.ByteArrayInputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 import java.util.Base64;
@@ -20,7 +23,10 @@ import org.opensaml.core.config.ConfigurationService;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistry;
 import org.opensaml.core.xml.io.Unmarshaller;
-import org.opensaml.saml.saml2.metadata.*;
+import org.opensaml.saml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml.saml2.metadata.KeyDescriptor;
+import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.security.credential.UsageType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -52,7 +58,7 @@ public class SamlIdentityProviderMetadataTest {
     private final ParserPool parserPool = registry.getParserPool();
 
     // hard-coded in test since they are hard-coded in the actual configuration
-    public static final String BASE_URL = "http://localhost";
+    public static final String BASE_URL = "http://localhost:8080";
     public static final String METADATA_PATH = "/auth/saml/metadata/";
     public static final String SSO_PATH = "/auth/saml/sso/";
 
@@ -77,20 +83,35 @@ public class SamlIdentityProviderMetadataTest {
                     assertThat(idps.size()).isEqualTo(2);
 
                     ConfigurableIdentityProvider idp1 = idps.get(0);
-                    signingIdpMetadataUrl = BASE_URL + METADATA_PATH + idp1.getProvider();
-                    signingIdpAssertionConsumerServiceLocation = BASE_URL + SSO_PATH + idp1.getProvider();
+                    signingIdpMetadataUrl = METADATA_PATH + idp1.getProvider();
+                    signingIdpAssertionConsumerServiceLocation = "http://localhost" + SSO_PATH + idp1.getProvider();
 
                     SamlIdentityProviderConfigMap config1 = new SamlIdentityProviderConfigMap();
                     config1.setConfiguration(idp1.getConfiguration());
-                    signingIdpSigningCertificate = config1.getSigningCertificate();
-                    signingIdpEntityId = config1.getEntityId() != null ? config1.getEntityId() : signingIdpMetadataUrl;
+                    assertThat(config1.getSigningCredentials())
+                            .isNotNull()
+                            .isNotEmpty()
+                            .first()
+                            .extracting(cred -> cred.getSigningCertificate())
+                            .isNotNull();
+                    assertThat(config1.getSigningCredentials().get(0).getSigningCertificate()).isNotNull();
+
+                    signingIdpSigningCertificate = config1.getSigningCredentials().get(0).getSigningCertificate();
+                    signingIdpEntityId = config1.getEntityId() != null ? config1.getEntityId() : BASE_URL + signingIdpMetadataUrl;
 
                     ConfigurableIdentityProvider idp2 = idps.get(1);
                     signingAndCryptIdpMetadataUrl = BASE_URL + METADATA_PATH + idp2.getProvider();
 
                     SamlIdentityProviderConfigMap config2 = new SamlIdentityProviderConfigMap();
                     config2.setConfiguration(idp2.getConfiguration());
-                    signingAndCryptIdpSigningCertificate = config2.getSigningCertificate();
+                    assertThat(config2.getSigningCredentials())
+                            .isNotNull()
+                            .isNotEmpty()
+                            .first()
+                            .extracting(cred -> cred.getSigningCertificate())
+                            .isNotNull();
+                    assertThat(config2.getSigningCredentials().get(0).getSigningCertificate()).isNotNull();
+                    signingAndCryptIdpSigningCertificate = config2.getSigningCredentials().get(0).getSigningCertificate();
                 }
             });
     }
@@ -170,8 +191,7 @@ public class SamlIdentityProviderMetadataTest {
             .getAssertionConsumerServices();
 
         assertThat(assertionConsumerServices.get(0).getBinding()).isEqualTo(Saml2MessageBinding.POST.getUrn());
-        assertThat(assertionConsumerServices.get(0).getLocation())
-            .isEqualTo(signingIdpAssertionConsumerServiceLocation);
+        assertThat(assertionConsumerServices.get(0).getLocation()).isEqualTo(signingIdpAssertionConsumerServiceLocation);
     }
 
     @Test
