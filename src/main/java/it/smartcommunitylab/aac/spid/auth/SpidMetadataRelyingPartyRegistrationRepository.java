@@ -44,7 +44,6 @@ public class SpidMetadataRelyingPartyRegistrationRepository implements RelyingPa
      * findByRegistrationId provides read access as per interface.
      * Spid supports two different patterns for registration ids:
      * (1) {providerId}
-     * (2) {providerId}|{entityLabel}
      * The function extracts the providerId to return the correct
      * provider-wide metadata registration.
      */

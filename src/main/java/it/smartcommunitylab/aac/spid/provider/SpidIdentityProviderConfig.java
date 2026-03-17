@@ -786,9 +786,8 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             .collect(Collectors.toSet());
 
         // Check set equality via double inclusion:
-        // If (A ⊆ B) AND (B ⊆ A) => A = B (Set Identity)
 
-        // 1. Check if all certificates in metadata are present in configuration (metaCert ⊆ confCert)
+        // 1. Check if all certificates in metadata are present in configuration
         if (!confCertNormalizedList.containsAll(metaCertNormalizedList)) {
             Set<String> extraInMeta = new HashSet<>(metaCertNormalizedList);
             extraInMeta.removeAll(confCertNormalizedList);
@@ -798,7 +797,7 @@ public class SpidIdentityProviderConfig extends AbstractIdentityProviderConfig<S
             );
         }
 
-        // 2. Check if all configured certificates are present in metadata (confCert ⊆ metaCert)
+        // 2. Check if all configured certificates are present in metadata
         if (!metaCertNormalizedList.containsAll(confCertNormalizedList)) {
             Set<String> missingInMeta = new HashSet<>(confCertNormalizedList);
             missingInMeta.removeAll(metaCertNormalizedList);
