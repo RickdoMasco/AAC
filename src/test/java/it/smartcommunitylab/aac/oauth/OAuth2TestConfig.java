@@ -68,9 +68,6 @@ public final class OAuth2TestConfig {
                     String clientJwks = (String) a.getConfiguration().get("jwks");
                     c.setJwks(clientJwks);
 
-                    String redirectUris = (String) a.getConfiguration().get("jwks");
-                    c.setJwks(clientJwks);
-
                     return c;
                 })
                 .collect(Collectors.toList());
