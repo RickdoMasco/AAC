@@ -27,6 +27,7 @@ import it.smartcommunitylab.aac.spid.model.SpidAttribute;
 import it.smartcommunitylab.aac.spid.model.SpidAuthnContext;
 import it.smartcommunitylab.aac.spid.model.SpidUserAttribute;
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import javax.validation.Valid;
@@ -45,8 +46,11 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         SystemKeys.AUTHORITY_SPID;
 
     // <Signature> options
+    private List<SigningCredential> signingCredentials;
+    private String activeSigningCredentialId;
+
     private String signingKey;
-    private String signingCertificate; // for <KeyDescriptor use="signing"><KeyInfo>
+    private String signingCertificate;
 
     private String metadataUrl;
     private String metadataXML;
@@ -77,6 +81,14 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
     private SpidUserAttribute subAttributeName; // optional
     private SpidUserAttribute usernameAttributeName; // optional
 
+    public List<SigningCredential> getSigningCredentials() {
+        return signingCredentials;
+    }
+
+    public void setSigningCredentials(List<SigningCredential> signingCredentials) {
+        this.signingCredentials = signingCredentials;
+    }
+
     public String getSigningKey() {
         return signingKey;
     }
@@ -91,6 +103,14 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     public void setSigningCertificate(String signingCertificate) {
         this.signingCertificate = signingCertificate;
+    }
+
+    public String getActiveSigningCredentialId() {
+        return activeSigningCredentialId;
+    }
+
+    public void setActiveSigningCredentialId(String activeSigningCredentialId) {
+        this.activeSigningCredentialId = activeSigningCredentialId;
     }
 
     public String getMetadataUrl() {
@@ -225,6 +245,8 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
     public void setConfiguration(SpidIdentityProviderConfigMap map) {
         this.signingKey = map.getSigningKey();
         this.signingCertificate = map.getSigningCertificate();
+        this.signingCredentials = map.getSigningCredentials();
+        this.activeSigningCredentialId = map.getActiveSigningCredentialId();
         this.metadataUrl = map.getMetadataUrl();
         this.metadataXML = map.getMetadataXML();
         this.entityId = map.getEntityId();

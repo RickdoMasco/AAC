@@ -291,10 +291,12 @@ export const uiSchemaOpenidfedIdp: UiSchema = {
     },
 };
 export const uiSchemaSpidIdp: UiSchema = {
-    'ui:layout': [6, 6, 12, 12, 12, 4, 4, 4, 6, 6, 12, 12, 12, 6, 6, 12, 6, 6],
+    'ui:layout': [6, 6, 12, 12, 12, 12, 12, 4, 4, 4, 6, 6, 12, 12, 12, 6, 6, 12, 6, 6],
     'ui:order': [
         'signingKey',
         'signingCertificate',
+        'signingCredentials',
+        'activeSigningCredentialId',
         'metadataUrl',
         'metadataXML',
         'entityId',
@@ -312,12 +314,6 @@ export const uiSchemaSpidIdp: UiSchema = {
         'subAttributeName',
         'usernameAttributeName',
     ],
-    signingKey: {
-        'ui:widget': 'textarea',
-    },
-    signingCertificate: {
-        'ui:widget': 'textarea',
-    },
     metadataXML: {
         'ui:widget': 'textarea',
     },
@@ -329,6 +325,36 @@ export const uiSchemaSpidIdp: UiSchema = {
     authnContext: {
         'ui:title': 'field.spidLevel.name',
         'ui:description': 'field.spidLevel.helperText',
+    },
+    signingKey: {
+        "ui:widget": "textarea",
+        'ui:title': 'field.signingKey.name',
+        'ui:description': 'field.signingKey.helperText',
+    },
+    signingCertificate: {
+        "ui:widget": "textarea",
+        'ui:title': 'field.signingCertificate.name',
+        'ui:description': 'field.signingCertificate.helperText',
+    },
+    signingCredentials: {
+        items: {
+            'ui:layout': [12, 6, 6],
+            'ui:order': ['credentialId', 'signingKey', 'signingCertificate'],
+            credentialId: {
+                'ui:title': 'field.credentialId.name',
+                'ui:description': 'field.credentialId.helperText',
+            },
+            signingKey: {
+                "ui:widget": "textarea",
+                'ui:title': 'field.signingKey.name',
+                'ui:description': 'field.signingKey.helperText',
+            },
+            signingCertificate: {
+                "ui:widget": "textarea",
+                'ui:title': 'field.signingCertificate.name',
+                'ui:description': 'field.signingCertificate.helperText',
+            },
+        },
     },
 };
 //list
