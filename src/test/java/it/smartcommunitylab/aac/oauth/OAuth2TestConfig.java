@@ -68,6 +68,9 @@ public final class OAuth2TestConfig {
                     String clientJwks = (String) a.getConfiguration().get("jwks");
                     c.setJwks(clientJwks);
 
+                    String redirectUris = (String) a.getConfiguration().get("jwks");
+                    c.setJwks(clientJwks);
+
                     return c;
                 })
                 .collect(Collectors.toList());
@@ -152,6 +155,7 @@ public final class OAuth2TestConfig {
         @Override
         public ClientRegistration convert(OAuth2ClientConfigMap e) {
             ClientRegistration c = new ClientRegistration();
+            c.setRedirectUris(e.getRedirectUris());
             // TODO map all fields
             return c;
         }

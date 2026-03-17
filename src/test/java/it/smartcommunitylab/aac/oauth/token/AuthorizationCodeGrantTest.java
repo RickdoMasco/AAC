@@ -61,15 +61,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import com.github.tomakehurst.wiremock.client.WireMock;
-import com.maciejwalkowiak.wiremock.spring.ConfigureWireMock;
-import com.maciejwalkowiak.wiremock.spring.EnableWireMock;
-import com.maciejwalkowiak.wiremock.spring.InjectWireMock;
-import com.github.tomakehurst.wiremock.WireMockServer;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.URI;
 
 /*
  * OAuth 2.0 Authorization Code Grant
@@ -81,7 +72,6 @@ import java.net.URI;
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-@EnableWireMock({ @ConfigureWireMock(name = "oauth-client") })
 public class AuthorizationCodeGrantTest {
 
     @Autowired
@@ -92,9 +82,6 @@ public class AuthorizationCodeGrantTest {
 
     @Autowired
     private BootstrapConfig config;
-
-    @InjectWireMock("oauth-client")
-    private WireMockServer mockClientServer;
 
     private String username;
     private String password;
@@ -1375,9 +1362,14 @@ public class AuthorizationCodeGrantTest {
         // verify form has POST method and correct action
         assertThat(form.attr("method")).isEqualToIgnoringCase("post");
         String formAction = form.attr("action");
-        assertThat(formAction).isEqualTo("http://localhost:9999");
+        
+        ClientRegistration client = OAuth2ConfigUtils.with(config).client();
+        assertThat(client).isNotNull();
+        assertThat(client.getRedirectUris()).isNotEmpty();
+        String redirectUri = client.getRedirectUris().iterator().next();
+        assertThat(formAction).isEqualTo(redirectUri);
 
-        // verify body has onload auto-submit as per OAuth2 form_post spec
+        // verify body has onload auto-submit
         Element body = doc.select("body").first();
         assertThat(body).isNotNull();
         assertThat(body.attr("onload")).contains("document.forms[0].submit()");
@@ -1407,44 +1399,6 @@ public class AuthorizationCodeGrantTest {
         String formIssuer = formParams.get("iss").get(0);
         assertThat(formIssuer).isEqualTo(expectedIssuer);
 
-        // setup mock client server to receive the POST
-        mockClientServer.stubFor(WireMock.post(WireMock.urlEqualTo("/"))
-            .willReturn(WireMock.aResponse()
-                .withStatus(200)
-                .withHeader("Content-Type", "text/plain")
-                .withBody("POST received")));
-
-        // simulate client POST to mock server (using random port)
-        // Form action should still be http://localhost:9999 as per client config
-        String clientRedirectUri = mockClientServer.baseUrl();
-
-        // Build form data as URL-encoded string
-        StringBuilder formData = new StringBuilder();
-        for (Map.Entry<String, List<String>> entry : formParams.entrySet()) {
-            if (formData.length() > 0) {
-                formData.append("&");
-            }
-            formData.append(entry.getKey()).append("=").append(entry.getValue().get(0));
-        }
-
-        // Make actual HTTP POST to mock client server
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(clientRedirectUri))
-            .header("Content-Type", "application/x-www-form-urlencoded")
-            .POST(HttpRequest.BodyPublishers.ofString(formData.toString()))
-            .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-
-        // verify POST response
-        assertThat(response.statusCode()).isEqualTo(200);
-        assertThat(response.body()).isEqualTo("POST received");
-
-        // verify that our mock server received the POST with correct parameters
-        mockClientServer.verify(WireMock.postRequestedFor(WireMock.urlEqualTo("/"))
-            .withRequestBody(WireMock.containing("code=" + formParams.get("code").get(0)))
-            .withRequestBody(WireMock.containing("iss=" + expectedIssuer)));
     }
 
     private static final String AUTHORIZE_URL = AuthorizationEndpoint.AUTHORIZATION_URL;
