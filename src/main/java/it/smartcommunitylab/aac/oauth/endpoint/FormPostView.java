@@ -50,6 +50,7 @@ public class FormPostView extends AbstractView {
         data.put("scope", (String) model.get("scope"));
         data.put("state", (String) model.get("state"));
         data.put("nonce", (String) model.get("nonce"));
+        data.put("iss", (String) model.get("iss"));
 
         data.put("error", (String) model.get("error"));
         data.put("error_description", (String) model.get("error_description"));

@@ -152,6 +152,7 @@ public final class OAuth2TestConfig {
         @Override
         public ClientRegistration convert(OAuth2ClientConfigMap e) {
             ClientRegistration c = new ClientRegistration();
+            c.setRedirectUris(e.getRedirectUris());
             // TODO map all fields
             return c;
         }

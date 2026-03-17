@@ -55,7 +55,12 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /*
  * OAuth 2.0 Authorization Code Grant
@@ -1299,6 +1304,101 @@ public class AuthorizationCodeGrantTest {
 
         // there is no access token
         assertThat(response.get(OAuth2ParameterNames.ACCESS_TOKEN)).isNull();
+    }
+
+    @Test
+    @WithMockUserAuthentication(username = "test", realm = "test")
+    public void userAuthWithFormPostResponseModeAndIssuerTest() throws Exception {
+        // fetch issuer from metadata
+        MockHttpServletRequestBuilder metaReq = MockMvcRequestBuilders
+            .get("/.well-known/oauth-authorization-server")
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        MvcResult metaRes = this.mockMvc.perform(metaReq).andExpect(status().isOk()).andReturn();
+        String metaJson = metaRes.getResponse().getContentAsString();
+        Map<String, Serializable> metadata = mapper.readValue(metaJson, typeRef);
+
+        assertThat(metadata.get("issuer")).isNotNull().isInstanceOf(String.class);
+        String expectedIssuer = (String) metadata.get("issuer");
+        assertThat(expectedIssuer).isNotBlank();
+
+        // authorize request
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add(OAuth2ParameterNames.RESPONSE_TYPE, ResponseType.CODE.toString());
+        params.add(OAuth2ParameterNames.CLIENT_ID, clientId);
+        params.add(OAuth2ParameterNames.SCOPE, "");
+        params.add("response_mode", "form_post");
+
+        MockHttpServletRequestBuilder req = MockMvcRequestBuilders
+            .get(AUTHORIZE_URL)
+            .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+            .params(params);
+
+        MvcResult res = this.mockMvc.perform(req).andExpect(status().isOk()).andReturn();
+
+        // expect a forward in response
+        assertThat(res.getResponse().getContentAsString()).isBlank();
+
+        String forwardedUrl = res.getResponse().getForwardedUrl();
+        assertThat(forwardedUrl).isNotNull().startsWith("/oauth/authorized_post");
+
+        // keep same session for whole request flow
+        MockHttpSession session = (MockHttpSession) res.getRequest().getSession();
+        assertThat(session).isNotNull();
+
+        // follow forward to fetch response
+        req = MockMvcRequestBuilders.get(forwardedUrl).session(session);
+        res = this.mockMvc.perform(req).andExpect(status().isOk()).andReturn();
+
+        // expect HTML form response
+        String htmlContent = res.getResponse().getContentAsString();
+        assertThat(htmlContent).isNotBlank();
+
+        // parse HTML form to extract parameters and validate compliance
+        Document doc = Jsoup.parse(htmlContent);
+        Element form = doc.select("form").first();
+        assertThat(form).isNotNull();
+
+        // verify form has POST method and correct action
+        assertThat(form.attr("method")).isEqualToIgnoringCase("post");
+        String formAction = form.attr("action");
+        
+        ClientRegistration client = OAuth2ConfigUtils.with(config).client();
+        assertThat(client).isNotNull();
+        assertThat(client.getRedirectUris()).isNotEmpty();
+        String redirectUri = client.getRedirectUris().iterator().next();
+        assertThat(formAction).isEqualTo(redirectUri);
+
+        // verify body has onload auto-submit
+        Element body = doc.select("body").first();
+        assertThat(body).isNotNull();
+        assertThat(body.attr("onload")).contains("document.forms[0].submit()");
+
+        // verify noscript fallback for accessibility (check the one inside form)
+        Elements noscriptElements = doc.select("form noscript");
+        assertThat(noscriptElements).isNotEmpty();
+        Element formNoscript = noscriptElements.first();
+        Element submitButton = formNoscript.select("input[type=submit]").first();
+        assertThat(submitButton).isNotNull();
+
+        // extract hidden fields from form
+        Elements hiddenInputs = form.select("input[type=\"hidden\"]");
+        assertThat(hiddenInputs).isNotEmpty();
+
+        MultiValueMap<String, String> formParams = new LinkedMultiValueMap<>();
+        for (Element input : hiddenInputs) {
+            String name = input.attr("name");
+            String value = input.attr("value");
+            if (StringUtils.hasText(name) && StringUtils.hasText(value)) {
+                formParams.add(name, value);
+            }
+        }
+
+        // verify iss parameter is present in form
+        assertThat(formParams.get("iss")).isNotNull().isNotEmpty();
+        String formIssuer = formParams.get("iss").get(0);
+        assertThat(formIssuer).isEqualTo(expectedIssuer);
+
     }
 
     private static final String AUTHORIZE_URL = AuthorizationEndpoint.AUTHORIZATION_URL;
