@@ -294,12 +294,13 @@ export const uiSchemaOpenidfedIdp: UiSchema = {
     },
 };
 export const uiSchemaSpidIdp: UiSchema = {
-    'ui:layout': [6, 6, 12, 12, 12, 12, 12, 4, 4, 4, 6, 6, 12, 12, 12, 6, 6, 12, 6, 6],
+    'ui:layout': [6, 6, 12, 12, 12, 12, 12, 12, 4, 4, 4, 6, 6, 12, 12, 12, 6, 6, 12, 6, 6],
     'ui:order': [
         'signingKey',
         'signingCertificate',
         'signingCredentials',
-        'activeSigningCredentialId',
+        'activeAuthRequestSigningCredentialId',
+        'activeMetadataSigningCredentialId',
         'metadataUrl',
         'metadataXML',
         'entityId',

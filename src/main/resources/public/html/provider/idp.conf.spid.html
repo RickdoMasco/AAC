@@ -51,9 +51,16 @@
         </div>
         <div class="row">
             <div class="form-group col ">
-                <label for="activeSigningCredentialId">Active Signing Credential Id</label>
-                <input type="text" name="activeSigningCredentialId" class="form-control form-control-sm" id="activeSigningCredentialId"
-                       ng-model="idp.configuration.activeSigningCredentialId">
+                <label for="activeAuthRequestSigningCredentialId">Active Signing Credential Id</label>
+                <input type="text" name="activeAuthRequestSigningCredentialId" class="form-control form-control-sm" id="activeAuthRequestSigningCredentialId"
+                       ng-model="idp.configuration.activeAuthRequestSigningCredentialId">
+            </div>
+        </div>
+        <div class="row">
+            <div class="form-group col ">
+                <label for="activeMetadataSigningCredentialId">Active Signing Credential Id</label>
+                <input type="text" name="activeMetadataSigningCredentialId" class="form-control form-control-sm" id="activeMetadataSigningCredentialId"
+                       ng-model="idp.configuration.activeMetadataSigningCredentialId">
             </div>
         </div>
     </fieldset>

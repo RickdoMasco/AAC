@@ -587,9 +587,13 @@
         "name": "Signing Credential Id",
         "helperText": "Unique identifier for the credential"
     },
-    "activeSigningCredentialId": {
-        "name": "Active Signing Credential Id",
-        "helperText": "If not specified or incorrect, the first credential will be selected"
+    "activeAuthRequestSigningCredentialId": {
+        "name": "Active AuthRequest Signing Credential Id",
+        "helperText": "If not specified or not found in the list, the system will fall back to the standalone-signingKey and standalone-signingCertificate configuration, and finally to the first credential in the list."
+    },
+    "activeMetadataSigningCredentialId": {
+        "name": "Active Metadata Signing Credential Id",
+        "helperText": "If not specified or not found in the list, the system will fall back to the standalone-signingKey and standalone-signingCertificate configuration, and finally to the first credential in the list."
     },
     "signingKey": {
         "name": "Signing Key",

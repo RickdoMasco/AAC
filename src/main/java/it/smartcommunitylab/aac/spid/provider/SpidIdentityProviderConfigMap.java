@@ -47,7 +47,8 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
 
     // <Signature> options
     private List<SigningCredential> signingCredentials;
-    private String activeSigningCredentialId;
+    private String activeAuthRequestSigningCredentialId;
+    private String activeMetadataSigningCredentialId;
 
     private String signingKey;
     private String signingCertificate;
@@ -105,12 +106,18 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         this.signingCertificate = signingCertificate;
     }
 
-    public String getActiveSigningCredentialId() {
-        return activeSigningCredentialId;
+    public String getActiveAuthRequestSigningCredentialId() {
+        return activeAuthRequestSigningCredentialId;
     }
 
-    public void setActiveSigningCredentialId(String activeSigningCredentialId) {
-        this.activeSigningCredentialId = activeSigningCredentialId;
+    public void setActiveAuthRequestSigningCredentialId(String activeAuthRequestSigningCredentialId) {
+        this.activeAuthRequestSigningCredentialId = activeAuthRequestSigningCredentialId;
+    }
+
+    public String getActiveMetadataSigningCredentialId() { return activeMetadataSigningCredentialId; }
+
+    public void setActiveMetadataSigningCredentialId(String activeMetadataSigningCredentialId) {
+        this.activeMetadataSigningCredentialId = activeMetadataSigningCredentialId;
     }
 
     public String getMetadataUrl() {
@@ -246,7 +253,8 @@ public class SpidIdentityProviderConfigMap extends AbstractConfigMap implements 
         this.signingKey = map.getSigningKey();
         this.signingCertificate = map.getSigningCertificate();
         this.signingCredentials = map.getSigningCredentials();
-        this.activeSigningCredentialId = map.getActiveSigningCredentialId();
+        this.activeAuthRequestSigningCredentialId = map.getActiveAuthRequestSigningCredentialId();
+        this.activeMetadataSigningCredentialId = map.getActiveMetadataSigningCredentialId();
         this.metadataUrl = map.getMetadataUrl();
         this.metadataXML = map.getMetadataXML();
         this.entityId = map.getEntityId();
