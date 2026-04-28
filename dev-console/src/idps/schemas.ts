@@ -104,6 +104,9 @@ export const schemaIdpSettings: RJSFSchema = {
 
 export const uiSchemaIdpSettings: UiSchema = {
     'ui:layout': [12],
+    notes: {
+        'ui:widget': 'textarea',
+    },
 };
 
 export const uiSchemaInternalIdp: UiSchema = {
