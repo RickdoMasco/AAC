@@ -26,6 +26,7 @@ import it.smartcommunitylab.aac.common.NoSuchRealmException;
 import it.smartcommunitylab.aac.dto.RealmConfig;
 import it.smartcommunitylab.aac.model.Realm;
 import it.smartcommunitylab.aac.realms.service.RealmService;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -64,6 +65,15 @@ public class TosConfigTest {
 
             slug = rc.getRealm().getSlug();
             assertThat(slug).isNotBlank();
+        }
+    }
+
+    @AfterEach
+    public void cleanUp() throws NoSuchRealmException {
+        if (slug != null) {
+            TosConfigurationMap configMap = new TosConfigurationMap();
+            configMap.setEnableTOS(null);
+            updateTos(slug, configMap);
         }
     }
 
