@@ -30,3 +30,5 @@ aac.log
 *.jar
 /test/
 node_modules
+
+/.vscode/
