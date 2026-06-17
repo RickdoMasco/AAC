@@ -1,3 +1,7 @@
+---
+layout: default
+---
+
 # Sequence Diagram - Flusso di Autenticazione OIDC (Google IdP)
 
 Questo diagramma di sequenza descrive la logica dinamica eseguita a runtime per l'autenticazione di un utente tramite Google come Identity Provider (IdP). Il flusso illustra l'interazione tra i filtri di intercettazione di AAC, l'IdP esterno di Google e i componenti di sicurezza di Spring Security per lo scambio dei token e il recupero dell'identità.

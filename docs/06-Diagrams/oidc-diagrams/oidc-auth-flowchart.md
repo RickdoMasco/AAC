@@ -1,3 +1,7 @@
+---
+layout: default
+---
+
 # Flowchart - Flusso di Autenticazione OIDC (Google IdP)
 
 Questo diagramma di flusso descrive la logica di controllo sequenziale applicata durante il flusso di autenticazione OIDC tramite Google come Identity Provider. Il processo coinvolge due filtri principali nella Security Filter Chain: `OIDCRedirectAuthenticationFilter` (fase di inizio) e `OIDCLoginAuthenticationFilter` (fase di callback), con delega all'`OIDCAuthenticationProvider` per lo scambio del codice e la creazione dell'identità utente.

@@ -1,0 +1,4 @@
+title: "Documentazione AAC"
+theme: jekyll-theme-primer
+plugins:
+  - jekyll-relative-links
