@@ -40,6 +40,8 @@ classDiagram
 
 ---
 
+## Account Hierarchy (Internal + OIDC)
+
 ```mermaid
 classDiagram
     direction TB
@@ -89,6 +91,8 @@ classDiagram
         +getStatus()
         +setStatus() 
     }
+
+    %% === Internal ===
     class InternalUserAccount { 
         -repositoryId
         -username
@@ -96,6 +100,30 @@ classDiagram
         -email
         +constructor()
         +eraseCredentials() 
+    }
+
+    %% === OIDC) ===
+    class OIDCUserAccount {
+        -repositoryId
+        -subject
+        -uuid
+        -status
+        -username
+        -issuer
+        -email
+        -emailVerified
+        -name
+        -givenName
+        -lang
+        -picture
+        -attributes
+        -createDate
+        -modifiedDate
+        +constructor()
+        +eraseCredentials()
+        +getEmail()
+        +isEmailVerified()
+        +isLocked()
     }
 
     %% Ereditarietà e Implementazioni
@@ -107,11 +135,15 @@ classDiagram
     AbstractBaseUserResource <|-- AbstractUserAccount
     UserAccount <|.. AbstractUserAccount
     AbstractUserAccount <|-- InternalUserAccount
+    AbstractUserAccount <|-- OIDCUserAccount
     CredentialsContainer <|.. InternalUserAccount
+    CredentialsContainer <|.. OIDCUserAccount
 
 ```
 
 ---
+
+## Identity Hierarchy (Internal + OIDC)
 
 ```mermaid
 classDiagram
@@ -148,6 +180,8 @@ classDiagram
         +getAccount()
         +getUuid() 
     }
+
+    %% === Internal ===
     class InternalUserIdentity { 
         +RESOURCE_TYPE
         -principal
@@ -156,7 +190,23 @@ classDiagram
         +constructor() 
     }
     class InternalUserAccount { 
-        <<external>> 
+    }
+
+    %% === OIDC (Google, Facebook, GitHub, ecc.) ===
+    class OIDCUserAuthenticatedPrincipal {
+        -serialVersionUID
+        +RESOURCE_TYPE
+        -subject
+        -emailVerified
+        -principal
+        -username
+        -emailAddress
+        -attributes
+        +constructor()
+        +isEmailVerified()
+    }
+    class OIDCUserAccount {
+        <<external>>
     }
 
     %% Ereditarietà e Implementazioni
@@ -168,8 +218,10 @@ classDiagram
     AbstractBaseUserResource <|-- AbstractUserIdentity
     UserIdentity <|.. AbstractUserIdentity
     AbstractUserIdentity <|-- InternalUserIdentity
+    AbstractUserIdentity <|-- OIDCUserAuthenticatedPrincipal
 
     %% Collegamento finale verso l'account
     InternalUserIdentity "1" *-- "1" InternalUserAccount : detiene
+    OIDCUserAuthenticatedPrincipal "1" *-- "1" OIDCUserAccount : detiene
 
 ```

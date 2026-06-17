@@ -62,3 +62,9 @@ Expert
 * JWT
 * SPID + CIE
 * EIDAS
+
+# [Diagrams](./06-Diagrams/00-index.md)
+
+* auth-class-diagram
+* internal`diagrams
+* auth/class-diagram

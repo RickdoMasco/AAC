@@ -32,3 +32,5 @@ aac.log
 node_modules
 
 /.vscode/
+
+.clineignore
