@@ -1,9 +1,29 @@
 <!-- Mermaid.js per il rendering dei diagrammi su GitHub Pages -->
 <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
 <script>
-  mermaid.initialize({ 
-    startOnLoad: true,
-    theme: 'default',
-    securityLevel: 'loose'
+  document.addEventListener("DOMContentLoaded", function() {
+    // 1. Trova tutti i blocchi di codice che Jekyll ha marcato come mermaid
+    var mermaidBlocks = document.querySelectorAll('pre code.language-mermaid');
+    
+    mermaidBlocks.forEach(function(block) {
+      // 2. Crea un div con classe 'mermaid' (che è quello che Mermaid.js si aspetta)
+      var div = document.createElement('div');
+      div.className = 'mermaid';
+      div.textContent = block.textContent;
+      
+      // 3. Sostituisce l'intero blocco <pre><code> con il nuovo <div>
+      var pre = block.parentElement;
+      if (pre && pre.tagName === 'PRE') {
+        pre.parentNode.replaceChild(div, pre);
+      }
+    });
+
+    // 4. Inizializza Mermaid dopo la trasformazione del DOM
+    mermaid.initialize({ 
+      startOnLoad: false, // Gestiamo il caricamento manualmente
+      theme: 'default',
+      securityLevel: 'loose'
+    });
+    mermaid.init();
   });
 </script>
