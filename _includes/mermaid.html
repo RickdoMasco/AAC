@@ -1,27 +1,41 @@
 <!-- Mermaid.js per il rendering dei diagrammi su GitHub Pages -->
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 <script>
-  document.addEventListener("DOMContentLoaded", function () {
-    // 1. Trova tutti i blocchi di codice generati da Jekyll/Kramdown
-    var mermaidBlocks = document.querySelectorAll('pre code.language-mermaid, .language-mermaid pre, pre.language-mermaid');
-
-    mermaidBlocks.forEach(function (block) {
-      var div = document.createElement('div');
-      div.className = 'mermaid';
-      div.textContent = block.textContent;
-
-      // Trova il nodo genitore <pre> per sostituirlo completamente
-      var pre = block.tagName === 'PRE' ? block : block.closest('pre');
-      if (pre) {
-        pre.parentNode.replaceChild(div, pre);
+  (function() {
+    function initMermaid() {
+      if (typeof mermaid === 'undefined') {
+        console.error('Mermaid.js not loaded');
+        return;
       }
-    });
 
-    // 2. Inizializza e renderizza
-    mermaid.initialize({
-      startOnLoad: true,
-      theme: 'default',
-      securityLevel: 'loose'
-    });
-  });
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: 'default',
+        securityLevel: 'loose'
+      });
+
+      var mermaidBlocks = document.querySelectorAll('pre code.language-mermaid, .language-mermaid pre, pre.language-mermaid');
+      
+      if (mermaidBlocks.length > 0) {
+        mermaidBlocks.forEach(function (block) {
+          var div = document.createElement('div');
+          div.className = 'mermaid';
+          div.textContent = block.textContent;
+
+          var pre = block.tagName === 'PRE' ? block : block.closest('pre');
+          if (pre) {
+            pre.parentNode.replaceChild(div, pre);
+          }
+        });
+        
+        mermaid.run();
+      }
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initMermaid);
+    } else {
+      initMermaid();
+    }
+  })();
 </script>
