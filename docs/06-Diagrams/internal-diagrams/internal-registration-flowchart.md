@@ -1,7 +1,3 @@
----
-layout: default
----
-
 # Flowchart - Processo logico di registrazione
 
 Questo diagramma di flusso descrive la logica di controllo, le verifiche condizionali e le politiche di gestione delle eccezioni applicate durante la fase di registrazione di una nuova identità. Il flusso evidenzia le strategie di *fail-fast* messe in atto dal controller per proteggere lo stato del sistema e i successivi bivi decisionali dei servizi di dominio.

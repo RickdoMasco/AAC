@@ -1,7 +1,3 @@
----
-layout: default
----
-
 # Sequence Diagram
 
 Questo diagramma di sequenza descrive la logica dinamica a runtime del sottosistema di Identity e Access Management (IAM) durante la fase di registrazione di un nuovo utente per l'IdP internal. Mostra come i servizi di dominio collaborano per garantire la consistenza dei dati tra l'utente globale (`UserEntity`), il suo account locale (`InternalUserAccount`) e le sue credenziali di autenticazione.

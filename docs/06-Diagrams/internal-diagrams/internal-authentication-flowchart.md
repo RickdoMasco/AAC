@@ -1,7 +1,3 @@
----
-layout: default
----
-
 # Flowchart - Filtro di Autenticazione tramite Chiave di Conferma
 
 Questo diagramma di flusso descrive la logica di controllo sequenziale applicata dal filtro di sicurezza `ConfirmKeyAuthenticationFilter` durante la fase di intercettazione di una richiesta di autenticazione. Il filtro si posiziona nella *Security Filter Chain* dell'applicazione e funge da guardiano per convalidare i prerequisiti della richiesta prima di delegare il processo di login vero e proprio.

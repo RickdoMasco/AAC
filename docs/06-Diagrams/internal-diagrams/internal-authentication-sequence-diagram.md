@@ -1,7 +1,3 @@
----
-layout: default
----
-
 # Sequence Diagram - Flusso di Autenticazione tramite Chiave di Conferma
 
 Questo diagramma di sequenza descrive la logica dinamica eseguita a runtime dal componente `ConfirmKeyAuthenticationFilter` per autenticare un utente tramite una chiave di conferma (*confirm key*). Il flusso mostra l'estrazione dei parametri di contesto dal protocollo HTTP, il recupero dell'account di dominio e la successiva delega al manager di sicurezza del framework.

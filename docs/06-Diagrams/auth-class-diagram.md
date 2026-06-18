@@ -1,7 +1,3 @@
----
-layout: default
----
-
 # Class Diagram
 
 **Utente** (rappresentazione sia magari di un applicativo/server o, come in questo caso, un individuo)
