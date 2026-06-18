@@ -18,7 +18,7 @@ The internal representation of a user account in AAC is composed by the combinat
 
 Each repository can hold a variety of user `attributes`, which are metadata describing a feature of a given user `account`.
 
-By linking an `account` to a `user` entity we can map `attributes` from the provider into the global representation, or into an account specific section. 
+By linking an `account` to a `user` entity we can map `attributes` from the provider into the global representation, or into an account specific section.
 
 When linking more than one account to the same user, we can compose a global identity characterized by a series of attributes fetched from different sources, mapped by rules into the global object. Consequently, client applications can access those attributes without specific knowledge of the data source behind the data.
 
@@ -28,7 +28,6 @@ erDiagram
     ACCOUNT ||--|{ ATTRIBUTE : has
 
 ```
-
 
 ## Login
 
@@ -75,7 +74,6 @@ The logout procedure will invalidate the session at AAC level, leaving sessions 
 
 The same behavior can be observed in client applications: logging out of an AAC session does not alter in any way application sessions. There is no communication between AAC and clients regarding active users sessions.
 
-
 ## SSO
 
 For Single-Sing-On scenarios clients are expected to transparently share not only user *identities* via the same provider, but also share a globally managed *session*.
@@ -116,6 +114,5 @@ sequenceDiagram
     ClientA-->>User: terminated client session
 
 ```
-
 
 This scenario is currently under development, following the OpenID Connect - Session spec.

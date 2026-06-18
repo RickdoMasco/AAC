@@ -11,9 +11,8 @@ It is mandatory to ensure that every user interaction aimed at transmitting pers
 
 ## Realm
 
-A realm describes a group of applications, managed by the same partner, all sharing a common configuration. As such, it is advisable to let developers customize some graphical elements to properly transmit the *tenant* identity to end users. 
+A realm describes a group of applications, managed by the same partner, all sharing a common configuration. As such, it is advisable to let developers customize some graphical elements to properly transmit the *tenant* identity to end users.
 All elements personalized at the realm level are shared between applications registered inside the given realm.
-
 
 List of elements customizable *per realm*:
 
@@ -21,16 +20,15 @@ List of elements customizable *per realm*:
 * global: realm logo
 * layout: header text
 * layout: footer text
-* about page: realm description 
+* about page: realm description
 * about page: realm info/contacts (web page, mail etc)
 * privacy policy: realm contacts added to platform handlers
 * registration: enable/disable
 * (global: languages enabled)
 
-
 ## Client
 
-A single client is usually connected to a single user-facing application, and optionally to an API backend serving such app. 
+A single client is usually connected to a single user-facing application, and optionally to an API backend serving such app.
 
 The level of customization offered aims at personalizing the user-facing pages of the AAC UI, by adding descriptive texts, explanation section and application links.
 More importantly, the client should expose an identity to users, enabling them in recognizing the application. The objective is to enable users in distinguishing clients inside the same realm, giving them the ability to properly choose what personal data share with each distinct client.
@@ -49,4 +47,3 @@ List of elements customizable *per client*:
 * registration: confirmation message/mail
 * MFA: custom message
 * MFA: factor list (with custom order)
-

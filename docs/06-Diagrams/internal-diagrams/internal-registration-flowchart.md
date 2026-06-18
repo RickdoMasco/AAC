@@ -21,26 +21,22 @@ flowchart TD
   
     IRC --> IIS["InternalIdentityService registerIdentity(userId, registration, credentials)"]
 
-    IIS --> FUser{userId esiste?}
+    IIS --> FUser{userId fornito?}
     FUser -- Yes --> FindUser["UserEntityService findUser(userId)"]
-    FUser -- No --> NoUser["Salta ricerca user esistente"]
+    FUser -- No --> RegAcc["InternalAccountService registerAccount(userId, account)"]
 
-    FindUser --> RegAcc["InternalAccountService registerAccount(userId, account)"]
-    NoUser --> RegAcc
+    FindUser --> RegAcc
 
     RegAcc --> GetAcc["InternalAccountService getAccount(accountId)"]
-    GetAcc --> CredExists{Credenziali esistenti?}
+    GetAcc --> LoopCred["Per ogni credenziale fornita"]
     
-    CredExists -- No --> AddCred["CredentialsService addCredential(...)"]
-    CredExists -- Yes --> SetCred["setGivenCredential"]
-    
-    AddCred --> SetCred
-    SetCred --> SR["registration effettuata"]
+    LoopCred --> AddCred["CredentialsService addCredential(userId, null, uc)"]
+    AddCred --> SR["registration effettuata"]
 
 ```
 
 ## Dettagli ed Analisi dei Bivi Logici
 
 * **Strategia Anti-Errore nel Controller (Fail-Fast):** Il blocco iniziale mostra tre rami di gestione dell'errore ad alto livello. Se il provider rifiuta l'operazione (`unsupported_operation`), se i dati falliscono la validazione sintattica, o se si verifica un'eccezione non prevista (`registration unsuccessful`), il sistema interrompe immediatamente l'esecuzione e reindirizza l'utente alla vista sicura (`internal/registeraccount`).
-* **Risoluzione dell'Utente Esistente:** Prima di avviare la persistenza, il sistema esegue un controllo condizionale sull'ID utente (`userId esiste?`). Questo bivio permette di riutilizzare un'istanza di `UserEntity` esistente (nel caso di multi-identità collegate allo stesso utente) oppure di saltare la ricerca per procedere direttamente alla creazione di una nuova risorsa pulita.
-* **Idempotenza e Aggiornamento delle Credenziali:** Nella fase finale, il sistema controlla la presenza di credenziali pregresse (`Credenziali esistenti?`). Se non sono presenti, viene invocato il ciclo di creazione sul `CredentialsService`; se invece esistono già, il sistema applica una logica di sovrascrittura o aggiornamento (`setGivenCredential`), garantendo l'idempotenza del processo di registrazione.
+* **Risoluzione dell'Utente Esistente:** Se un `userId` è fornito, il sistema interroga l'`UserEntityService` per verificare l'esistenza dell'utente. Questo passaggio serve a determinare se l'utente è nuovo o se l'identità deve essere collegata a un profilo esistente, sebbene la creazione effettiva dell'account sia delegata all'`InternalAccountService`.
+* **Gestione delle Credenziali:** A differenza della gestione dell'account, le credenziali vengono processate in modo iterativo. Per ogni credenziale fornita nella richiesta di registrazione, il sistema identifica il servizio di credenziali appropriato (es. Password) e invoca `addCredential`, associando la nuova credenziale all'ID utente risolto.

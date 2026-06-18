@@ -6,8 +6,6 @@ TODO translate, contestualize for AAC
 
 L'uso di OAuth permette ad una applicazione (interna o di terze parti) di accedere a risorse protette in maniera sicura, controllata ed affidabile.
 
-
-
 ### Scenari di utilizzo
 
 OAuth2 è stato sviluppato per rispondere alle esigenze di accesso a risorse protette. Alcuni scenari di esempio sono:
@@ -19,13 +17,9 @@ OAuth2 è stato sviluppato per rispondere alle esigenze di accesso a risorse pro
 * Internet of Things (IoT)
 * sistemi distribuiti e cloud native
 
-
-
 ## Il modello
 
 Il framework OAuth2 è basato sul concetto di *delega di autorità*: un *client* ottiene una autorizzazione limitata ad accedere a delle *risorse protette* da parte del *proprietario*.
-
-
 
 ### Delega di autorità vs identità
 
@@ -42,8 +36,6 @@ Separando il ruolo di client da quello dell'utente e introducendo un layer di au
 * eseguire la revoca dell'autorizzazione
 * limitare le azioni e le modalità di uso delle risorse
 
-
-
 ## Attori e ruoli
 
 Gli attori coinvolti in OAuth2 sono:
@@ -53,35 +45,25 @@ Gli attori coinvolti in OAuth2 sono:
 * il server di autorizzazione (*authorization server*)
 * l'applicazione (*client*)
 
-
-
 ### Attori: Resource Owner
 
 Il *proprietario delle risorse* è l'utente che autorizza una applicazione ad accedere a tali risorse.
 
 Tramite l'utilizzo di *scope* è possibile limitare tali accessi a determinate azioni.
 
-
-
 ### Attori: Resource Server
 
 Il *resource server* è il fornitore di risorse protette: una API che gestisce contenuti e informazioni *dell'utente* e che effettua il *controllo di accesso*.
 
-
-
 ### Attori: Authorization server
 
 L'*authorization server* è incaricato di gestire le richieste di accesso alle risorse per l'utente, fornendo una interfaccia tramite la quale il proprietario delle risorse può validare la propria identità e approvare l'accesso dei client.
-
-
 
 ### Attori: Client
 
 Il *client* è l'applicazione che desidera accedere alle risorse dell'utente e eventualmente eseguire azioni su di esse.
 
 Per poter operare necessità dell'autorizzazione, che ottiene previa *approvazione* dall'utente tramite l'*authorization server*.
-
-
 
 ## Il flusso generale
 
@@ -92,8 +74,6 @@ Il flusso alla base del framework OAuth permette di:
 * *approvare* tale accesso
 * trasmettere l'informazione di *autorizzazione*
 
-
-
 La comunicazione tra le varie parti si basa sul concetto di *trasmissione sicura*.
 
 Tramite l'uso di **token** le informazioni di autorizzazione possono essere scambiate tra gli attori garantendo:
@@ -102,18 +82,13 @@ Tramite l'uso di **token** le informazioni di autorizzazione possono essere scam
 * **validità**
 * **affidabilità**
 
-
 ## Core spec: RFC6749
 
 Il framework è definito tramite pubblicazione nel 2012 dell'*RFC 6749* da parte dell'*Internet Engineering Task Force (IETF)*:
 
 > ### The OAuth 2.0 Authorization Framework
 
-
-
 Il framework OAuth2 come definito dalla specifica base si occupa di definire una serie di *flussi di autorizzazione* che permettono all'utente di delegare l'accesso alle risorse ad un client in maniera sicura su HTTP.
-
-
 
 ### Core spec: flusso astratto
 
@@ -137,15 +112,12 @@ sequenceDiagram
     
 ```
 
-
 Il flusso di autorizzazione segue generalmente i seguenti passi:
 
 * l'applicazione richiede una autorizzazione dall'utente
 * l'utente approva (o rifiuta) la richiesta
 * l'applicazione richiede un *access token* al server di autorizzazione
 * l'applicazione utilizza il token per accedere alle risorse protette
-
-
 
 ## Core spec: i flussi disponibili
 
@@ -156,13 +128,9 @@ La specifica prevede la definizione di diversi tipi di *grant* che implementano 
 * authorization grant
 * client credentials grant
 
-
-
 ### Core spec: Resource Owner Grant
 
 Il flusso denominato *resource owner password grant* prevede che l'utente fornisca le proprie credenziali di accesso direttamente all'applicazione client, che le utilizza per ottenere il token di accesso.
-
-
 
 ```mermaid
 
@@ -182,15 +150,11 @@ sequenceDiagram
     
 ```
 
-
-
 Il flusso *resource owner* è l'applicazione del *vecchio* modello client-server, precedente i moderni framework IDM.
 
 Fornendo le *credenziali di accesso* ai client gli utenti perdono il controllo della propria identità e delle risorse protette.
 
 Il suo uso è sconsigliato fin dalla specifica iniziale, e deprecato dalle versioni aggiornate dello standard.
-
-
 
 ### Core spec: Implicit Grant
 
@@ -228,20 +192,15 @@ Nel flusso *implicit*:
 * l'utente approva la richiesta presso l'auth server
 * l'auth server fornisce al client un access token, embeddandolo nel *redirect url*
 
-
-
 Il flusso *implicit* permette di controllare la gestione dell'accesso e di non rivelare le credenziali alle applicazioni, ma trasmette i token di accesso come parametri via browser.
 
 Questa modalità permette ad altre applicazioni e all'utente di scoprire i token, e non è quindi in grado di assicurare la *confidenzialità*.
-
-
 
 ### Core spec: Authorization Grant
 
 L'*authorization code grant* prevede di fornire i token di accesso alle applicazioni tramite un flusso *redirect-based*, in maniera similare ad *implicit grant*.
 
 La differenza risiede nell'uso di codici di autorizzazione (non riusabili) per trasmettere l'autorizzazione ad ottenere un *access token*.
-
 
 ```mermaid
 sequenceDiagram
@@ -268,7 +227,6 @@ sequenceDiagram
 
 ```
 
-
 Nel flusso *auth code*:
 
 * il client richiede l'autorizzazione all'utente tramite redirect via browser
@@ -277,10 +235,7 @@ Nel flusso *auth code*:
 * il client richiede direttamente all'auth server un access token fornendo prova di identità e auth code
 * l'auth server risponde al client con l'access token
 
-
 Il grant *auth code*, oltre a garantire la riservatezza delle credenziali utente, permette di ottenere la confidenzialità nella trasmissione degli access token anche nei confronti dell'utente e del browser: solo client e auth server sono coinvolti nella trasmissione.
-
-
 
 ### Core spec: Client Credentials
 
@@ -301,8 +256,6 @@ sequenceDiagram
 ```
 
 Le modalità di *autenticazione* del client solitamente dipendono dall'utilizzo di *credenziali* nella forma di *clientId+clientSecret*, ma la specifica OAuth permette l'utilizzo di altre forme di autenticazione se richieste dal contesto applicativo.
-
-
 
 ### Core spec: Refresh Token
 
@@ -335,19 +288,17 @@ Quando un access token scade, un client può richiederne *in autonomia* uno nuov
 
 Se il refresh token è valido, l'auth server andrà ad invalidare l'access token precedentemente associato e ne genererà uno nuovo, fornendolo al client.
 
-
 ## Applicazioni mobile e native
 
 Le applicazioni distribuite sui dispositivi degli utenti non possono essere considerate *confidenziali*: utilizzando il flusso *auth code* c'è il rischio che le credenziali del client vengano compromesse.
 
 Una soluzione è adottare un flusso *meno sicuro*, quale ad esempio *implicit grant* tramite browser di sistema. Non è in ogni caso possibile assicurare che i token o gli *auth code* non vengano intercettati.
 
-
 ## Mobile spec: PKCE
 
 La soluzione adottata tramite *RFC 7636* prevede un meccanismo sicuro di verifica dell'identità che evita la trasmissione dei secret:
 
-####   Proof Key for Code Exchange by OAuth Public Clients
+#### Proof Key for Code Exchange by OAuth Public Clients
 
 ```mermaid
 
@@ -371,8 +322,6 @@ sequenceDiagram
     
 ```
 
-
 L'idea alla base del protocollo è estendere il grant *auth code* e sostituire la verifica dell'identità client tramite secret con un meccanismo challenge/response basato su algoritmi crittografici.
 
 Tale approccio garantisce che l'auth code rilasciato sia utilizzabile solo dal legittimo destinatario.
-

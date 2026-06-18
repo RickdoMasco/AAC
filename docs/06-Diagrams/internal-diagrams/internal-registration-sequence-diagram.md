@@ -32,23 +32,20 @@ sequenceDiagram
 
         %% Flusso registerAccount
         InternalIdentityService->>InternalAccountService: registerAccount(userId, InternalEditableUserAccount)
-        InternalAccountService->>UserAccountService: findAccountById(repositoryId, username)
-        UserAccountService-->>InternalAccountService: InternalUserAccount
+        InternalAccountService->>InternalAccountService: findAccountByUsername(username)
         InternalAccountService->>UserAccountService: findAccountsByEmail(repositoryId, emailAddress)
-        UserAccountService-->>InternalAccountService: List  
-        InternalAccountService->>UserEntityService: createUser(realm)
-        UserEntityService->>SubjectService: generateUuid(type)
-        SubjectService-->>UserEntityService: String
-        UserEntityService-->>InternalAccountService: UserEntity
-        InternalAccountService->>UserEntityService: addUser(userId, realm, username, emailAddress)
-        UserEntityService->> UserEntityRepository: findByUuid(uuid)
-        UserEntityRepository-->> UserEntityService: UserEntity
-        UserEntityService->> SubjectService: addSubject(uuid, realm, RESOURCE_USER, username)
-        SubjectService-->>UserEntityService : Subject
-        UserEntityService-->>InternalAccountService: UserEntity
-        InternalAccountService->>UserEntityService : addAccount(repositoryId, username, account)
-        UserEntityService-->>InternalAccountService: UserAccount
-        InternalAccountService->>ResourceEntityService : addResourceEntity(id, type, authority, provider, resourceId)
+        
+        alt userId is null
+            InternalAccountService->>UserEntityService: createUser(realm)
+            UserEntityService-->>InternalAccountService: UserEntity (uuid)
+            InternalAccountService->>UserEntityService: addUser(userId, realm, username, emailAddress)
+            UserEntityService-->>InternalAccountService: UserEntity
+        end
+        
+        InternalAccountService->>UserAccountService: addAccount(repositoryId, username, account)
+        UserAccountService-->>InternalAccountService: InternalUserAccount
+        
+        InternalAccountService->>ResourceEntityService : addResourceEntity(uuid, RESOURCE_ACCOUNT, AUTHORITY_INTERNAL, provider, username)
         ResourceEntityService-->>InternalAccountService: ResourceEntity
         InternalAccountService-->>InternalIdentityService: InternalUserAccount
 

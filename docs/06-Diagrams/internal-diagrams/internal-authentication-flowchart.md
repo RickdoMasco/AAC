@@ -18,7 +18,7 @@ flowchart TD
     HR -- Yes --> FRI["Fetch Request ID (Realm/Provider)"]
     FRI --> RPE{Esistono Provider e Realm?}
     
-    RPE -- No --> ECC["throw IllegalArgumentException (No provider or realm found)"]
+    RPE -- No --> ECC["throw ProviderNotFoundException (No provider or realm found)"]
     RPE -- Yes --> CCC["Estrai e verifica il Confirm Code"]
     
     CCC --> CCV{Il codice è valido?}

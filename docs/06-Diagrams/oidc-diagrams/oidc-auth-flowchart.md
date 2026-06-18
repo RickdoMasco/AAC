@@ -87,23 +87,21 @@ flowchart TD
     SUB -- Yes --> FIND["accountService.findAccountById()\n(repositoryId, subject)"]
 
     FIND --> ACCT{Account trovato?}
- 
     ACCT -- No --> PRINCIPAL_START["Inizio creazione\nOIDCUserAuthenticatedPrincipal"]
     ACCT -- Yes --> LOCKED{Account bloccato?}
  
-    LOCKED -- Yes --> BLOCKED["throw LockedException\n(Account is locked)"]
+    LOCKED -- Yes --> BLOCKED["throw OIDCAuthenticationException\n(account not available)"]
  
     LOCKED -- No --> PRINCIPAL_START
 
-    PRINCIPAL_START --> EMAIL_CHECK{"trustEmailAddress\no alwaysTrustEmailAddress?"}
+    PRINCIPAL_START --> EMAIL_LOGIC["Calcola emailVerified:\n1. Se claim 'email_verified' presente -> usa claim\n2. Altrimenti -> usa trustEmailAddress"]
  
-    EMAIL_CHECK -- Yes --> MARKVERIFIED["Segna email come verificata"]
-    EMAIL_CHECK -- No --> CHECKVERIFIED{"email_verified = true\nnei claim?"}
-    CHECKVERIFIED -- Yes --> MARKVERIFIED
-    CHECKVERIFIED -- No --> UNVERIFIED["Email non verificata"]
+    EMAIL_LOGIC --> ALWAYS_CHECK{"alwaysTrustEmailAddress\n= true?"}
+    ALWAYS_CHECK -- Yes --> MARKVERIFIED["Forza emailVerified = true"]
+    ALWAYS_CHECK -- No --> FINAL_STATUS["Mantiene valore calcolato"]
 
     MARKVERIFIED --> PRINCIPAL_FINAL["Finalizza Principal\ncon subject, username, email,\nemailVerified, attributes"]
-    UNVERIFIED --> PRINCIPAL_FINAL
+    FINAL_STATUS --> PRINCIPAL_FINAL
 
     PRINCIPAL_FINAL --> EXPIRES{"respectTokenExpiration\n= true?"}
 
@@ -145,6 +143,9 @@ flowchart TD
 
 * **Estrazione Attributi e UserInfo**: Attualmente, AAC delega l'estrazione dell'identità a `OidcUserService` (Spring Security), che effettua una chiamata aggiuntiva all'endpoint `/userinfo` dell'IdP per recuperare gli attributi aggiornati. È presente un `TODO` nel codice (`OIDCAuthenticationProvider.java`) per implementare il parsing diretto dell' `id_token` (JWT) ed eliminare questa chiamata extra.
 
-* **Gestione dell'Email e Verifica:** Il sistema gestisce la verifica dell'email in base alla configurazione del provider: `trustEmailAddress` (fidati sempre), `alwaysTrustEmailAddress` (aggiorna sempre), oppure verifica il claim `email_verified` dall'id_token.
+* **Gestione dell'Email e Verifica:** Il sistema determina lo stato di verifica dell'email seguendo una gerarchia di priorità:
+    1. Se l'IdP fornisce il claim `email_verified`, viene utilizzato il suo valore.
+    2. Se il claim è assente, viene utilizzato il valore di `trustEmailAddress` configurato nel provider.
+    3. In ogni caso, se `alwaysTrustEmailAddress` è impostato a `true`, l'email viene forzatamente segnata come verificata, sovrascrivendo i passaggi precedenti.
 
 * **Prevenzione Session Fixation:** Al completamento dell'autenticazione, il filtro cambia l'ID della sessione (`changeSessionId()`), prevenendo attacchi di session fixation.

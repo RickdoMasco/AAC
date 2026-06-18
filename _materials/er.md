@@ -23,6 +23,7 @@ As naming rule, entity without suffix should indicate the detached DTO, while in
 ## Core
 
 ### Realm
+
 An isolated, fully enclosed environment which serves as the container for clients and user management.
 Additionally, a `realm` serves as repository for shared configuration items such as:
 
@@ -33,7 +34,6 @@ Additionally, a `realm` serves as repository for shared configuration items such
 * look and feel customization
 * custom flow actions (eg login, registration)
 * organization and roles
-
 
 In most deployment scenarios, a single `realm` should match a unique `tenant` in a multitenancy-oriented architecture.
 
@@ -48,8 +48,6 @@ erDiagram
 
 ```
 
-
-
 ### Client
 
 A client is an application in any form, be it a desktop, web or native application, a Single-Page-App (SPA), an API backend, a physical device etc.
@@ -59,12 +57,11 @@ By registering a `client` developers can obtain credentials useful to access the
 The platform supports different client types, each one designed to leverage a specific set of OAuth2/OpenID authorization flows such as:
 
 * Authorization code (with/without PKCE)
-* Implicit 
+* Implicit
 * Resource Owner/Password
 * Client credentials
 * Device
 * Refresh token
-
 
 Additionally, each client can specify a list of properties defining in detail the security and operative settings for OAuth/OpenID such as:
 
@@ -79,7 +76,6 @@ Additionally, each client can specify a list of properties defining in detail th
 
 Additionally, a custom type of client dedicated to SAML environments is available, acting as a bridge between OpenID and SAML by posing as a provider.
 
-
 ```mermaid
 erDiagram
     CLIENT {
@@ -93,8 +89,6 @@ erDiagram
 
 ```
 
-
-
 ### User
 
 A `user` is a complex datatype which represents an individual inside the `realm`.
@@ -102,7 +96,6 @@ A `user` is a complex datatype which represents an individual inside the `realm`
 Each user possesses a list of `attributes` which describe its properties, and is linked to 1 or more `accounts` which map to login path via internal or external identity providers.
 
 Each user is identified by a unique `subjectId`, an opaque string which unifies the entity and can be used by clients to assess the identity.
-
 
 ```mermaid
 erDiagram
@@ -143,8 +136,7 @@ For example, a user with an internal account and connected to google could be de
 
 When configuring identity providers, developers can choose where to share attributes with the global user entity, and describe how to map idp attributes.
 
-
-While in a given realm a unique `account` can be connected to only one `user`, 
+While in a given realm a unique `account` can be connected to only one `user`,
 the very same `accounts` can be linked to different `users` inside separated `realms`.
 
 #### Internal user provider
@@ -186,14 +178,12 @@ erDiagram
     SERVICE ||--|o CLAIM : exposes
 ```
 
-
 While `services` are registered inside a single `realm`, developers have the option to share their definitions with the whole platform, by declaring them *public*.
 Public services are available for subscription for all the realms and the relative clients, regardless of the source.
 
 By default, the platform generates a preconfigured `client` to represent the API backend linked to the service definition. The client will have `client_credentials` flow enabled, and be subscribed to the source service and to all the relative client scopes.
 
 Additionally, the platform can initialize a test client to be used by developers for debugging and simulating an end-user application.
-
 
 ### Identity Providers
 

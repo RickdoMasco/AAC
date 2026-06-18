@@ -1,10 +1,8 @@
 # AAC architecture
 
-
-
 # Overview
-TODO
 
+TODO
 
 # Layers
 
@@ -21,16 +19,10 @@ Inside core components services can access multiple repositories. Every other mo
 
 Transactions are handled usually at service level, when required by context at manager level.
 
-
-
 # Graph
 
-
-
-
-
 ```mermaid
-graph TD
+graph LR
     CORE --> SESSION
     CORE --> UI        
     CORE --> TS[Token Service]

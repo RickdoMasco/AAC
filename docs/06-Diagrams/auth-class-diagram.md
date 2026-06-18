@@ -192,7 +192,14 @@ classDiagram
     class InternalUserAccount { 
     }
 
-    %% === OIDC (Google, Facebook, GitHub, ecc.) ===
+    %% === OIDC (Google) ===
+    class OIDCUserIdentity {
+        +RESOURCE_TYPE
+        -principal
+        -account
+        -attributes
+        +constructor()
+    }
     class OIDCUserAuthenticatedPrincipal {
         -serialVersionUID
         +RESOURCE_TYPE
@@ -204,6 +211,10 @@ classDiagram
         -attributes
         +constructor()
         +isEmailVerified()
+    }
+    class AbstractUserAuthenticatedPrincipal {
+        <<abstract>>
+        #constructor()
     }
     class OIDCUserAccount {
         <<external>>
@@ -218,7 +229,8 @@ classDiagram
     AbstractBaseUserResource <|-- AbstractUserIdentity
     UserIdentity <|.. AbstractUserIdentity
     AbstractUserIdentity <|-- InternalUserIdentity
-    AbstractUserIdentity <|-- OIDCUserAuthenticatedPrincipal
+    AbstractUserIdentity <|-- OIDCUserIdentity
+    AbstractUserAuthenticatedPrincipal <|-- OIDCUserAuthenticatedPrincipal
 
     %% Collegamento finale verso l'account
     InternalUserIdentity "1" *-- "1" InternalUserAccount : detiene
