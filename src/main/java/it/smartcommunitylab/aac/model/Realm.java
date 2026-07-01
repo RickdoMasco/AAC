@@ -41,6 +41,7 @@ public class Realm {
 
     private boolean isEditable = true;
     private boolean isPublic = true;
+    private boolean mfaRequired = true;
 
     // TODO drop and move to provider
     private OAuth2ConfigurationMap oauthConfiguration;
@@ -105,6 +106,14 @@ public class Realm {
 
     public void setPublic(boolean isPublic) {
         this.isPublic = isPublic;
+    }
+
+    public boolean isMfaRequired() {
+        return mfaRequired;
+    }
+
+    public void setMfaRequired(boolean mfaRequired) {
+        this.mfaRequired = mfaRequired;
     }
 
     public OAuth2ConfigurationMap getOAuthConfiguration() {

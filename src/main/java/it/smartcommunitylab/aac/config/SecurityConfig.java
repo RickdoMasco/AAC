@@ -88,6 +88,9 @@ public class SecurityConfig {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private MfaFilter mfaFilter;
+
     //    /*
     //     * rememberme
     //     */
@@ -268,9 +271,6 @@ public class SecurityConfig {
         );
 
         TosOnAccessFilter tosFilter = new TosOnAccessFilter(realmService, userService);
-
-        MfaFilter mfaFilter = new MfaFilter();
-
         // build a virtual filter chain as composite filter
         ArrayList<Filter> filters = new ArrayList<>();
         filters.add(mfaFilter);
