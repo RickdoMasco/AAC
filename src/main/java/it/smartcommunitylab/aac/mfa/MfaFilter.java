@@ -8,28 +8,34 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import it.smartcommunitylab.aac.core.auth.DefaultUserAuthenticationToken;
 import it.smartcommunitylab.aac.core.auth.RealmAwareAuthenticationEntryPoint;
 import it.smartcommunitylab.aac.model.Realm;
 import it.smartcommunitylab.aac.model.Subject;
 import it.smartcommunitylab.aac.realms.RealmManager;
-import org.springframework.security.web.AuthenticationEntryPoint;
 
 @Component
 public class MfaFilter extends OncePerRequestFilter {
 
-    // TODO: remove hardcoded login path and use realm aware entry point
-    private final AuthenticationEntryPoint authenticationEntryPoint = new RealmAwareAuthenticationEntryPoint("/login");
+    private final AuthenticationEntryPoint authenticationEntryPoint;
+    private final RealmAwareAuthenticationEntryPoint secondFactorAuthenticationEntryPoint;
 
-    @Autowired
-    private RealmManager realmManager;
+    private final RealmManager realmManager;
+
+    public MfaFilter(RealmManager realmManager) {
+        this.realmManager = realmManager;
+        this.authenticationEntryPoint = new LoginUrlAuthenticationEntryPoint("/login");
+        this.secondFactorAuthenticationEntryPoint = new RealmAwareAuthenticationEntryPoint("/login");
+    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -69,15 +75,20 @@ public class MfaFilter extends OncePerRequestFilter {
         if (session.getAttribute("MFA_FIRST_TOKEN") == null) {
             // save first token
             session.setAttribute("MFA_FIRST_TOKEN", auth);
-            // System.out.println("Token 1: " + "\n" + session.getAttribute("MFA_FIRST_TOKEN"));
+            System.out.println("Token 1: " + "\n" + session.getAttribute("MFA_FIRST_TOKEN"));
 
             // remove authentication from the securitycontext
             SecurityContextHolder.getContext().setAuthentication(null);
             // change session id to avoid session fixation attacks
             request.changeSessionId();
 
+            // preserve realm for second-factor redirect
+            if (auth instanceof DefaultUserAuthenticationToken) {
+                request.setAttribute("realm", ((DefaultUserAuthenticationToken) auth).getRealm());
+            }
+
             // redirect to login page for the second factor
-            authenticationEntryPoint.commence(request, response, null);
+            secondFactorAuthenticationEntryPoint.commence(request, response, null);
             return;
         } else {
             // se il primo token è popolato allora si va alla logica che verifica il login
@@ -95,13 +106,13 @@ public class MfaFilter extends OncePerRequestFilter {
                         // check if the subjectId of the first token is the same as the second one
                         DefaultUserAuthenticationToken ft = (DefaultUserAuthenticationToken) firstToken;
                         DefaultUserAuthenticationToken st = (DefaultUserAuthenticationToken) auth;
-                        
-                        // System.out.println("Token 2: " + "\n" + st.toString());
-                        
+
+                        System.out.println("Token 2: " + "\n" + st.toString());
+
                         // check if the subjectId of the first token is the same as the second one
                         if (ft.getSubjectId().equals(st.getSubjectId())) {
                             session.setAttribute("MFA_COMPLETED", true);
-                                
+
                             // combine the two tokens into a new one and set it in the security context
                             DefaultUserAuthenticationToken combinedToken = new DefaultUserAuthenticationToken(
                                     (Subject) ft.getPrincipal(),
@@ -110,7 +121,7 @@ public class MfaFilter extends OncePerRequestFilter {
                                     ft,
                                     st);
 
-                            // System.out.println("Token unito: " + "\n" + combinedToken.toString());
+                            System.out.println("Token unito: " + "\n" + combinedToken.toString());
 
                             SecurityContextHolder.getContext().setAuthentication(combinedToken);
                             session.setAttribute("MFA_COMBINED_TOKEN", combinedToken);
@@ -122,10 +133,13 @@ public class MfaFilter extends OncePerRequestFilter {
                             return;
                         } else {
                             SecurityContextHolder.getContext().setAuthentication(null);
+                            session.removeAttribute("MFA_FIRST_TOKEN");
 
                             authenticationEntryPoint.commence(request, response,
                                     new org.springframework.security.authentication.BadCredentialsException(
                                             "invalid_mfa"));
+
+                            // TODO: toast notification for error message
 
                             return;
                         }
