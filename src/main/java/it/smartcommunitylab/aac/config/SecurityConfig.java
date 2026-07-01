@@ -25,6 +25,7 @@ import it.smartcommunitylab.aac.mfa.MfaFilter;
 import it.smartcommunitylab.aac.password.auth.InternalPasswordResetOnAccessFilter;
 import it.smartcommunitylab.aac.password.persistence.InternalUserPasswordEntityRepository;
 import it.smartcommunitylab.aac.password.provider.PasswordIdentityProviderConfig;
+import it.smartcommunitylab.aac.realms.RealmManager;
 import it.smartcommunitylab.aac.realms.service.RealmService;
 import it.smartcommunitylab.aac.tos.TosOnAccessFilter;
 import it.smartcommunitylab.aac.users.service.UserService;
@@ -89,7 +90,7 @@ public class SecurityConfig {
     private UserService userService;
 
     @Autowired
-    private MfaFilter mfaFilter;
+    private RealmManager realmManager;
 
     //    /*
     //     * rememberme
@@ -265,6 +266,8 @@ public class SecurityConfig {
     }
 
     private Filter buildSessionFilters() {
+        MfaFilter mfaFilter = new MfaFilter(realmManager, realmUriBuilder);
+
         InternalPasswordResetOnAccessFilter passwordChangeFilter = new InternalPasswordResetOnAccessFilter(
             passwordRepository,
             internalPasswordIdentityProviderConfigRepository

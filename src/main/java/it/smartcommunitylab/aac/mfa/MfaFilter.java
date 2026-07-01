@@ -1,5 +1,6 @@
 package it.smartcommunitylab.aac.mfa;
 
+import it.smartcommunitylab.aac.core.entrypoint.RealmAwarePathUriBuilder;
 import java.io.IOException;
 
 import javax.servlet.FilterChain;
@@ -8,13 +9,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
-import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import it.smartcommunitylab.aac.core.auth.DefaultUserAuthenticationToken;
@@ -23,7 +22,6 @@ import it.smartcommunitylab.aac.model.Realm;
 import it.smartcommunitylab.aac.model.Subject;
 import it.smartcommunitylab.aac.realms.RealmManager;
 
-@Component
 public class MfaFilter extends OncePerRequestFilter {
 
     private final AuthenticationEntryPoint authenticationEntryPoint;
@@ -31,10 +29,31 @@ public class MfaFilter extends OncePerRequestFilter {
 
     private final RealmManager realmManager;
 
-    public MfaFilter(RealmManager realmManager) {
+    static private final String MFA_FIRST_TOKEN = "MFA_FIRST_TOKEN";
+    static private final String MFA_COMBINED_TOKEN = "MFA_COMBINED_TOKEN";
+
+    private final String MFA_COMPLETED = "MFA_COMPLETED";
+
+    public MfaFilter(RealmManager realmManager, RealmAwarePathUriBuilder realmUriBuilder) {
         this.realmManager = realmManager;
         this.authenticationEntryPoint = new LoginUrlAuthenticationEntryPoint("/login");
         this.secondFactorAuthenticationEntryPoint = new RealmAwareAuthenticationEntryPoint("/login");
+        this.secondFactorAuthenticationEntryPoint.setUseForward(false);
+        this.secondFactorAuthenticationEntryPoint.setRealmUriBuilder(realmUriBuilder);
+    }
+
+    private void redirectFailedMFA(HttpSession session, HttpServletRequest request, HttpServletResponse response)
+            throws IOException, ServletException {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        session.removeAttribute(MFA_FIRST_TOKEN);
+
+        authenticationEntryPoint.commence(request, response,
+                new org.springframework.security.authentication.BadCredentialsException(
+                        "invalid_mfa"));
+
+        // TODO: toast notification for error message
+
+        return;
     }
 
     @Override
@@ -46,8 +65,8 @@ public class MfaFilter extends OncePerRequestFilter {
 
         // skip if mfa check already completed by evalutating subject Id of the second
         // login with the first one
-        if (session.getAttribute("MFA_COMPLETED") != null) {
-            Authentication combined = (Authentication) session.getAttribute("MFA_COMBINED_TOKEN");
+        if (session.getAttribute(MFA_COMPLETED) != null) {
+            Authentication combined = (Authentication) session.getAttribute(MFA_COMBINED_TOKEN);
             if (combined != null) {
                 SecurityContextHolder.getContext().setAuthentication(combined);
             }
@@ -72,10 +91,11 @@ public class MfaFilter extends OncePerRequestFilter {
             }
         }
 
-        if (session.getAttribute("MFA_FIRST_TOKEN") == null) {
+        if (session.getAttribute(MFA_FIRST_TOKEN) == null) {
             // save first token
-            session.setAttribute("MFA_FIRST_TOKEN", auth);
-            System.out.println("Token 1: " + "\n" + session.getAttribute("MFA_FIRST_TOKEN"));
+            session.setAttribute(MFA_FIRST_TOKEN, auth);
+            // TODO: remove print
+            System.out.println("Token 1: " + "\n" + session.getAttribute(MFA_FIRST_TOKEN));
 
             // remove authentication from the securitycontext
             SecurityContextHolder.getContext().setAuthentication(null);
@@ -91,9 +111,8 @@ public class MfaFilter extends OncePerRequestFilter {
             secondFactorAuthenticationEntryPoint.commence(request, response, null);
             return;
         } else {
-            // se il primo token è popolato allora si va alla logica che verifica il login
-            // dopo il secondo login
-            Authentication firstToken = (Authentication) session.getAttribute("MFA_FIRST_TOKEN");
+            // if the first token is already present, check if the second token is valid and matches the first one
+            Authentication firstToken = (Authentication) session.getAttribute(MFA_FIRST_TOKEN);
 
             if (auth != null && auth.isAuthenticated() && !(auth instanceof AnonymousAuthenticationToken)) {
 
@@ -106,12 +125,13 @@ public class MfaFilter extends OncePerRequestFilter {
                         // check if the subjectId of the first token is the same as the second one
                         DefaultUserAuthenticationToken ft = (DefaultUserAuthenticationToken) firstToken;
                         DefaultUserAuthenticationToken st = (DefaultUserAuthenticationToken) auth;
-
+                        
+                        // TODO: remove print
                         System.out.println("Token 2: " + "\n" + st.toString());
 
                         // check if the subjectId of the first token is the same as the second one
                         if (ft.getSubjectId().equals(st.getSubjectId())) {
-                            session.setAttribute("MFA_COMPLETED", true);
+                            session.setAttribute(MFA_COMPLETED, true);
 
                             // combine the two tokens into a new one and set it in the security context
                             DefaultUserAuthenticationToken combinedToken = new DefaultUserAuthenticationToken(
@@ -120,34 +140,34 @@ public class MfaFilter extends OncePerRequestFilter {
                                     ft.getAuthorities(),
                                     ft,
                                     st);
-
+                            
+                            // TODO: remove print
                             System.out.println("Token unito: " + "\n" + combinedToken.toString());
 
                             SecurityContextHolder.getContext().setAuthentication(combinedToken);
-                            session.setAttribute("MFA_COMBINED_TOKEN", combinedToken);
+                            session.setAttribute(MFA_COMBINED_TOKEN, combinedToken);
 
                             // remove the first token from the session
-                            session.removeAttribute("MFA_FIRST_TOKEN");
+                            session.removeAttribute(MFA_FIRST_TOKEN);
 
                             filterChain.doFilter(request, response);
                             return;
                         } else {
-                            SecurityContextHolder.getContext().setAuthentication(null);
-                            session.removeAttribute("MFA_FIRST_TOKEN");
-
-                            authenticationEntryPoint.commence(request, response,
-                                    new org.springframework.security.authentication.BadCredentialsException(
-                                            "invalid_mfa"));
-
-                            // TODO: toast notification for error message
-
+                            redirectFailedMFA(session, request, response);
                             return;
                         }
+                    } else {
+                        redirectFailedMFA(session, request, response);
+                        return;
                     }
+                } else {
+                    redirectFailedMFA(session, request, response);
+                    return;
                 }
+            } else {
+                redirectFailedMFA(session, request, response);
+                return;
             }
         }
-
-        filterChain.doFilter(request, response);
     }
 }
