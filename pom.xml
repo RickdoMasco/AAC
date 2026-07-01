@@ -16,14 +16,14 @@
 	<properties>
 		<revision>5.2.0-SNAPSHOT</revision>
 		<java.version>17</java.version>
-		<bouncycastle.version>1.74</bouncycastle.version>
+		<bouncycastle.version>1.84</bouncycastle.version>
 		<springdoc.version>1.6.15</springdoc.version>
 		<jsoup.version>1.17.2</jsoup.version>
 		<yubico.version>2.0.0</yubico.version>
 		<jsonschema.version>4.33.1</jsonschema.version>
 		<node.version>v18.17.1</node.version>
 		<yarn.version>v1.22.19</yarn.version>
-		<postgresql.version>42.7.1</postgresql.version>
+		<postgresql.version>42.7.11</postgresql.version>
 		<mysql.version>8.3.0</mysql.version>
 		<mariadb.version>3.3.2</mariadb.version>
 		<opensaml.version>4.1.1</opensaml.version>
@@ -345,7 +345,7 @@
 		<dependency>
 			<groupId>org.javadelight</groupId>
 			<artifactId>delight-nashorn-sandbox</artifactId>
-			<version>0.2.4</version>
+			<version>0.3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.openjdk.nashorn</groupId>
