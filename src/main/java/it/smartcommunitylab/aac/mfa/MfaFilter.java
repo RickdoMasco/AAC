@@ -93,6 +93,8 @@ public class MfaFilter extends OncePerRequestFilter {
     }
 
     private boolean isMfaSkipped(Authentication auth) {
+        if (!(auth instanceof DefaultUserAuthenticationToken))
+            return false;
 
         Realm realm = realmManager.findRealm(((DefaultUserAuthenticationToken) auth).getRealm());
         return (realm != null && !realm.isMfaRequired());
