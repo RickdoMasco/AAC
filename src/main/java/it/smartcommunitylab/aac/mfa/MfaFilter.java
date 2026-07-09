@@ -18,6 +18,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import it.smartcommunitylab.aac.Config;
 import it.smartcommunitylab.aac.core.auth.DefaultUserAuthenticationToken;
 import it.smartcommunitylab.aac.core.auth.RealmAwareAuthenticationEntryPoint;
 import it.smartcommunitylab.aac.model.Realm;
@@ -28,15 +29,7 @@ public class MfaFilter extends OncePerRequestFilter {
 
     private final AuthenticationEntryPoint authenticationEntryPoint;
     private final RealmAwareAuthenticationEntryPoint secondFactorAuthenticationEntryPoint;
-
     private final RealmManager realmManager;
-
-    // Session Attribute for the MFA
-    static private final String MFA_FIRST_TOKEN = "MFA_FIRST_TOKEN";
-    static private final String MFA_TIMESTAMP = "MFA_TIMESTAMP";
-    static private final String MFA_TRYNUMBER = "MFA_TRY_NUMBER";
-
-    static int MAX_MFA_ATTEMPTS = 3;
 
     public MfaFilter(RealmManager realmManager, RealmAwarePathUriBuilder realmUriBuilder) {
         this.realmManager = realmManager;
@@ -51,73 +44,73 @@ public class MfaFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
 
         HttpSession session = request.getSession(true);
+        MfaSessionStore store = new MfaSessionStore(session);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (session.getAttribute(MFA_TRYNUMBER) != null && ((Number) session.getAttribute(MFA_TRYNUMBER)).intValue() >= MAX_MFA_ATTEMPTS) {
-            handleMfaFailure(session, request, response, "mfa_max_attempts");
+        // Check if maximum attempts were already reached
+        if (store.getTryNumber() >= Config.MAX_MFA_ATTEMPTS) {
+            handleMfaFailure(store, request, response, "mfa_max_attempts");
             return;
         }
 
-        // Skip MFA if the realm does not require it
+        // Skip MFA if the realm does not require it or auth type is unknown
         if (isMfaSkipped(auth)) {
             filterChain.doFilter(request, response);
             return;
         }
 
         // MFA already completed, proceed
-        if ((auth instanceof DefaultUserAuthenticationToken)
+        if (auth instanceof DefaultUserAuthenticationToken
                 && ((DefaultUserAuthenticationToken) auth).getAuthentications().size() >= 2) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        Object attr = session.getAttribute(MFA_FIRST_TOKEN);
+        Authentication firstToken = store.getFirstToken();
 
-        // Initiate MFA flow if no valid token exists
-        if (!(attr instanceof Authentication)) {
-            initiateMfaFlow(request, response, session, auth);
+        // Initiate MFA flow if no active first factor exists
+        if (firstToken == null) {
+            initiateMfaFlow(store, request, response, auth);
             return;
         }
 
-        // No authenticated user found, proceed
+        // In progress: redirect to second factor if context not yet authenticated
         if (auth == null || !auth.isAuthenticated()) {
-            // If MFA in progress, redirect back to second factor
-            if (attr instanceof DefaultUserAuthenticationToken) {
-                redirectToSecondFactor(request, response, (Authentication) attr, null);
-                return;
-            }
-            filterChain.doFilter(request, response);
+            redirectToSecondFactor(request, response, firstToken, null);
             return;
         }
 
-        Authentication firstToken = (Authentication) attr;
-
-        // Validate current token
-        if (!isMfaValid(request, response, session, firstToken, auth)) {
+        // Validate current token against the first token
+        long now = Instant.now().getEpochSecond();
+        if (!isMfaValid(firstToken, auth, store.getTimestamp(), now)) {
+            store.incrementAttempts();
+            handleMfaFailure(store, request, response, "mfa_invalid_token");
             return;
         }
 
         // Both tokens are valid and belong to the same subject, finalize the MFA flow
-        finalizeMfaFlow(session, (DefaultUserAuthenticationToken) firstToken, (DefaultUserAuthenticationToken) auth);
+        finalizeMfaFlow(store, (DefaultUserAuthenticationToken) firstToken, (DefaultUserAuthenticationToken) auth);
         filterChain.doFilter(request, response);
     }
 
     private boolean isMfaSkipped(Authentication auth) {
-        if (!(auth instanceof DefaultUserAuthenticationToken))
+        if (auth == null || !(auth instanceof DefaultUserAuthenticationToken)) {
             return true;
+        }
 
         DefaultUserAuthenticationToken token = (DefaultUserAuthenticationToken) auth;
         Realm realm = realmManager.findRealm(token.getRealm());
-        return (realm != null && !realm.isMfaRequired());
+        if (realm != null) {
+            return !realm.isMfaRequired();
+        }
+        return false;
     }
 
-    private void initiateMfaFlow(HttpServletRequest request, HttpServletResponse response, HttpSession session,
+    private void initiateMfaFlow(MfaSessionStore store, HttpServletRequest request, HttpServletResponse response,
             Authentication auth)
             throws IOException, ServletException {
 
-        session.setAttribute(MFA_FIRST_TOKEN, auth);
-        session.setAttribute(MFA_TIMESTAMP, Instant.now().getEpochSecond());
-        session.setAttribute(MFA_TRYNUMBER, 0);
+        store.init(auth);
 
         SecurityContextHolder.clearContext();
         request.changeSessionId();
@@ -125,73 +118,50 @@ public class MfaFilter extends OncePerRequestFilter {
         redirectToSecondFactor(request, response, auth, null);
     }
 
-    private boolean isMfaValid(HttpServletRequest request, HttpServletResponse response, HttpSession session,
-            Authentication first, Authentication current) throws IOException, ServletException {
-
-        long timestamp = ((Number) session.getAttribute(MFA_TIMESTAMP)).longValue();
-        int tryNum = ((Number) session.getAttribute(MFA_TRYNUMBER)).intValue();
-
-
-        if (timestamp + 60 < Instant.now().getEpochSecond()) {
-            handleMfaFailure(session, request, response, "mfa_timeout");
-            return false;
+    /**
+     * Pure validation logic. Does not touch the session.
+     */
+    private boolean isMfaValid(Authentication first, Authentication current, long timestamp, long now) {
+        // Timeout check
+        if (timestamp + 60 < now) {
+            return false; 
         }
 
         if (!(first instanceof DefaultUserAuthenticationToken)
                 || !(current instanceof DefaultUserAuthenticationToken)) {
-            session.setAttribute(MFA_TRYNUMBER, Integer.valueOf(tryNum + 1));
-            session.setAttribute(MFA_TIMESTAMP, Long.valueOf(Instant.now().getEpochSecond()));
-            handleMfaFailure(session, request, response, "mfa_invalid_token_type");
             return false;
         }
 
-        String firstId = ((DefaultUserAuthenticationToken) first).getSubjectId();
-        String currentId = ((DefaultUserAuthenticationToken) current).getSubjectId();
+        DefaultUserAuthenticationToken ft = (DefaultUserAuthenticationToken) first;
+        DefaultUserAuthenticationToken ct = (DefaultUserAuthenticationToken) current;
 
-        if (!firstId.equals(currentId)) {
-            session.setAttribute(MFA_TRYNUMBER, Integer.valueOf(tryNum + 1));
-            session.setAttribute(MFA_TIMESTAMP, Long.valueOf(Instant.now().getEpochSecond()));
-            handleMfaFailure(session, request, response, "mfa_subject_mismatch");
-            return false;
-        }
-
-        if (current.equals(first)) {
-            session.setAttribute(MFA_TRYNUMBER, Integer.valueOf(tryNum + 1));
-            session.setAttribute(MFA_TIMESTAMP, Long.valueOf(Instant.now().getEpochSecond()));
-            handleMfaFailure(session, request, response, "mfa_duplicate_token");
+        // Subject mismatch or duplicate token
+        if (!ft.getSubjectId().equals(ct.getSubjectId()) || ct.equals(ft)) {
             return false;
         }
 
         return true;
     }
 
-    private void handleMfaFailure(HttpSession session, HttpServletRequest request, HttpServletResponse response,
+    private void handleMfaFailure(MfaSessionStore store, HttpServletRequest request, HttpServletResponse response,
             String code)
             throws IOException, ServletException {
 
-        // Clear auth on failure to avoid leaving in the context an authentication that
-        // would force the filter to set the second factor token as the first factor
-        // token on the next request, which would allow to login with the second factor
-        // if u fail a first time the second factor. after the first fail if u use the
-        // second factor linked to an another account again u can login to the account
-        // linked to the second factor auth.
         SecurityContextHolder.clearContext();
 
         // Only clear MFA state if failure is terminal
         if (code.equals("mfa_timeout") || code.equals("mfa_max_attempts")) {
-            session.removeAttribute(MFA_FIRST_TOKEN);
-            session.removeAttribute(MFA_TIMESTAMP);
-            session.removeAttribute(MFA_TRYNUMBER);
+            store.clear();
             authenticationEntryPoint.commence(request, response, new BadCredentialsException(code));
             return;
         }
 
-        // Redirect back to 2nd factor page instead of /login to allow retries
-        Authentication firstToken = (Authentication) session.getAttribute(MFA_FIRST_TOKEN);
+        // Redirect back to 2nd factor page to allow retries
+        Authentication firstToken = store.getFirstToken();
         redirectToSecondFactor(request, response, firstToken, new BadCredentialsException(code));
     }
 
-    private void finalizeMfaFlow(HttpSession session, DefaultUserAuthenticationToken ft,
+    private void finalizeMfaFlow(MfaSessionStore store, DefaultUserAuthenticationToken ft,
             DefaultUserAuthenticationToken st) {
 
         DefaultUserAuthenticationToken combinedToken = new DefaultUserAuthenticationToken(
@@ -202,15 +172,21 @@ public class MfaFilter extends OncePerRequestFilter {
                 st);
 
         SecurityContextHolder.getContext().setAuthentication(combinedToken);
-
-        session.removeAttribute(MFA_FIRST_TOKEN);
-        session.removeAttribute(MFA_TRYNUMBER);
-        session.removeAttribute(MFA_TIMESTAMP);
+        store.clear();
     }
 
     private void redirectToSecondFactor(HttpServletRequest request, HttpServletResponse response, Authentication auth,
             AuthenticationException ex)
             throws IOException, ServletException {
+
+        if (!(auth instanceof DefaultUserAuthenticationToken)) {
+            AuthenticationException exception = ex;
+            if (exception == null) {
+                exception = new BadCredentialsException("Invalid token type");
+            }
+            authenticationEntryPoint.commence(request, response, exception);
+            return;
+        }
 
         String realm = ((DefaultUserAuthenticationToken) auth).getRealm();
         request.setAttribute("realm", realm);

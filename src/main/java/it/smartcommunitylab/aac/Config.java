@@ -83,6 +83,8 @@ public class Config {
 
     /** operation scope requiring strong 2-factor authentication */
     public static final String SCOPE_OPERATION_CONFIRMED = "operation.confirmed";
+    /** maximum MFA attempts */
+    public static final int MAX_MFA_ATTEMPTS = 3;
 
     /** Session attribute holding AAC OAuth2 request context */
     public static final String SESSION_ATTR_AAC_OAUTH_REQUEST = "aacOAuthRequest";
