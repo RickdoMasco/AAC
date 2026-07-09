@@ -12,6 +12,7 @@ import javax.servlet.http.HttpSession;
 
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -71,18 +72,15 @@ public class MfaFilter extends OncePerRequestFilter {
             return;
         }
 
-        Authentication firstToken = null;
         Object attr = session.getAttribute(MFA_FIRST_TOKEN);
 
-        if (attr instanceof Authentication) {
-            firstToken = (Authentication) attr;
-        }
-
-        // Initiate MFA flow if no token exists
-        if (firstToken == null) {
+        // Initiate MFA flow if no valid token exists
+        if (!(attr instanceof Authentication)) {
             initiateMfaFlow(request, response, session, auth);
             return;
         }
+
+        Authentication firstToken = (Authentication) attr;
 
         // Validate current token
         if (!isMfaValid(request, response, session, firstToken, auth)) {
@@ -114,7 +112,7 @@ public class MfaFilter extends OncePerRequestFilter {
         SecurityContextHolder.clearContext();
         request.changeSessionId();
 
-        redirectToSecondFactor(request, response, auth);
+        redirectToSecondFactor(request, response, auth, null);
     }
 
     private boolean isMfaValid(HttpServletRequest request, HttpServletResponse response, HttpSession session,
@@ -128,6 +126,10 @@ public class MfaFilter extends OncePerRequestFilter {
             return false;
         }
 
+        // check attempt -1 becouse otherwise i would have to check it before the
+        // MfaValidation
+        // this way i can exit the flow before the fourth attempt otherwise it would
+        // fail after sending the second factor max_attempt + 1 times
         if (tryNum >= MAX_MFA_ATTEMPTS - 1) {
             handleMfaFailure(session, request, response, "mfa_max_attempts");
             return false;
@@ -165,8 +167,12 @@ public class MfaFilter extends OncePerRequestFilter {
             String code)
             throws IOException, ServletException {
 
-
-        // Clear auth on failure
+        // Clear auth on failure to avoid leaving in the context an authentication that
+        // would force the filter to set the second factor token as the first factor
+        // token on the next request, which would allow to login with the second factor
+        // if u fail a first time the second factor. after the first fail if u use the
+        // second factor linked to an another account again u can login to the account
+        // linked to the second factor auth.
         SecurityContextHolder.clearContext();
 
         // Only clear MFA state if failure is terminal
@@ -177,16 +183,10 @@ public class MfaFilter extends OncePerRequestFilter {
             authenticationEntryPoint.commence(request, response, new BadCredentialsException(code));
             return;
         }
-        
+
         // Redirect back to 2nd factor page instead of /login to allow retries
         Authentication firstToken = (Authentication) session.getAttribute(MFA_FIRST_TOKEN);
-        if (firstToken instanceof DefaultUserAuthenticationToken) {
-            String realm = ((DefaultUserAuthenticationToken) firstToken).getRealm();
-            request.setAttribute("realm", realm);
-            secondFactorAuthenticationEntryPoint.commence(request, response, new BadCredentialsException(code));
-        } else {
-            authenticationEntryPoint.commence(request, response, new BadCredentialsException(code));
-        }
+        redirectToSecondFactor(request, response, firstToken, new BadCredentialsException(code));
     }
 
     private void finalizeMfaFlow(HttpSession session, DefaultUserAuthenticationToken ft,
@@ -206,11 +206,12 @@ public class MfaFilter extends OncePerRequestFilter {
         session.removeAttribute(MFA_TIMESTAMP);
     }
 
-    private void redirectToSecondFactor(HttpServletRequest request, HttpServletResponse response, Authentication auth)
+    private void redirectToSecondFactor(HttpServletRequest request, HttpServletResponse response, Authentication auth,
+            AuthenticationException ex)
             throws IOException, ServletException {
 
         String realm = ((DefaultUserAuthenticationToken) auth).getRealm();
         request.setAttribute("realm", realm);
-        secondFactorAuthenticationEntryPoint.commence(request, response, null);
+        secondFactorAuthenticationEntryPoint.commence(request, response, ex);
     }
 }
