@@ -53,9 +53,8 @@ public class MfaFilter extends OncePerRequestFilter {
         HttpSession session = request.getSession(true);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        // No authenticated user found, proceed
-        if (auth == null || !auth.isAuthenticated()) {
-            filterChain.doFilter(request, response);
+        if (session.getAttribute(MFA_TRYNUMBER) != null && ((Number) session.getAttribute(MFA_TRYNUMBER)).intValue() >= MAX_MFA_ATTEMPTS) {
+            handleMfaFailure(session, request, response, "mfa_max_attempts");
             return;
         }
 
@@ -80,6 +79,17 @@ public class MfaFilter extends OncePerRequestFilter {
             return;
         }
 
+        // No authenticated user found, proceed
+        if (auth == null || !auth.isAuthenticated()) {
+            // If MFA in progress, redirect back to second factor
+            if (attr instanceof DefaultUserAuthenticationToken) {
+                redirectToSecondFactor(request, response, (Authentication) attr, null);
+                return;
+            }
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         Authentication firstToken = (Authentication) attr;
 
         // Validate current token
@@ -94,7 +104,7 @@ public class MfaFilter extends OncePerRequestFilter {
 
     private boolean isMfaSkipped(Authentication auth) {
         if (!(auth instanceof DefaultUserAuthenticationToken))
-            return false;
+            return true;
 
         DefaultUserAuthenticationToken token = (DefaultUserAuthenticationToken) auth;
         Realm realm = realmManager.findRealm(token.getRealm());
@@ -118,20 +128,12 @@ public class MfaFilter extends OncePerRequestFilter {
     private boolean isMfaValid(HttpServletRequest request, HttpServletResponse response, HttpSession session,
             Authentication first, Authentication current) throws IOException, ServletException {
 
-        int tryNum = ((Number) session.getAttribute(MFA_TRYNUMBER)).intValue();
         long timestamp = ((Number) session.getAttribute(MFA_TIMESTAMP)).longValue();
+        int tryNum = ((Number) session.getAttribute(MFA_TRYNUMBER)).intValue();
+
 
         if (timestamp + 60 < Instant.now().getEpochSecond()) {
             handleMfaFailure(session, request, response, "mfa_timeout");
-            return false;
-        }
-
-        // check attempt -1 becouse otherwise i would have to check it before the
-        // MfaValidation
-        // this way i can exit the flow before the fourth attempt otherwise it would
-        // fail after sending the second factor max_attempt + 1 times
-        if (tryNum >= MAX_MFA_ATTEMPTS - 1) {
-            handleMfaFailure(session, request, response, "mfa_max_attempts");
             return false;
         }
 
