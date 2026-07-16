@@ -1,0 +1,139 @@
+package it.smartcommunitylab.aac.otp.persistance;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+@Entity
+@Table(name = "internal_user_OTP", uniqueConstraints = @UniqueConstraint(columnNames = { "repository_id" }))
+@EntityListeners(AuditingEntityListener.class)
+public class InternalUserOTPEntity {
+
+    @Id
+    @NotBlank
+    @Column(name = "id", length = 128)
+    private String id;
+
+    @NotNull
+    @Column(name = "repository_id", length = 128)
+    private String repositoryId;
+
+    @NotNull
+    @Column(name = "user_id", length = 128)
+    private String userId;
+
+    @NotNull
+    @Column(length = 128)
+    private String realm;
+
+    @NotNull
+    @Column(length = 512)
+    private String hashed_otp_code;
+
+    @NotNull
+    @Column(name = "request_timestamp")
+    private long request_timestamp;
+
+    @NotNull
+    @Column(name = "attempts")
+    private int attempts;
+
+    @NotNull
+    @Column(name = "consumed")
+    private boolean consumed;
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getRepositoryId() {
+        return repositoryId;
+    }
+
+    public void setRepositoryId(String repositoryId) {
+        this.repositoryId = repositoryId;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getRealm() {
+        return realm;
+    }
+
+    public void setRealm(String realm) {
+        this.realm = realm;
+    }
+
+    public String getHashed_otp_code() {
+        return hashed_otp_code;
+    }
+
+    public void setHashed_otp_code(String hashed_otp_code) {
+        this.hashed_otp_code = hashed_otp_code;
+    }
+
+    public long getRequest_timestamp() {
+        return request_timestamp;
+    }
+
+    public void setRequest_timestamp(long request_timestamp) {
+        this.request_timestamp = request_timestamp;
+    }
+
+    public int getAttempts() {
+        return attempts;
+    }
+
+    public void setAttempts(int attempts) {
+        this.attempts = attempts;
+    }
+
+    public boolean isConsumed() {
+        return consumed;
+    }
+
+    public void setConsumed(boolean consumed) {
+        this.consumed = consumed;
+    }
+
+    @Override
+    public String toString() {
+        return (
+            "InternalUserOTPEntity [id=" + 
+            id + 
+            ", repositoryId=" + 
+            repositoryId + 
+            ", userId=" + 
+            userId + 
+            ", realm=" + 
+            realm + 
+            ", hashed_otp_code=" + 
+            hashed_otp_code + 
+            ", request_timestamp=" + 
+            request_timestamp + 
+            ", attempts=" + 
+            attempts + 
+            ", consumed=" + 
+            consumed + 
+            "]"
+        );
+    }
+
+}
