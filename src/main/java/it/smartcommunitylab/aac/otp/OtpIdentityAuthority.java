@@ -1,0 +1,91 @@
+package it.smartcommunitylab.aac.otp;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
+
+import it.smartcommunitylab.aac.SystemKeys;
+import it.smartcommunitylab.aac.accounts.persistence.UserAccountService;
+import it.smartcommunitylab.aac.core.entrypoint.RealmAwareUriBuilder;
+import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
+import it.smartcommunitylab.aac.identity.base.AbstractIdentityProviderAuthority;
+import it.smartcommunitylab.aac.internal.model.InternalUserAccount;
+import it.smartcommunitylab.aac.internal.model.InternalUserIdentity;
+import it.smartcommunitylab.aac.otp.provider.OtpFilterProvider;
+import it.smartcommunitylab.aac.otp.provider.OtpIdentityConfigurationProvider;
+import it.smartcommunitylab.aac.otp.provider.OtpIdentityProvider;
+import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfig;
+import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfigMap;
+import it.smartcommunitylab.aac.otp.provider.OtpCredentialsService;
+import it.smartcommunitylab.aac.realms.service.RealmService;
+import it.smartcommunitylab.aac.utils.MailService;
+
+@Service
+public class OtpIdentityAuthority
+        extends
+        AbstractIdentityProviderAuthority<OtpIdentityProvider, InternalUserIdentity, OtpIdentityProviderConfig, OtpIdentityProviderConfigMap> {
+
+    public static final String AUTHORITY_URL = "/auth/otp/";
+
+    private final UserAccountService<InternalUserAccount> accountService;
+
+    private final OtpFilterProvider filterProvider;
+
+    private RealmService realmService;
+    private MailService mailService;
+
+    public OtpIdentityAuthority(
+            UserAccountService<InternalUserAccount> userAccountService,
+            OtpCredentialsService otpService,
+            ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
+
+        super(SystemKeys.AUTHORITY_OTP, registrationRepository);
+        Assert.notNull(userAccountService, "account service is mandatory");
+        Assert.notNull(otpService, "otp service is mandatory");
+
+        this.accountService = userAccountService;
+        this.filterProvider = new OtpFilterProvider(userAccountService, otpService, registrationRepository);
+    }
+
+    @Autowired
+    public void setConfigProvider(OtpIdentityConfigurationProvider configProvider) {
+
+        Assert.notNull(configProvider, "config provider is mandatory");
+        this.configProvider = configProvider;
+    }
+
+    @Autowired
+    public void setRealmService(RealmService realmService) {
+        this.realmService = realmService;
+    }
+
+    @Autowired
+    public void setMailService(MailService mailService) {
+        this.mailService = mailService;
+    }
+
+    @Autowired
+    public void setUriBuilder(RealmAwareUriBuilder uriBuilder) {
+    }
+
+    @Override
+    public OtpIdentityProvider buildProvider(OtpIdentityProviderConfig config) {
+
+        OtpIdentityProvider idp = new OtpIdentityProvider(
+                config.getProvider(),
+                accountService,
+                config,
+                config.getRealm());
+
+        idp.setRealmService(realmService);
+        idp.setMailService(mailService);
+
+        return idp;
+    }
+
+    @Override
+    public OtpFilterProvider getFilterProvider() {
+        return filterProvider;
+    }
+
+}
