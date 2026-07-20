@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head th:fragment="header">
+</head>
+
+<body>
+    <div th:fragment="message">
+        <p>
+            Gentile <span data-th-text="${user.name}">Mario</span> <span data-th-text="${user.surname}">Rossi</span>,
+            <br>
+            Un nuovo codice OTP è stato generato per te su <b data-th-text="${realm.name}">AAC</b>
+            <br>
+            Per completare il login, usa questo codice <span data-th-text="${code}">Null</span>
+            Oppure clicca sul seguente link per completare il login:
+            <a th:href="${link}" data-th-text="${link}">Link</a>
+        </p>
+        <p>
+            Si prega di contattare <a href="mailto:" th:href="'mailto:'+${application.email}">supporto</a> in caso di
+            problemi
+            con l'accesso.
+        </p>
+    </div>
+</body>
+
+</html>
