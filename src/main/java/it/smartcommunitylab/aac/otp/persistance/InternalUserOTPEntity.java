@@ -14,7 +14,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Entity
 @Table(name = "internal_user_OTP", uniqueConstraints = @UniqueConstraint(columnNames = { "repository_id" }))
 @EntityListeners(AuditingEntityListener.class)
-public class InternalUserOTPEntity {
+public class InternalUserOtpEntity {
 
     @Id
     @NotBlank
@@ -35,11 +35,11 @@ public class InternalUserOTPEntity {
 
     @NotNull
     @Column(length = 512)
-    private String hashed_otp_code;
+    private String token;
 
     @NotNull
-    @Column(name = "request_timestamp")
-    private long request_timestamp;
+    @Column(name = "expiry_timestamp")
+    private long expiry_timestamp;
 
     @NotNull
     @Column(name = "attempts")
@@ -81,20 +81,20 @@ public class InternalUserOTPEntity {
         this.realm = realm;
     }
 
-    public String getHashed_otp_code() {
-        return hashed_otp_code;
+    public String getToken() {
+        return token;
     }
 
-    public void setHashed_otp_code(String hashed_otp_code) {
-        this.hashed_otp_code = hashed_otp_code;
+    public void setToken(String token) {
+        this.token = token;
     }
 
-    public long getRequest_timestamp() {
-        return request_timestamp;
+    public long getExpiry_timestamp() {
+        return expiry_timestamp;
     }
 
-    public void setRequest_timestamp(long request_timestamp) {
-        this.request_timestamp = request_timestamp;
+    public void setExpiry_timestamp(long expiry_timestamp) {
+        this.expiry_timestamp = expiry_timestamp;
     }
 
     public int getAttempts() {
@@ -124,10 +124,10 @@ public class InternalUserOTPEntity {
             userId + 
             ", realm=" + 
             realm + 
-            ", hashed_otp_code=" + 
-            hashed_otp_code + 
-            ", request_timestamp=" + 
-            request_timestamp + 
+            ", token=" + 
+            token + 
+            ", expiry_timestamp=" + 
+            expiry_timestamp + 
             ", attempts=" + 
             attempts + 
             ", consumed=" + 
