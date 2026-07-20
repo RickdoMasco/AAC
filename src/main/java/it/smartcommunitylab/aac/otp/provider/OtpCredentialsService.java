@@ -1,0 +1,117 @@
+package it.smartcommunitylab.aac.otp.provider;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+
+import javax.mail.MessagingException;
+
+import org.springframework.util.Assert;
+
+import it.smartcommunitylab.aac.SystemKeys;
+import it.smartcommunitylab.aac.common.NoSuchUserException;
+import it.smartcommunitylab.aac.common.RegistrationException;
+import it.smartcommunitylab.aac.common.SystemException;
+import it.smartcommunitylab.aac.core.entrypoint.RealmAwareUriBuilder;
+import it.smartcommunitylab.aac.credentials.base.AbstractCredentialsService;
+import it.smartcommunitylab.aac.internal.model.InternalUserAccount;
+import it.smartcommunitylab.aac.internal.service.InternalJpaUserAccountService;
+import it.smartcommunitylab.aac.internal.service.InternalUserConfirmKeyService;
+import it.smartcommunitylab.aac.otp.model.InternalEditableUserOtp;
+import it.smartcommunitylab.aac.otp.model.InternalUserOtp;
+import it.smartcommunitylab.aac.realms.service.RealmService;
+import it.smartcommunitylab.aac.utils.MailService;
+
+// Remove @Service to prevent Spring from attempting to instantiate it as a bean.
+// Instantiation is handled manually by OtpCredentialsAuthority.buildProvider().
+public class OtpCredentialsService
+        extends
+        AbstractCredentialsService<InternalUserOtp, InternalEditableUserOtp, OtpIdentityProviderConfigMap, OtpCredentialsServiceConfig> {
+
+    private final InternalUserConfirmKeyService confirmKeyService;
+    private final InternalJpaUserAccountService accountService;
+    private final String repositoryId;
+
+    public OtpCredentialsService(
+            String providerId,
+            InternalUserConfirmKeyService confirmKeyService,
+            InternalJpaUserAccountService accountService,
+            String repositoryId,
+            OtpCredentialsServiceConfig providerConfig,
+            String realm) {
+        super(SystemKeys.AUTHORITY_OTP, providerId, null, providerConfig, realm);
+        Assert.notNull(confirmKeyService, "confirmKeyService is mandatory");
+        Assert.notNull(accountService, "accountService is mandatory");
+        this.confirmKeyService = confirmKeyService;
+        this.accountService = accountService;
+        this.repositoryId = repositoryId;
+    }
+
+    private MailService mailService;
+    private RealmAwareUriBuilder uriBuilder;
+
+    public void setRealmService(RealmService realmService) {
+    }
+
+    public void setMailService(MailService mailService) {
+        this.mailService = mailService;
+    }
+
+    public void setUriBuilder(RealmAwareUriBuilder uriBuilder) {
+        this.uriBuilder = uriBuilder;
+    }
+
+    /**
+     * Generates and sends OTP.
+     */
+    public void generateOtp(String username)
+            throws RegistrationException, NoSuchUserException {
+        InternalUserAccount account = accountService.findAccountById(repositoryId, username);
+        if (account == null)
+            throw new NoSuchUserException();
+
+        // Rate limiting check: se deadline attiva, blocca.
+        if (account.getConfirmationDeadline() != null && account.getConfirmationDeadline().after(new Date())) {
+            throw new RegistrationException("rate-limit-exceeded");
+        }
+
+        // Imposta deadline (5 min) anche per nuovi tentativi post-blocco
+        account.setConfirmationDeadline(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
+
+        String code = UUID.randomUUID().toString();
+        account.setConfirmationKey(code);
+        account.setConfirmationDeadline(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
+        accountService.updateAccount(repositoryId, account.getUuid(), account);
+
+        try {
+            sendOtpMail(account.getEmail(), code, account.getLang());
+        } catch (MessagingException e) {
+            throw new SystemException(e.getMessage());
+        }
+    }
+
+    private void sendOtpMail(String userId, String code, String lang) throws MessagingException {
+        if (mailService != null) {
+            Map<String, Object> vars = new HashMap<>();
+            vars.put("code", code);
+            mailService.sendEmail(userId, "otp", lang, vars);
+        }
+    }
+
+    public boolean verifyOtp(String username, String token) throws NoSuchUserException {
+        InternalUserAccount account = confirmKeyService.findAccountByConfirmationKey(repositoryId, token);
+        return account != null && account.getUsername().equals(username);
+    }
+
+    @Override
+    public String getRegisterUrl() {
+        return uriBuilder.buildUrl(getRealm(), "/otp/register");
+    }
+
+    @Override
+    public String getEditUrl(String credentialsId) {
+        return uriBuilder.buildUrl(getRealm(), "/otp/edit/" + credentialsId);
+    }
+}
