@@ -14,10 +14,9 @@ public interface InternalUserOtpEntityRepository
 
     List<InternalUserOtpEntity> findByRepositoryIdAndUserId(String repositoryId, String userId);
 
-    InternalUserOtpEntity findByRepositoryIdAndUserIdAndStatusOrderByCreateDateDesc(
+    List<InternalUserOtpEntity> findByRepositoryIdAndUserIdOrderByExpiryTimestampDesc(
             String repositoryId,
-            String userId,
-            String status);
+            String userId);
 
     List<InternalUserOtpEntity> findByRepositoryIdAndConsumed(String repositoryId, boolean consumed);
 

@@ -39,7 +39,7 @@ public class InternalUserOtpEntity {
 
     @NotNull
     @Column(name = "expiry_timestamp")
-    private long expiry_timestamp;
+    private long expiryTimestamp;
 
     @NotNull
     @Column(name = "attempts")
@@ -89,12 +89,12 @@ public class InternalUserOtpEntity {
         this.token = token;
     }
 
-    public long getExpiry_timestamp() {
-        return expiry_timestamp;
+    public long getExpiryTimestamp() {
+        return expiryTimestamp;
     }
 
-    public void setExpiry_timestamp(long expiry_timestamp) {
-        this.expiry_timestamp = expiry_timestamp;
+    public void setExpiryTimestamp(long expiryTimestamp) {
+        this.expiryTimestamp = expiryTimestamp;
     }
 
     public int getAttempts() {
@@ -126,8 +126,8 @@ public class InternalUserOtpEntity {
             realm + 
             ", token=" + 
             token + 
-            ", expiry_timestamp=" + 
-            expiry_timestamp + 
+            ", expiryTimestamp=" + 
+            expiryTimestamp + 
             ", attempts=" + 
             attempts + 
             ", consumed=" + 
