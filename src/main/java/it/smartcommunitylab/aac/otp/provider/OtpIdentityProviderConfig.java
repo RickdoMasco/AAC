@@ -8,6 +8,8 @@ import it.smartcommunitylab.aac.password.provider.PasswordIdentityProviderConfig
 
 public class OtpIdentityProviderConfig extends AbstractIdentityProviderConfig<OtpIdentityProviderConfigMap> {
 
+    private static final long serialVersionUID = SystemKeys.AAC_CORE_SERIAL_VERSION;
+
     public static final String RESOURCE_TYPE = SystemKeys.RESOURCE_PROVIDER + SystemKeys.ID_SEPARATOR
             + PasswordIdentityProviderConfigMap.RESOURCE_TYPE;
 

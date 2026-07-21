@@ -18,20 +18,16 @@ public class OtpFilterProvider implements FilterProvider {
 
     private final ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository;
     private final UserAccountService<InternalUserAccount> userAccountService;
-    private final OtpCredentialsService userOtpService;
 
     private AuthenticationManager authManager;
 
     public OtpFilterProvider(
             UserAccountService<InternalUserAccount> userAccountService,
-            OtpCredentialsService userOtpService,
             ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
         Assert.notNull(userAccountService, "account service is mandatory");
-        Assert.notNull(userOtpService, "otp service is mandatory");
         Assert.notNull(registrationRepository, "registration repository is mandatory");
 
         this.userAccountService = userAccountService;
-        this.userOtpService = userOtpService;
         this.registrationRepository = registrationRepository;
     }
 
@@ -48,7 +44,6 @@ public class OtpFilterProvider implements FilterProvider {
     public List<Filter> getAuthFilters() {
         UsernameOtpAuthenticationFilter loginFilter = new UsernameOtpAuthenticationFilter(
                 userAccountService,
-                userOtpService,
                 registrationRepository);
         loginFilter.setAuthenticationSuccessHandler(new RequestAwareAuthenticationSuccessHandler());
 

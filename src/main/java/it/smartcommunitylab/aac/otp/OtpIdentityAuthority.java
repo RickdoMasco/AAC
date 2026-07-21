@@ -16,7 +16,6 @@ import it.smartcommunitylab.aac.otp.provider.OtpIdentityConfigurationProvider;
 import it.smartcommunitylab.aac.otp.provider.OtpIdentityProvider;
 import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfig;
 import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfigMap;
-import it.smartcommunitylab.aac.otp.provider.OtpCredentialsService;
 import it.smartcommunitylab.aac.realms.service.RealmService;
 import it.smartcommunitylab.aac.utils.MailService;
 
@@ -33,18 +32,17 @@ public class OtpIdentityAuthority
 
     private RealmService realmService;
     private MailService mailService;
+    private RealmAwareUriBuilder uriBuilder;
 
     public OtpIdentityAuthority(
             UserAccountService<InternalUserAccount> userAccountService,
-            OtpCredentialsService otpService,
             ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
 
         super(SystemKeys.AUTHORITY_OTP, registrationRepository);
         Assert.notNull(userAccountService, "account service is mandatory");
-        Assert.notNull(otpService, "otp service is mandatory");
 
         this.accountService = userAccountService;
-        this.filterProvider = new OtpFilterProvider(userAccountService, otpService, registrationRepository);
+        this.filterProvider = new OtpFilterProvider(userAccountService, registrationRepository);
     }
 
     @Autowired
@@ -66,6 +64,7 @@ public class OtpIdentityAuthority
 
     @Autowired
     public void setUriBuilder(RealmAwareUriBuilder uriBuilder) {
+        this.uriBuilder = uriBuilder;
     }
 
     @Override
@@ -79,6 +78,7 @@ public class OtpIdentityAuthority
 
         idp.setRealmService(realmService);
         idp.setMailService(mailService);
+        idp.setUriBuilder(uriBuilder);
 
         return idp;
     }

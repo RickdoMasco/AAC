@@ -32,7 +32,6 @@ import it.smartcommunitylab.aac.internal.auth.InternalAuthenticationException;
 import it.smartcommunitylab.aac.internal.model.InternalUserAccount;
 import it.smartcommunitylab.aac.otp.OtpIdentityAuthority;
 import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfig;
-import it.smartcommunitylab.aac.otp.provider.OtpCredentialsService;
 
 /**
  * Authentication filter for OTP and Magic Link based flows.
@@ -58,9 +57,8 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
      */
     public UsernameOtpAuthenticationFilter(
             UserAccountService<InternalUserAccount> userAccountService,
-            OtpCredentialsService otpService,
             ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
-        this(userAccountService, otpService, registrationRepository, DEFAULT_FILTER_URI, null);
+        this(userAccountService, registrationRepository, DEFAULT_FILTER_URI, null);
 
     }
 
@@ -76,13 +74,11 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
 
     public UsernameOtpAuthenticationFilter(
             UserAccountService<InternalUserAccount> userAccountService,
-            OtpCredentialsService otpService,
             ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository,
             String filterProcessingUrl,
             AuthenticationEntryPoint authenticationEntryPoint) {
         super(filterProcessingUrl);
         Assert.notNull(userAccountService, "user account service is required");
-        Assert.notNull(otpService, "OTP service is required");
 
         Assert.notNull(registrationRepository, "provider registration repository cannot be null");
         Assert.hasText(filterProcessingUrl, "filterProcessesUrl must contain a URL pattern");
