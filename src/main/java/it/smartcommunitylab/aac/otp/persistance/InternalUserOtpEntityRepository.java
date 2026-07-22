@@ -1,13 +1,11 @@
 package it.smartcommunitylab.aac.otp.persistance;
 
-import java.util.List;
-
 import it.smartcommunitylab.aac.repository.CustomJpaRepository;
 import it.smartcommunitylab.aac.repository.DetachableJpaRepository;
+import java.util.List;
 
 public interface InternalUserOtpEntityRepository
-        extends CustomJpaRepository<InternalUserOtpEntity, String>, DetachableJpaRepository<InternalUserOtpEntity> {
-
+    extends CustomJpaRepository<InternalUserOtpEntity, String>, DetachableJpaRepository<InternalUserOtpEntity> {
     List<InternalUserOtpEntity> findByRepositoryId(String repositoryId);
 
     List<InternalUserOtpEntity> findByRealm(String realm);
@@ -15,8 +13,9 @@ public interface InternalUserOtpEntityRepository
     List<InternalUserOtpEntity> findByRepositoryIdAndUserId(String repositoryId, String userId);
 
     List<InternalUserOtpEntity> findByRepositoryIdAndUserIdOrderByExpiryTimestampDesc(
-            String repositoryId,
-            String userId);
+        String repositoryId,
+        String userId
+    );
 
     List<InternalUserOtpEntity> findByRepositoryIdAndConsumed(String repositoryId, boolean consumed);
 
@@ -27,5 +26,4 @@ public interface InternalUserOtpEntityRepository
     List<InternalUserOtpEntity> findByAttemptsGreaterThanEqual(int attempts);
 
     List<InternalUserOtpEntity> findByExpiryTimestampLessThan(long timestamp);
-
 }

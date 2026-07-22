@@ -1,11 +1,5 @@
 package it.smartcommunitylab.aac.otp.provider;
 
-import java.util.Collection;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.security.oauth2.provider.AuthorizationRequest;
-
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.accounts.persistence.UserAccountService;
 import it.smartcommunitylab.aac.accounts.provider.AccountService;
@@ -25,9 +19,19 @@ import it.smartcommunitylab.aac.otp.OtpIdentityAuthority;
 import it.smartcommunitylab.aac.otp.model.InternalOtpUserAuthenticatedPrincipal;
 import it.smartcommunitylab.aac.realms.service.RealmService;
 import it.smartcommunitylab.aac.utils.MailService;
+import java.util.Collection;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.security.oauth2.provider.AuthorizationRequest;
 
-public class OtpIdentityProvider extends
-        AbstractIdentityProvider<InternalUserIdentity, InternalUserAccount, InternalOtpUserAuthenticatedPrincipal, OtpIdentityProviderConfigMap, OtpIdentityProviderConfig> {
+public class OtpIdentityProvider
+    extends AbstractIdentityProvider<
+        InternalUserIdentity,
+        InternalUserAccount,
+        InternalOtpUserAuthenticatedPrincipal,
+        OtpIdentityProviderConfigMap,
+        OtpIdentityProviderConfig
+    > {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -40,28 +44,42 @@ public class OtpIdentityProvider extends
     private final InternalSubjectResolver subjectResolver;
 
     public OtpIdentityProvider(
-            String providerId,
-            UserAccountService<InternalUserAccount> userAccountService,
-            OtpIdentityProviderConfig config,
-            String realm) {
+        String providerId,
+        UserAccountService<InternalUserAccount> userAccountService,
+        OtpIdentityProviderConfig config,
+        String realm
+    ) {
         super(SystemKeys.AUTHORITY_OTP, providerId, config, realm);
-
         String repositoryId = config.getRepositoryId();
         logger.debug("create otp provider with id {} repository {}", String.valueOf(providerId), repositoryId);
 
         this.attributeProvider = new InternalAttributeProvider<>(SystemKeys.AUTHORITY_OTP, providerId, realm);
 
-        this.accountProvider = new InternalAccountProvider(SystemKeys.AUTHORITY_OTP, providerId, userAccountService,
-                repositoryId, realm);
-        this.principalConverter = new InternalAccountPrincipalConverter(SystemKeys.AUTHORITY_OTP, providerId,
-                userAccountService, repositoryId, realm);
+        this.accountProvider = new InternalAccountProvider(
+            SystemKeys.AUTHORITY_OTP,
+            providerId,
+            userAccountService,
+            repositoryId,
+            realm
+        );
+        this.principalConverter = new InternalAccountPrincipalConverter(
+            SystemKeys.AUTHORITY_OTP,
+            providerId,
+            userAccountService,
+            repositoryId,
+            realm
+        );
 
         this.otpService = new OtpIdentityCredentialsService(providerId, userAccountService, config, realm);
-        this.authenticationProvider = new OtpAuthenticationProvider(providerId, userAccountService, otpService, config,
-                realm);
+        this.authenticationProvider = new OtpAuthenticationProvider(
+            providerId,
+            userAccountService,
+            otpService,
+            config,
+            realm
+        );
 
         this.subjectResolver = new InternalSubjectResolver(providerId, userAccountService, repositoryId, false, realm);
-
     }
 
     public void setRealmService(RealmService rs) {
@@ -112,18 +130,24 @@ public class OtpIdentityProvider extends
     }
 
     @Override
-    protected InternalUserIdentity buildIdentity(InternalUserAccount account,
-            InternalOtpUserAuthenticatedPrincipal principal, Collection<UserAttributes> attributes) {
-                
-        InternalUserIdentity identity = new InternalUserIdentity(getAuthority(), getProvider(), getRealm(), account,
-                principal);
+    protected InternalUserIdentity buildIdentity(
+        InternalUserAccount account,
+        InternalOtpUserAuthenticatedPrincipal principal,
+        Collection<UserAttributes> attributes
+    ) {
+        InternalUserIdentity identity = new InternalUserIdentity(
+            getAuthority(),
+            getProvider(),
+            getRealm(),
+            account,
+            principal
+        );
         identity.setAttributes(attributes);
         return identity;
     }
 
     @Override
-    public void deleteIdentity(String userId, String username) throws NoSuchUserException {
-    }
+    public void deleteIdentity(String userId, String username) throws NoSuchUserException {}
 
     @Override
     public String getAuthenticationUrl() {
@@ -145,7 +169,6 @@ public class OtpIdentityProvider extends
 
     @Override
     public InternalLoginProvider getLoginProvider(ClientDetails clientDetails, AuthorizationRequest authRequest) {
-        
         InternalLoginProvider ilp = new InternalLoginProvider(getProvider(), getRealm(), getName());
 
         ilp.setTitleMap(getTitleMap());

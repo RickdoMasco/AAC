@@ -1,15 +1,12 @@
 package it.smartcommunitylab.aac.otp.auth;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import it.smartcommunitylab.aac.internal.model.InternalUserAccount;
 import java.util.Collection;
-
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
 import org.springframework.util.Assert;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import it.smartcommunitylab.aac.internal.model.InternalUserAccount;
 
 /**
  * Authentication token for OTP-based requests.
@@ -27,12 +24,11 @@ public class UsernameOtpAuthenticationToken extends AbstractAuthenticationToken 
 
     /**
      * Constructs an unauthenticated token with username and OTP code.
-     * 
+     *
      * @param username The identifier of the user.
      * @param otp      The one-time code or magic link token.
      */
     public UsernameOtpAuthenticationToken(String username, String otp) {
-        
         super(null);
         this.username = username;
         this.otp = otp;
@@ -42,16 +38,16 @@ public class UsernameOtpAuthenticationToken extends AbstractAuthenticationToken 
 
     /**
      * Constructs a trusted token with authorities.
-     * 
+     *
      * @param username    The identifier of the user.
      * @param otp         The one-time code or magic link token.
      * @param authorities Collection of granted authorities.
      */
     public UsernameOtpAuthenticationToken(
-            String username,
-            String otp,
-            Collection<? extends GrantedAuthority> authorities) {
-
+        String username,
+        String otp,
+        Collection<? extends GrantedAuthority> authorities
+    ) {
         super(authorities);
         this.username = username;
         this.otp = otp;
@@ -61,18 +57,18 @@ public class UsernameOtpAuthenticationToken extends AbstractAuthenticationToken 
 
     /**
      * Constructs a fully authenticated token with user account details.
-     * 
+     *
      * @param username    The identifier of the user.
      * @param otp         The one-time code or magic link token.
      * @param account     The authenticated user account.
      * @param authorities Collection of granted authorities.
      */
     public UsernameOtpAuthenticationToken(
-            String username,
-            String otp,
-            InternalUserAccount account,
-            Collection<? extends GrantedAuthority> authorities) {
-
+        String username,
+        String otp,
+        InternalUserAccount account,
+        Collection<? extends GrantedAuthority> authorities
+    ) {
         super(authorities);
         this.username = username;
         this.otp = otp;
@@ -115,21 +111,19 @@ public class UsernameOtpAuthenticationToken extends AbstractAuthenticationToken 
 
     @Override
     public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
-
         Assert.isTrue(
-                !isAuthenticated,
-                "Cannot set this token to trusted - use constructor which takes a GrantedAuthority list instead");
+            !isAuthenticated,
+            "Cannot set this token to trusted - use constructor which takes a GrantedAuthority list instead"
+        );
         super.setAuthenticated(false);
     }
 
     @Override
     public void eraseCredentials() {
-
         super.eraseCredentials();
         this.otp = null;
         if (this.account != null) {
             this.account.eraseCredentials();
         }
     }
-
 }

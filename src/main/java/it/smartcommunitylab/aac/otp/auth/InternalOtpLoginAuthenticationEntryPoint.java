@@ -1,20 +1,17 @@
 package it.smartcommunitylab.aac.otp.auth;
 
+import it.smartcommunitylab.aac.core.entrypoint.RealmAwarePathUriBuilder;
+import it.smartcommunitylab.aac.otp.OtpIdentityAuthority;
 import java.util.Collections;
 import java.util.Map;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.StringUtils;
 import org.springframework.web.util.UriComponents;
-
-import it.smartcommunitylab.aac.core.entrypoint.RealmAwarePathUriBuilder;
-import it.smartcommunitylab.aac.otp.OtpIdentityAuthority;
 
 /**
  * Authentication entry point for OTP-based flows.
@@ -59,10 +56,10 @@ public class InternalOtpLoginAuthenticationEntryPoint extends LoginUrlAuthentica
 
     @Override
     protected String determineUrlToUseForThisRequest(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            AuthenticationException exception) {
-
+        HttpServletRequest request,
+        HttpServletResponse response,
+        AuthenticationException exception
+    ) {
         // Attempt to resolve provider ID via URL path matching
         if (providerRequestMatcher.matches(request)) {
             // Extract provider ID from path variable
@@ -93,7 +90,6 @@ public class InternalOtpLoginAuthenticationEntryPoint extends LoginUrlAuthentica
     }
 
     private String buildLoginUrl(HttpServletRequest request, String provider) {
-
         if (realmUriBuilder != null) {
             Map<String, String> params = Collections.singletonMap(PROVIDER_URI_VARIABLE_NAME, provider);
             UriComponents u1 = realmUriBuilder.buildUri(request, null, getLoginFormUrl());

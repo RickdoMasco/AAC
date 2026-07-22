@@ -1,15 +1,14 @@
 package it.smartcommunitylab.aac.otp.model;
 
-import org.springframework.security.core.CredentialsContainer;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.internal.model.InternalUserAccount;
 import it.smartcommunitylab.aac.internal.model.InternalUserAuthenticatedPrincipal;
+import org.springframework.security.core.CredentialsContainer;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class InternalOtpUserAuthenticatedPrincipal extends InternalUserAuthenticatedPrincipal
+public class InternalOtpUserAuthenticatedPrincipal
+    extends InternalUserAuthenticatedPrincipal
     implements CredentialsContainer {
 
     private static final long serialVersionUID = SystemKeys.AAC_INTERNAL_SERIAL_VERSION;
@@ -21,8 +20,13 @@ public class InternalOtpUserAuthenticatedPrincipal extends InternalUserAuthentic
     }
 
     public InternalOtpUserAuthenticatedPrincipal(InternalUserAccount account) {
-        super(SystemKeys.AUTHORITY_OTP, account.getProvider(), account.getRealm(), account.getUserId(),
-            account.getUsername());
+        super(
+            SystemKeys.AUTHORITY_OTP,
+            account.getProvider(),
+            account.getRealm(),
+            account.getUserId(),
+            account.getUsername()
+        );
     }
 
     @Override
@@ -34,5 +38,4 @@ public class InternalOtpUserAuthenticatedPrincipal extends InternalUserAuthentic
     public void eraseCredentials() {
         // nothing to do
     }
-    
 }

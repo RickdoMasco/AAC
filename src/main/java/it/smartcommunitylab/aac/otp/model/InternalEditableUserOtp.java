@@ -9,25 +9,28 @@ import it.smartcommunitylab.aac.repository.JsonSchemaIgnore;
 import java.util.Date;
 import javax.validation.Valid;
 
-
 // capire se serve, altrimenti rimuovere
 @Valid
 @JsonInclude(JsonInclude.Include.ALWAYS)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InternalEditableUserOtp extends AbstractEditableUserCredentials {
-    
+
     private static final long serialVersionUID = SystemKeys.AAC_INTERNAL_SERIAL_VERSION;
-    public static final String RESOURCE_TYPE = SystemKeys.RESOURCE_CREDENTIALS + SystemKeys.ID_SEPARATOR
-            + SystemKeys.AUTHORITY_OTP;
+    public static final String RESOURCE_TYPE =
+        SystemKeys.RESOURCE_CREDENTIALS + SystemKeys.ID_SEPARATOR + SystemKeys.AUTHORITY_OTP;
 
     @JsonSchemaIgnore
     private String credentialsId;
+
     @JsonSchemaIgnore
     private String userId;
+
     @JsonSchemaIgnore
     private Date createDate;
+
     @JsonSchemaIgnore
     private Date modifiedDate;
+
     @JsonSchemaIgnore
     private Date expireDate;
 

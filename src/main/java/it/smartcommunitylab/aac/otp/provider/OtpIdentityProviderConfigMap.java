@@ -1,21 +1,18 @@
 package it.smartcommunitylab.aac.otp.provider;
 
-import java.io.Serializable;
-import java.util.Map;
-
-import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.Pattern;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
-
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.base.model.AbstractConfigMap;
+import java.io.Serializable;
+import java.util.Map;
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.Pattern;
 
 @Valid
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -23,11 +20,12 @@ public class OtpIdentityProviderConfigMap extends AbstractConfigMap {
 
     private static final long serialVersionUID = SystemKeys.AAC_CORE_SERIAL_VERSION;
 
-    public static final String RESOURCE_TYPE = SystemKeys.RESOURCE_CONFIG +
-            SystemKeys.ID_SEPARATOR +
-            SystemKeys.RESOURCE_IDENTITY_PROVIDER +
-            SystemKeys.ID_SEPARATOR +
-            SystemKeys.AUTHORITY_OTP;
+    public static final String RESOURCE_TYPE =
+        SystemKeys.RESOURCE_CONFIG +
+        SystemKeys.ID_SEPARATOR +
+        SystemKeys.RESOURCE_IDENTITY_PROVIDER +
+        SystemKeys.ID_SEPARATOR +
+        SystemKeys.AUTHORITY_OTP;
 
     @Max(30 * 24 * 60 * 60)
     private Integer maxSessionDuration;
@@ -53,8 +51,7 @@ public class OtpIdentityProviderConfigMap extends AbstractConfigMap {
     @Max(3)
     private Integer otpTryNumber;
 
-    public OtpIdentityProviderConfigMap() {
-    }
+    public OtpIdentityProviderConfigMap() {}
 
     public static long getSerialversionuid() {
         return serialVersionUID;
@@ -146,5 +143,4 @@ public class OtpIdentityProviderConfigMap extends AbstractConfigMap {
     public JsonSchema getSchema() throws JsonMappingException {
         return schemaGen.generateSchema(OtpIdentityProviderConfigMap.class);
     }
-
 }

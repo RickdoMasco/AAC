@@ -1,15 +1,5 @@
 package it.smartcommunitylab.aac.otp.provider;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-
-import javax.mail.MessagingException;
-
-import org.springframework.util.Assert;
-
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.common.NoSuchUserException;
 import it.smartcommunitylab.aac.common.RegistrationException;
@@ -22,23 +12,34 @@ import it.smartcommunitylab.aac.internal.service.InternalUserConfirmKeyService;
 import it.smartcommunitylab.aac.otp.model.InternalEditableUserOtp;
 import it.smartcommunitylab.aac.otp.model.InternalUserOtp;
 import it.smartcommunitylab.aac.utils.MailService;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import javax.mail.MessagingException;
+import org.springframework.util.Assert;
 
 public class OtpCredentialsService
-        extends
-        AbstractCredentialsService<InternalUserOtp, InternalEditableUserOtp, OtpIdentityProviderConfigMap, OtpCredentialsServiceConfig> {
+    extends AbstractCredentialsService<
+        InternalUserOtp,
+        InternalEditableUserOtp,
+        OtpIdentityProviderConfigMap,
+        OtpCredentialsServiceConfig
+    > {
 
     private final InternalUserConfirmKeyService confirmKeyService;
     private final InternalJpaUserAccountService accountService;
     private final String repositoryId;
 
     public OtpCredentialsService(
-            String providerId,
-            InternalUserConfirmKeyService confirmKeyService,
-            InternalJpaUserAccountService accountService,
-            String repositoryId,
-            OtpCredentialsServiceConfig providerConfig,
-            String realm) {
-                
+        String providerId,
+        InternalUserConfirmKeyService confirmKeyService,
+        InternalJpaUserAccountService accountService,
+        String repositoryId,
+        OtpCredentialsServiceConfig providerConfig,
+        String realm
+    ) {
         super(SystemKeys.AUTHORITY_OTP, providerId, null, providerConfig, realm);
         Assert.notNull(confirmKeyService, "confirmKeyService is mandatory");
         Assert.notNull(accountService, "accountService is mandatory");
@@ -61,12 +62,9 @@ public class OtpCredentialsService
     /**
      * Generates and sends OTP.
      */
-    public void generateOtp(String username)
-            throws RegistrationException, NoSuchUserException {
-
+    public void generateOtp(String username) throws RegistrationException, NoSuchUserException {
         InternalUserAccount account = accountService.findAccountById(repositoryId, username);
-        if (account == null)
-            throw new NoSuchUserException();
+        if (account == null) throw new NoSuchUserException();
 
         // Rate limiting check: se deadline attiva, blocca.
         if (account.getConfirmationDeadline() != null && account.getConfirmationDeadline().after(new Date())) {
@@ -89,7 +87,6 @@ public class OtpCredentialsService
     }
 
     private void sendOtpMail(String userId, String code, String lang) throws MessagingException {
-
         if (mailService != null) {
             Map<String, Object> vars = new HashMap<>();
             vars.put("code", code);
@@ -98,7 +95,6 @@ public class OtpCredentialsService
     }
 
     public boolean verifyOtp(String username, String token) throws NoSuchUserException {
-
         InternalUserAccount account = confirmKeyService.findAccountByConfirmationKey(repositoryId, token);
         return account != null && account.getUsername().equals(username);
     }

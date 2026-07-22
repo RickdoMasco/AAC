@@ -1,9 +1,5 @@
 package it.smartcommunitylab.aac.otp;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import org.springframework.util.Assert;
-
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.accounts.persistence.UserAccountService;
 import it.smartcommunitylab.aac.core.entrypoint.RealmAwareUriBuilder;
@@ -18,11 +14,18 @@ import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfig;
 import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.realms.service.RealmService;
 import it.smartcommunitylab.aac.utils.MailService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 @Service
 public class OtpIdentityAuthority
-        extends
-        AbstractIdentityProviderAuthority<OtpIdentityProvider, InternalUserIdentity, OtpIdentityProviderConfig, OtpIdentityProviderConfigMap> {
+    extends AbstractIdentityProviderAuthority<
+        OtpIdentityProvider,
+        InternalUserIdentity,
+        OtpIdentityProviderConfig,
+        OtpIdentityProviderConfigMap
+    > {
 
     public static final String AUTHORITY_URL = "/auth/otp/";
 
@@ -35,9 +38,9 @@ public class OtpIdentityAuthority
     private RealmAwareUriBuilder uriBuilder;
 
     public OtpIdentityAuthority(
-            UserAccountService<InternalUserAccount> userAccountService,
-            ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
-
+        UserAccountService<InternalUserAccount> userAccountService,
+        ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository
+    ) {
         super(SystemKeys.AUTHORITY_OTP, registrationRepository);
         Assert.notNull(userAccountService, "account service is mandatory");
 
@@ -47,7 +50,6 @@ public class OtpIdentityAuthority
 
     @Autowired
     public void setConfigProvider(OtpIdentityConfigurationProvider configProvider) {
-
         Assert.notNull(configProvider, "config provider is mandatory");
         this.configProvider = configProvider;
     }
@@ -69,12 +71,12 @@ public class OtpIdentityAuthority
 
     @Override
     public OtpIdentityProvider buildProvider(OtpIdentityProviderConfig config) {
-
         OtpIdentityProvider idp = new OtpIdentityProvider(
-                config.getProvider(),
-                accountService,
-                config,
-                config.getRealm());
+            config.getProvider(),
+            accountService,
+            config,
+            config.getRealm()
+        );
 
         idp.setRealmService(realmService);
         idp.setMailService(mailService);
@@ -87,5 +89,4 @@ public class OtpIdentityAuthority
     public OtpFilterProvider getFilterProvider() {
         return filterProvider;
     }
-
 }

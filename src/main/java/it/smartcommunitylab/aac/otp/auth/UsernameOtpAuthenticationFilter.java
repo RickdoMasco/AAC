@@ -1,12 +1,20 @@
 package it.smartcommunitylab.aac.otp.auth;
 
+import it.smartcommunitylab.aac.SystemKeys;
+import it.smartcommunitylab.aac.accounts.persistence.UserAccountService;
+import it.smartcommunitylab.aac.core.auth.ProviderWrappedAuthenticationToken;
+import it.smartcommunitylab.aac.core.auth.UserAuthentication;
+import it.smartcommunitylab.aac.core.auth.WebAuthenticationDetails;
+import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
+import it.smartcommunitylab.aac.internal.auth.InternalAuthenticationException;
+import it.smartcommunitylab.aac.internal.model.InternalUserAccount;
+import it.smartcommunitylab.aac.otp.OtpIdentityAuthority;
+import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfig;
 import java.io.IOException;
-
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.ProviderNotFoundException;
 import org.springframework.security.core.Authentication;
@@ -21,17 +29,6 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
-
-import it.smartcommunitylab.aac.SystemKeys;
-import it.smartcommunitylab.aac.accounts.persistence.UserAccountService;
-import it.smartcommunitylab.aac.core.auth.ProviderWrappedAuthenticationToken;
-import it.smartcommunitylab.aac.core.auth.UserAuthentication;
-import it.smartcommunitylab.aac.core.auth.WebAuthenticationDetails;
-import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
-import it.smartcommunitylab.aac.internal.auth.InternalAuthenticationException;
-import it.smartcommunitylab.aac.internal.model.InternalUserAccount;
-import it.smartcommunitylab.aac.otp.OtpIdentityAuthority;
-import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfig;
 
 /**
  * Authentication filter for OTP and Magic Link based flows.
@@ -50,21 +47,21 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
 
     /**
      * Base constructor.
-     * 
+     *
      * @param userAccountService     User account management service.
      * @param otpService             OTP credentials service.
      * @param registrationRepository Provider configuration repository.
      */
     public UsernameOtpAuthenticationFilter(
-            UserAccountService<InternalUserAccount> userAccountService,
-            ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
-
+        UserAccountService<InternalUserAccount> userAccountService,
+        ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository
+    ) {
         this(userAccountService, registrationRepository, DEFAULT_FILTER_URI, null);
     }
 
     /**
      * Advanced constructor with custom URL configuration.
-     * 
+     *
      * @param userAccountService       User account management service.
      * @param otpService               OTP credentials service.
      * @param registrationRepository   Provider configuration repository.
@@ -73,19 +70,20 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
      */
 
     public UsernameOtpAuthenticationFilter(
-            UserAccountService<InternalUserAccount> userAccountService,
-            ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository,
-            String filterProcessingUrl,
-            AuthenticationEntryPoint authenticationEntryPoint) {
-
+        UserAccountService<InternalUserAccount> userAccountService,
+        ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository,
+        String filterProcessingUrl,
+        AuthenticationEntryPoint authenticationEntryPoint
+    ) {
         super(filterProcessingUrl);
         Assert.notNull(userAccountService, "user account service is required");
 
         Assert.notNull(registrationRepository, "provider registration repository cannot be null");
         Assert.hasText(filterProcessingUrl, "filterProcessesUrl must contain a URL pattern");
         Assert.isTrue(
-                filterProcessingUrl.contains("{registrationId}"),
-                "filterProcessesUrl must contain a {registrationId} match variable");
+            filterProcessingUrl.contains("{registrationId}"),
+            "filterProcessesUrl must contain a {registrationId} match variable"
+        );
 
         this.registrationRepository = registrationRepository;
 
@@ -94,8 +92,11 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
         setRequiresAuthenticationRequestMatcher(requestMatcher);
 
         // redirect failed attempts to internal login
-        this.authenticationEntryPoint = new InternalOtpLoginAuthenticationEntryPoint("/login", DEFAULT_LOGIN_URI,
-                filterProcessingUrl);
+        this.authenticationEntryPoint = new InternalOtpLoginAuthenticationEntryPoint(
+            "/login",
+            DEFAULT_LOGIN_URI,
+            filterProcessingUrl
+        );
         if (authenticationEntryPoint != null) {
             this.authenticationEntryPoint = authenticationEntryPoint;
         }
@@ -106,22 +107,22 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
 
         // use a custom failureHandler to return to login form
         setAuthenticationFailureHandler(
-                new AuthenticationFailureHandler() {
-
-                    public void onAuthenticationFailure(
-                            HttpServletRequest request,
-                            HttpServletResponse response,
-                            AuthenticationException exception) throws IOException, ServletException {
-
-                        // from SimpleUrlAuthenticationFailureHandler, save exception as session
-                        HttpSession session = request.getSession(true);
-                        if (session != null) {
-                            request.getSession().setAttribute(WebAttributes.AUTHENTICATION_EXCEPTION, exception);
-                        }
-
-                        getAuthenticationEntryPoint().commence(request, response, exception);
+            new AuthenticationFailureHandler() {
+                public void onAuthenticationFailure(
+                    HttpServletRequest request,
+                    HttpServletResponse response,
+                    AuthenticationException exception
+                ) throws IOException, ServletException {
+                    // from SimpleUrlAuthenticationFailureHandler, save exception as session
+                    HttpSession session = request.getSession(true);
+                    if (session != null) {
+                        request.getSession().setAttribute(WebAttributes.AUTHENTICATION_EXCEPTION, exception);
                     }
-                });
+
+                    getAuthenticationEntryPoint().commence(request, response, exception);
+                }
+            }
+        );
     }
 
     /**
@@ -131,29 +132,28 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
      */
 
     public Authentication attemptAuthenticationLink(HttpServletRequest request, HttpServletResponse response)
-            throws AuthenticationException, IOException, ServletException {
-
-        if (!requestMatcher.matches(request))
-            return null;
+        throws AuthenticationException, IOException, ServletException {
+        if (!requestMatcher.matches(request)) return null;
 
         String providerId = requestMatcher.matcher(request).getVariables().get("registrationId");
         OtpIdentityProviderConfig config = registrationRepository.findByProviderId(providerId);
-        if (config == null)
-            throw new ProviderNotFoundException("no provider");
+        if (config == null) throw new ProviderNotFoundException("no provider");
 
         String username = request.getParameter("username");
         String code = request.getParameter("code");
 
-        if (!StringUtils.hasText(username))
-            throw new BadCredentialsException("invalid user");
+        if (!StringUtils.hasText(username)) throw new BadCredentialsException("invalid user");
 
-        UsernameOtpAuthenticationToken authRequest = new UsernameOtpAuthenticationToken(username,
-                code != null ? code : "");
+        UsernameOtpAuthenticationToken authRequest = new UsernameOtpAuthenticationToken(
+            username,
+            code != null ? code : ""
+        );
 
         ProviderWrappedAuthenticationToken wrapped = new ProviderWrappedAuthenticationToken(
-                authRequest,
-                providerId,
-                SystemKeys.AUTHORITY_OTP);
+            authRequest,
+            providerId,
+            SystemKeys.AUTHORITY_OTP
+        );
         wrapped.setAuthenticationDetails(new WebAuthenticationDetails(request));
 
         return getAuthenticationManager().authenticate(wrapped);
@@ -165,8 +165,7 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
-            throws AuthenticationException, IOException, ServletException {
-
+        throws AuthenticationException, IOException, ServletException {
         if (!requestMatcher.matches(request)) {
             return null;
         }
@@ -198,14 +197,13 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
         }
 
         // build a request
-        UsernameOtpAuthenticationToken authenticationRequest = new UsernameOtpAuthenticationToken(
-                username,
-                otp);
+        UsernameOtpAuthenticationToken authenticationRequest = new UsernameOtpAuthenticationToken(username, otp);
 
         ProviderWrappedAuthenticationToken wrappedAuthRequest = new ProviderWrappedAuthenticationToken(
-                authenticationRequest,
-                providerId,
-                SystemKeys.AUTHORITY_OTP);
+            authenticationRequest,
+            providerId,
+            SystemKeys.AUTHORITY_OTP
+        );
 
         // also collect request details
         WebAuthenticationDetails webAuthenticationDetails = new WebAuthenticationDetails(request);
@@ -215,7 +213,7 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
 
         // authenticate via extended authManager
         UserAuthentication userAuthentication = (UserAuthentication) getAuthenticationManager()
-                .authenticate(wrappedAuthRequest);
+            .authenticate(wrappedAuthRequest);
 
         // return authentication to be set in security context
         return userAuthentication;
@@ -228,5 +226,4 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
     public void setAuthenticationEntryPoint(AuthenticationEntryPoint authenticationEntryPoint) {
         this.authenticationEntryPoint = authenticationEntryPoint;
     }
-
 }

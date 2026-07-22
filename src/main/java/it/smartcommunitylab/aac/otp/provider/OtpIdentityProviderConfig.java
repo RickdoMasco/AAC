@@ -9,8 +9,8 @@ public class OtpIdentityProviderConfig extends AbstractIdentityProviderConfig<Ot
 
     private static final long serialVersionUID = SystemKeys.AAC_CORE_SERIAL_VERSION;
 
-    public static final String RESOURCE_TYPE = SystemKeys.RESOURCE_PROVIDER + SystemKeys.ID_SEPARATOR
-            + OtpIdentityProviderConfigMap.RESOURCE_TYPE;
+    public static final String RESOURCE_TYPE =
+        SystemKeys.RESOURCE_PROVIDER + SystemKeys.ID_SEPARATOR + OtpIdentityProviderConfigMap.RESOURCE_TYPE;
 
     private static final int DEFAULT_SESSION_DURATION = 24 * 60 * 60; // 24h
     private static final int COOLDOWN_DURATION = 300; // 5m
@@ -18,17 +18,19 @@ public class OtpIdentityProviderConfig extends AbstractIdentityProviderConfig<Ot
 
     public OtpIdentityProviderConfig(String provider, String realm) {
         super(
-                SystemKeys.AUTHORITY_OTP,
-                provider,
-                realm,
-                new IdentityProviderSettingsMap(),
-                new OtpIdentityProviderConfigMap());
+            SystemKeys.AUTHORITY_OTP,
+            provider,
+            realm,
+            new IdentityProviderSettingsMap(),
+            new OtpIdentityProviderConfigMap()
+        );
     }
 
     public OtpIdentityProviderConfig(
-            ConfigurableIdentityProvider cp,
-            IdentityProviderSettingsMap settingsMap,
-            OtpIdentityProviderConfigMap configMap) {
+        ConfigurableIdentityProvider cp,
+        IdentityProviderSettingsMap settingsMap,
+        OtpIdentityProviderConfigMap configMap
+    ) {
         super(cp, settingsMap, configMap);
     }
 
@@ -61,8 +63,9 @@ public class OtpIdentityProviderConfig extends AbstractIdentityProviderConfig<Ot
      */
 
     public int getDefaultSessionDuration() {
-        return configMap.getMaxSessionDuration() != null ? configMap.getMaxSessionDuration().intValue()
-                : DEFAULT_SESSION_DURATION;
+        return configMap.getMaxSessionDuration() != null
+            ? configMap.getMaxSessionDuration().intValue()
+            : DEFAULT_SESSION_DURATION;
     }
 
     public int getDefaultOtpCooldown() {
@@ -78,7 +81,7 @@ public class OtpIdentityProviderConfig extends AbstractIdentityProviderConfig<Ot
      */
     public boolean isRequireAccountConfirmation() {
         return configMap.getRequireAccountConfirmation() != null
-                ? configMap.getRequireAccountConfirmation().booleanValue()
-                : true;
+            ? configMap.getRequireAccountConfirmation().booleanValue()
+            : true;
     }
 }

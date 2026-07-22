@@ -1,14 +1,15 @@
 package it.smartcommunitylab.aac.otp.provider;
 
+import it.smartcommunitylab.aac.otp.persistance.InternalUserOtpEntity;
+import it.smartcommunitylab.aac.otp.persistance.InternalUserOtpEntityRepository;
 import java.util.List;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import it.smartcommunitylab.aac.otp.persistance.InternalUserOtpEntity;
-import it.smartcommunitylab.aac.otp.persistance.InternalUserOtpEntityRepository;
 
 @Component
 public class OtpCleanupScheduler {
+
     private final InternalUserOtpEntityRepository repository;
 
     public OtpCleanupScheduler(InternalUserOtpEntityRepository repository) {
@@ -18,17 +19,16 @@ public class OtpCleanupScheduler {
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void cleanup() {
-
         // avoid deletion of recent tokens, we keep a buffer of 1 hour
         long buffer = System.currentTimeMillis() - 3600000;
-        
+
         List<InternalUserOtpEntity> expired = repository.findByExpiryTimestampLessThan(buffer);
         repository.deleteAll(expired);
-        
+
         // remove consumed or failed tokens
         List<InternalUserOtpEntity> consumed = repository.findByConsumed(true);
         repository.deleteAll(consumed);
-        
+
         List<InternalUserOtpEntity> highAttempts = repository.findByAttemptsGreaterThanEqual(3);
         repository.deleteAll(highAttempts);
     }

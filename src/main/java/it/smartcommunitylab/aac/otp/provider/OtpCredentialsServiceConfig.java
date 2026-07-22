@@ -5,33 +5,33 @@ import it.smartcommunitylab.aac.credentials.base.AbstractCredentialsServiceConfi
 import it.smartcommunitylab.aac.credentials.model.ConfigurableCredentialsProvider;
 import it.smartcommunitylab.aac.credentials.provider.CredentialsServiceSettingsMap;
 
-public class OtpCredentialsServiceConfig
-        extends AbstractCredentialsServiceConfig<OtpIdentityProviderConfigMap> {
+public class OtpCredentialsServiceConfig extends AbstractCredentialsServiceConfig<OtpIdentityProviderConfigMap> {
 
     private static final long serialVersionUID = SystemKeys.AAC_CORE_SERIAL_VERSION;
-    public static final String RESOURCE_TYPE = SystemKeys.RESOURCE_PROVIDER +
-            SystemKeys.ID_SEPARATOR +
-            SystemKeys.RESOURCE_CONFIG +
-            SystemKeys.ID_SEPARATOR +
-            SystemKeys.RESOURCE_CREDENTIALS_SERVICE +
-            SystemKeys.ID_SEPARATOR +
-            SystemKeys.AUTHORITY_OTP;
+    public static final String RESOURCE_TYPE =
+        SystemKeys.RESOURCE_PROVIDER +
+        SystemKeys.ID_SEPARATOR +
+        SystemKeys.RESOURCE_CONFIG +
+        SystemKeys.ID_SEPARATOR +
+        SystemKeys.RESOURCE_CREDENTIALS_SERVICE +
+        SystemKeys.ID_SEPARATOR +
+        SystemKeys.AUTHORITY_OTP;
 
     public OtpCredentialsServiceConfig(String provider, String realm) {
-
         super(
-                SystemKeys.AUTHORITY_OTP,
-                provider,
-                realm,
-                new CredentialsServiceSettingsMap(),
-                new OtpIdentityProviderConfigMap());
+            SystemKeys.AUTHORITY_OTP,
+            provider,
+            realm,
+            new CredentialsServiceSettingsMap(),
+            new OtpIdentityProviderConfigMap()
+        );
     }
 
     public OtpCredentialsServiceConfig(
-            ConfigurableCredentialsProvider cp,
-            CredentialsServiceSettingsMap settingsMap,
-            OtpIdentityProviderConfigMap configMap) {
-
+        ConfigurableCredentialsProvider cp,
+        CredentialsServiceSettingsMap settingsMap,
+        OtpIdentityProviderConfigMap configMap
+    ) {
         super(cp, settingsMap, configMap);
     }
 
@@ -56,10 +56,8 @@ public class OtpCredentialsServiceConfig
      * config flags
      */
     public boolean isRequireAccountConfirmation() {
-        
         return configMap.getRequireAccountConfirmation() != null
-                ? configMap.getRequireAccountConfirmation().booleanValue()
-                : true;
+            ? configMap.getRequireAccountConfirmation().booleanValue()
+            : true;
     }
-
 }

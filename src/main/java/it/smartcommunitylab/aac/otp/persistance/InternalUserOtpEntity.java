@@ -8,7 +8,6 @@ import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
-
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 @Entity
@@ -116,24 +115,23 @@ public class InternalUserOtpEntity {
     @Override
     public String toString() {
         return (
-            "InternalUserOTPEntity [id=" + 
-            id + 
-            ", repositoryId=" + 
-            repositoryId + 
-            ", userId=" + 
-            userId + 
-            ", realm=" + 
-            realm + 
-            ", token=" + 
-            token + 
-            ", expiryTimestamp=" + 
-            expiryTimestamp + 
-            ", attempts=" + 
-            attempts + 
-            ", consumed=" + 
-            consumed + 
+            "InternalUserOTPEntity [id=" +
+            id +
+            ", repositoryId=" +
+            repositoryId +
+            ", userId=" +
+            userId +
+            ", realm=" +
+            realm +
+            ", token=" +
+            token +
+            ", expiryTimestamp=" +
+            expiryTimestamp +
+            ", attempts=" +
+            attempts +
+            ", consumed=" +
+            consumed +
             "]"
         );
     }
-
 }

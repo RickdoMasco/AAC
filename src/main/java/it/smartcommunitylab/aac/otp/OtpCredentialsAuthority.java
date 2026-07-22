@@ -1,8 +1,5 @@
 package it.smartcommunitylab.aac.otp;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.core.entrypoint.RealmAwareUriBuilder;
 import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
@@ -18,21 +15,26 @@ import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfig;
 import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfigMap;
 import it.smartcommunitylab.aac.users.service.UserEntityService;
 import it.smartcommunitylab.aac.utils.MailService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 @Service
 public class OtpCredentialsAuthority
-        extends
-        AbstractCredentialsAuthority<OtpCredentialsService, InternalUserOtp, InternalEditableUserOtp, OtpCredentialsServiceConfig, OtpIdentityProviderConfigMap> {
+    extends AbstractCredentialsAuthority<
+        OtpCredentialsService,
+        InternalUserOtp,
+        InternalEditableUserOtp,
+        OtpCredentialsServiceConfig,
+        OtpIdentityProviderConfigMap
+    > {
 
     private MailService mailService;
     private RealmAwareUriBuilder uriBuilder;
     private UserEntityService userService;
     private ResourceEntityService resourceService;
 
-    public OtpCredentialsAuthority(
-            ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
+    public OtpCredentialsAuthority(ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
         super(SystemKeys.AUTHORITY_OTP, new OtpConfigTranslatorRepository(registrationRepository));
-
     }
 
     @Autowired
@@ -53,8 +55,13 @@ public class OtpCredentialsAuthority
     @Override
     public OtpCredentialsService buildProvider(OtpCredentialsServiceConfig config) {
         OtpCredentialsService service = new OtpCredentialsService(
-                config.getProvider(),
-                null, null, config.getSettingsMap().getRepositoryId(), config, config.getRealm());
+            config.getProvider(),
+            null,
+            null,
+            config.getSettingsMap().getRepositoryId(),
+            config,
+            config.getRealm()
+        );
 
         service.setMailService(mailService);
         service.setUriBuilder(uriBuilder);
@@ -65,16 +72,15 @@ public class OtpCredentialsAuthority
     }
 
     static class OtpConfigTranslatorRepository
-            extends TranslatorProviderConfigRepository<OtpIdentityProviderConfig, OtpCredentialsServiceConfig> {
+        extends TranslatorProviderConfigRepository<OtpIdentityProviderConfig, OtpCredentialsServiceConfig> {
 
-        public OtpConfigTranslatorRepository(
-                ProviderConfigRepository<OtpIdentityProviderConfig> externalRepository) {
-
+        public OtpConfigTranslatorRepository(ProviderConfigRepository<OtpIdentityProviderConfig> externalRepository) {
             super(externalRepository);
             setConverter(source -> {
                 OtpCredentialsServiceConfig config = new OtpCredentialsServiceConfig(
-                        source.getProvider(),
-                        source.getRealm());
+                    source.getProvider(),
+                    source.getRealm()
+                );
                 config.setName(source.getName());
                 config.setTitleMap(source.getTitleMap());
                 config.setDescriptionMap(source.getDescriptionMap());

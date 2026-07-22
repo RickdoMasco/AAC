@@ -9,15 +9,14 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class OtpIdentityConfigurationProvider
-        extends AbstractIdentityConfigurationProvider<OtpIdentityProviderConfig, OtpIdentityProviderConfigMap> {
+    extends AbstractIdentityConfigurationProvider<OtpIdentityProviderConfig, OtpIdentityProviderConfigMap> {
 
     public OtpIdentityConfigurationProvider(
-            ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository,
-            IdentityAuthoritiesProperties authoritiesProperties) {
-
+        ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository,
+        IdentityAuthoritiesProperties authoritiesProperties
+    ) {
         super(SystemKeys.AUTHORITY_OTP, registrationRepository);
-        if (authoritiesProperties != null &&
-                authoritiesProperties.getSettings() != null) {
+        if (authoritiesProperties != null && authoritiesProperties.getSettings() != null) {
             setDefaultSettingsMap(authoritiesProperties.getSettings());
         }
         setDefaultConfigMap(new OtpIdentityProviderConfigMap());
@@ -25,10 +24,6 @@ public class OtpIdentityConfigurationProvider
 
     @Override
     protected OtpIdentityProviderConfig buildConfig(ConfigurableIdentityProvider cp) {
-        
-        return new OtpIdentityProviderConfig(
-                cp,
-                getSettingsMap(cp.getSettings()),
-                getConfigMap(cp.getConfiguration()));
+        return new OtpIdentityProviderConfig(cp, getSettingsMap(cp.getSettings()), getConfigMap(cp.getConfiguration()));
     }
 }

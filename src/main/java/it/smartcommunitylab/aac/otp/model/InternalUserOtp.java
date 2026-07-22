@@ -1,20 +1,18 @@
 package it.smartcommunitylab.aac.otp.model;
 
-import javax.validation.Valid;
-import javax.validation.constraints.NotBlank;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.credentials.base.AbstractUserCredentials;
+import javax.validation.Valid;
+import javax.validation.constraints.NotBlank;
 
 @Valid
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InternalUserOtp extends AbstractUserCredentials {
-    
+
     private static final long serialVersionUID = SystemKeys.AAC_INTERNAL_SERIAL_VERSION;
-    public static final String RESOURCE_TYPE = SystemKeys.RESOURCE_CREDENTIALS + SystemKeys.ID_SEPARATOR
-            + SystemKeys.AUTHORITY_OTP;
+    public static final String RESOURCE_TYPE =
+        SystemKeys.RESOURCE_CREDENTIALS + SystemKeys.ID_SEPARATOR + SystemKeys.AUTHORITY_OTP;
 
     @NotBlank
     private String repositoryId;
@@ -127,16 +125,18 @@ public class InternalUserOtp extends AbstractUserCredentials {
 
     @Override
     public String toString() {
-        return ("InternalUserOtp [repositoryId=" +
-                repositoryId +
-                ", token=" +
-                token +
-                ", expiry_timestamp=" +
-                expiry_timestamp +
-                ", attempts=" +
-                attempts +
-                ", consumed=" +
-                consumed +
-                "]");
+        return (
+            "InternalUserOtp [repositoryId=" +
+            repositoryId +
+            ", token=" +
+            token +
+            ", expiry_timestamp=" +
+            expiry_timestamp +
+            ", attempts=" +
+            attempts +
+            ", consumed=" +
+            consumed +
+            "]"
+        );
     }
 }
