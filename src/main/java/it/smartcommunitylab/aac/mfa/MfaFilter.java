@@ -1,15 +1,19 @@
 package it.smartcommunitylab.aac.mfa;
 
+import it.smartcommunitylab.aac.Config;
+import it.smartcommunitylab.aac.core.auth.DefaultUserAuthenticationToken;
+import it.smartcommunitylab.aac.core.auth.RealmAwareAuthenticationEntryPoint;
 import it.smartcommunitylab.aac.core.entrypoint.RealmAwarePathUriBuilder;
+import it.smartcommunitylab.aac.model.Realm;
+import it.smartcommunitylab.aac.model.Subject;
+import it.smartcommunitylab.aac.realms.RealmManager;
 import java.io.IOException;
 import java.time.Instant;
-
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -17,13 +21,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.web.filter.OncePerRequestFilter;
-
-import it.smartcommunitylab.aac.Config;
-import it.smartcommunitylab.aac.core.auth.DefaultUserAuthenticationToken;
-import it.smartcommunitylab.aac.core.auth.RealmAwareAuthenticationEntryPoint;
-import it.smartcommunitylab.aac.model.Realm;
-import it.smartcommunitylab.aac.model.Subject;
-import it.smartcommunitylab.aac.realms.RealmManager;
 
 public class MfaFilter extends OncePerRequestFilter {
 
@@ -41,8 +38,7 @@ public class MfaFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-            throws ServletException, IOException {
-
+        throws ServletException, IOException {
         HttpSession session = request.getSession(true);
         MfaSessionStore store = new MfaSessionStore(session);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -60,8 +56,10 @@ public class MfaFilter extends OncePerRequestFilter {
         }
 
         // MFA already completed, proceed
-        if (auth instanceof DefaultUserAuthenticationToken
-                && ((DefaultUserAuthenticationToken) auth).getAuthentications().size() >= 2) {
+        if (
+            auth instanceof DefaultUserAuthenticationToken &&
+            ((DefaultUserAuthenticationToken) auth).getAuthentications().size() >= 2
+        ) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -106,10 +104,12 @@ public class MfaFilter extends OncePerRequestFilter {
         return false;
     }
 
-    private void initiateMfaFlow(MfaSessionStore store, HttpServletRequest request, HttpServletResponse response,
-            Authentication auth)
-            throws IOException, ServletException {
-
+    private void initiateMfaFlow(
+        MfaSessionStore store,
+        HttpServletRequest request,
+        HttpServletResponse response,
+        Authentication auth
+    ) throws IOException, ServletException {
         store.init(auth);
 
         SecurityContextHolder.clearContext();
@@ -124,11 +124,12 @@ public class MfaFilter extends OncePerRequestFilter {
     private boolean isMfaValid(Authentication first, Authentication current, long timestamp, long now) {
         // Timeout check
         if (timestamp + 60 < now) {
-            return false; 
+            return false;
         }
 
-        if (!(first instanceof DefaultUserAuthenticationToken)
-                || !(current instanceof DefaultUserAuthenticationToken)) {
+        if (
+            !(first instanceof DefaultUserAuthenticationToken) || !(current instanceof DefaultUserAuthenticationToken)
+        ) {
             return false;
         }
 
@@ -143,10 +144,12 @@ public class MfaFilter extends OncePerRequestFilter {
         return true;
     }
 
-    private void handleMfaFailure(MfaSessionStore store, HttpServletRequest request, HttpServletResponse response,
-            String code)
-            throws IOException, ServletException {
-
+    private void handleMfaFailure(
+        MfaSessionStore store,
+        HttpServletRequest request,
+        HttpServletResponse response,
+        String code
+    ) throws IOException, ServletException {
         SecurityContextHolder.clearContext();
 
         // Only clear MFA state if failure is terminal
@@ -161,24 +164,29 @@ public class MfaFilter extends OncePerRequestFilter {
         redirectToSecondFactor(request, response, firstToken, new BadCredentialsException(code));
     }
 
-    private void finalizeMfaFlow(MfaSessionStore store, DefaultUserAuthenticationToken ft,
-            DefaultUserAuthenticationToken st) {
-
+    private void finalizeMfaFlow(
+        MfaSessionStore store,
+        DefaultUserAuthenticationToken ft,
+        DefaultUserAuthenticationToken st
+    ) {
         DefaultUserAuthenticationToken combinedToken = new DefaultUserAuthenticationToken(
-                (Subject) ft.getPrincipal(),
-                ft.getRealm(),
-                ft.getAuthorities(),
-                ft,
-                st);
+            (Subject) ft.getPrincipal(),
+            ft.getRealm(),
+            ft.getAuthorities(),
+            ft,
+            st
+        );
 
         SecurityContextHolder.getContext().setAuthentication(combinedToken);
         store.clear();
     }
 
-    private void redirectToSecondFactor(HttpServletRequest request, HttpServletResponse response, Authentication auth,
-            AuthenticationException ex)
-            throws IOException, ServletException {
-
+    private void redirectToSecondFactor(
+        HttpServletRequest request,
+        HttpServletResponse response,
+        Authentication auth,
+        AuthenticationException ex
+    ) throws IOException, ServletException {
         if (!(auth instanceof DefaultUserAuthenticationToken)) {
             AuthenticationException exception = ex;
             if (exception == null) {
