@@ -14,6 +14,7 @@ public class OtpIdentityConfigurationProvider
     public OtpIdentityConfigurationProvider(
             ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository,
             IdentityAuthoritiesProperties authoritiesProperties) {
+
         super(SystemKeys.AUTHORITY_OTP, registrationRepository);
         if (authoritiesProperties != null &&
                 authoritiesProperties.getSettings() != null) {
@@ -24,6 +25,7 @@ public class OtpIdentityConfigurationProvider
 
     @Override
     protected OtpIdentityProviderConfig buildConfig(ConfigurableIdentityProvider cp) {
+        
         return new OtpIdentityProviderConfig(
                 cp,
                 getSettingsMap(cp.getSettings()),

@@ -18,6 +18,7 @@ public class OtpCredentialsServiceConfig
             SystemKeys.AUTHORITY_OTP;
 
     public OtpCredentialsServiceConfig(String provider, String realm) {
+
         super(
                 SystemKeys.AUTHORITY_OTP,
                 provider,
@@ -30,6 +31,7 @@ public class OtpCredentialsServiceConfig
             ConfigurableCredentialsProvider cp,
             CredentialsServiceSettingsMap settingsMap,
             OtpIdentityProviderConfigMap configMap) {
+
         super(cp, settingsMap, configMap);
     }
 
@@ -54,6 +56,7 @@ public class OtpCredentialsServiceConfig
      * config flags
      */
     public boolean isRequireAccountConfirmation() {
+        
         return configMap.getRequireAccountConfirmation() != null
                 ? configMap.getRequireAccountConfirmation().booleanValue()
                 : true;

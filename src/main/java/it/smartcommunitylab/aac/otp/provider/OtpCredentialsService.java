@@ -21,11 +21,8 @@ import it.smartcommunitylab.aac.internal.service.InternalJpaUserAccountService;
 import it.smartcommunitylab.aac.internal.service.InternalUserConfirmKeyService;
 import it.smartcommunitylab.aac.otp.model.InternalEditableUserOtp;
 import it.smartcommunitylab.aac.otp.model.InternalUserOtp;
-import it.smartcommunitylab.aac.realms.service.RealmService;
 import it.smartcommunitylab.aac.utils.MailService;
 
-// Remove @Service to prevent Spring from attempting to instantiate it as a bean.
-// Instantiation is handled manually by OtpCredentialsAuthority.buildProvider().
 public class OtpCredentialsService
         extends
         AbstractCredentialsService<InternalUserOtp, InternalEditableUserOtp, OtpIdentityProviderConfigMap, OtpCredentialsServiceConfig> {
@@ -41,6 +38,7 @@ public class OtpCredentialsService
             String repositoryId,
             OtpCredentialsServiceConfig providerConfig,
             String realm) {
+                
         super(SystemKeys.AUTHORITY_OTP, providerId, null, providerConfig, realm);
         Assert.notNull(confirmKeyService, "confirmKeyService is mandatory");
         Assert.notNull(accountService, "accountService is mandatory");
@@ -51,9 +49,6 @@ public class OtpCredentialsService
 
     private MailService mailService;
     private RealmAwareUriBuilder uriBuilder;
-
-    public void setRealmService(RealmService realmService) {
-    }
 
     public void setMailService(MailService mailService) {
         this.mailService = mailService;
@@ -68,6 +63,7 @@ public class OtpCredentialsService
      */
     public void generateOtp(String username)
             throws RegistrationException, NoSuchUserException {
+
         InternalUserAccount account = accountService.findAccountById(repositoryId, username);
         if (account == null)
             throw new NoSuchUserException();
@@ -93,6 +89,7 @@ public class OtpCredentialsService
     }
 
     private void sendOtpMail(String userId, String code, String lang) throws MessagingException {
+
         if (mailService != null) {
             Map<String, Object> vars = new HashMap<>();
             vars.put("code", code);
@@ -101,6 +98,7 @@ public class OtpCredentialsService
     }
 
     public boolean verifyOtp(String username, String token) throws NoSuchUserException {
+
         InternalUserAccount account = confirmKeyService.findAccountByConfirmationKey(repositoryId, token);
         return account != null && account.getUsername().equals(username);
     }

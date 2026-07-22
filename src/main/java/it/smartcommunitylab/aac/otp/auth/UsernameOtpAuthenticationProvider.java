@@ -50,6 +50,7 @@ public class UsernameOtpAuthenticationProvider implements AuthenticationProvider
             UserAccountService<InternalUserAccount> userAccountService,
             String repositoryId,
             String realm) {
+                
         Assert.hasText(providerId, "provider can not be null or empty");
         Assert.notNull(userAccountService, "account service is mandatory");
         Assert.hasText(repositoryId, "repository id can not be null or empty");
@@ -70,6 +71,7 @@ public class UsernameOtpAuthenticationProvider implements AuthenticationProvider
 
     @Override
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+
         Assert.isInstanceOf(
                 UsernameOtpAuthenticationToken.class,
                 authentication,

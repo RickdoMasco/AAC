@@ -62,6 +62,7 @@ public class InternalOtpLoginAuthenticationEntryPoint extends LoginUrlAuthentica
             HttpServletRequest request,
             HttpServletResponse response,
             AuthenticationException exception) {
+
         // Attempt to resolve provider ID via URL path matching
         if (providerRequestMatcher.matches(request)) {
             // Extract provider ID from path variable
@@ -92,6 +93,7 @@ public class InternalOtpLoginAuthenticationEntryPoint extends LoginUrlAuthentica
     }
 
     private String buildLoginUrl(HttpServletRequest request, String provider) {
+
         if (realmUriBuilder != null) {
             Map<String, String> params = Collections.singletonMap(PROVIDER_URI_VARIABLE_NAME, provider);
             UriComponents u1 = realmUriBuilder.buildUri(request, null, getLoginFormUrl());

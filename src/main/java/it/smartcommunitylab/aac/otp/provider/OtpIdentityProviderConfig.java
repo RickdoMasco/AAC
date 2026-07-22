@@ -4,14 +4,13 @@ import it.smartcommunitylab.aac.SystemKeys;
 import it.smartcommunitylab.aac.identity.base.AbstractIdentityProviderConfig;
 import it.smartcommunitylab.aac.identity.model.ConfigurableIdentityProvider;
 import it.smartcommunitylab.aac.identity.provider.IdentityProviderSettingsMap;
-import it.smartcommunitylab.aac.password.provider.PasswordIdentityProviderConfigMap;
 
 public class OtpIdentityProviderConfig extends AbstractIdentityProviderConfig<OtpIdentityProviderConfigMap> {
 
     private static final long serialVersionUID = SystemKeys.AAC_CORE_SERIAL_VERSION;
 
     public static final String RESOURCE_TYPE = SystemKeys.RESOURCE_PROVIDER + SystemKeys.ID_SEPARATOR
-            + PasswordIdentityProviderConfigMap.RESOURCE_TYPE;
+            + OtpIdentityProviderConfigMap.RESOURCE_TYPE;
 
     private static final int DEFAULT_SESSION_DURATION = 24 * 60 * 60; // 24h
     private static final int COOLDOWN_DURATION = 300; // 5m

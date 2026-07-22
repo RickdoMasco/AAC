@@ -16,7 +16,6 @@ import it.smartcommunitylab.aac.otp.provider.OtpCredentialsService;
 import it.smartcommunitylab.aac.otp.provider.OtpCredentialsServiceConfig;
 import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfig;
 import it.smartcommunitylab.aac.otp.provider.OtpIdentityProviderConfigMap;
-import it.smartcommunitylab.aac.realms.service.RealmService;
 import it.smartcommunitylab.aac.users.service.UserEntityService;
 import it.smartcommunitylab.aac.utils.MailService;
 
@@ -25,7 +24,6 @@ public class OtpCredentialsAuthority
         extends
         AbstractCredentialsAuthority<OtpCredentialsService, InternalUserOtp, InternalEditableUserOtp, OtpCredentialsServiceConfig, OtpIdentityProviderConfigMap> {
 
-    private RealmService realmService;
     private MailService mailService;
     private RealmAwareUriBuilder uriBuilder;
     private UserEntityService userService;
@@ -35,11 +33,6 @@ public class OtpCredentialsAuthority
             ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
         super(SystemKeys.AUTHORITY_OTP, new OtpConfigTranslatorRepository(registrationRepository));
 
-    }
-
-    @Autowired
-    public void setRealmService(RealmService realmService) {
-        this.realmService = realmService;
     }
 
     @Autowired
@@ -63,7 +56,6 @@ public class OtpCredentialsAuthority
                 config.getProvider(),
                 null, null, config.getSettingsMap().getRepositoryId(), config, config.getRealm());
 
-        service.setRealmService(realmService);
         service.setMailService(mailService);
         service.setUriBuilder(uriBuilder);
         service.setUserService(userService);
@@ -77,6 +69,7 @@ public class OtpCredentialsAuthority
 
         public OtpConfigTranslatorRepository(
                 ProviderConfigRepository<OtpIdentityProviderConfig> externalRepository) {
+
             super(externalRepository);
             setConverter(source -> {
                 OtpCredentialsServiceConfig config = new OtpCredentialsServiceConfig(

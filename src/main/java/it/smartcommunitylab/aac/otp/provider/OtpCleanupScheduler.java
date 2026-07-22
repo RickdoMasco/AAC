@@ -15,16 +15,17 @@ public class OtpCleanupScheduler {
         this.repository = repository;
     }
 
-    @Scheduled(cron = "0 0 4 * * *")
+    @Scheduled(cron = "0 0 * * * *")
     @Transactional
     public void cleanup() {
-        // Rimuovi solo scaduti da almeno 1 ora (buffer sicurezza)
+
+        // avoid deletion of recent tokens, we keep a buffer of 1 hour
         long buffer = System.currentTimeMillis() - 3600000;
         
         List<InternalUserOtpEntity> expired = repository.findByExpiryTimestampLessThan(buffer);
         repository.deleteAll(expired);
         
-        // Rimuovi consumati o troppi tentativi (inutili)
+        // remove consumed or failed tokens
         List<InternalUserOtpEntity> consumed = repository.findByConsumed(true);
         repository.deleteAll(consumed);
         

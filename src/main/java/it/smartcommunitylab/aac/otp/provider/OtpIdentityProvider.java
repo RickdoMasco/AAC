@@ -49,7 +49,7 @@ public class OtpIdentityProvider extends
         String repositoryId = config.getRepositoryId();
         logger.debug("create otp provider with id {} repository {}", String.valueOf(providerId), repositoryId);
 
-        this.attributeProvider = new InternalAttributeProvider<>(SystemKeys.AUTHORITY_PASSWORD, providerId, realm);
+        this.attributeProvider = new InternalAttributeProvider<>(SystemKeys.AUTHORITY_OTP, providerId, realm);
 
         this.accountProvider = new InternalAccountProvider(SystemKeys.AUTHORITY_OTP, providerId, userAccountService,
                 repositoryId, realm);
@@ -114,6 +114,7 @@ public class OtpIdentityProvider extends
     @Override
     protected InternalUserIdentity buildIdentity(InternalUserAccount account,
             InternalOtpUserAuthenticatedPrincipal principal, Collection<UserAttributes> attributes) {
+                
         InternalUserIdentity identity = new InternalUserIdentity(getAuthority(), getProvider(), getRealm(), account,
                 principal);
         identity.setAttributes(attributes);
@@ -144,6 +145,7 @@ public class OtpIdentityProvider extends
 
     @Override
     public InternalLoginProvider getLoginProvider(ClientDetails clientDetails, AuthorizationRequest authRequest) {
+        
         InternalLoginProvider ilp = new InternalLoginProvider(getProvider(), getRealm(), getName());
 
         ilp.setTitleMap(getTitleMap());

@@ -32,6 +32,7 @@ public class UsernameOtpAuthenticationToken extends AbstractAuthenticationToken 
      * @param otp      The one-time code or magic link token.
      */
     public UsernameOtpAuthenticationToken(String username, String otp) {
+        
         super(null);
         this.username = username;
         this.otp = otp;
@@ -50,6 +51,7 @@ public class UsernameOtpAuthenticationToken extends AbstractAuthenticationToken 
             String username,
             String otp,
             Collection<? extends GrantedAuthority> authorities) {
+
         super(authorities);
         this.username = username;
         this.otp = otp;
@@ -70,6 +72,7 @@ public class UsernameOtpAuthenticationToken extends AbstractAuthenticationToken 
             String otp,
             InternalUserAccount account,
             Collection<? extends GrantedAuthority> authorities) {
+
         super(authorities);
         this.username = username;
         this.otp = otp;
@@ -112,6 +115,7 @@ public class UsernameOtpAuthenticationToken extends AbstractAuthenticationToken 
 
     @Override
     public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {
+
         Assert.isTrue(
                 !isAuthenticated,
                 "Cannot set this token to trusted - use constructor which takes a GrantedAuthority list instead");
@@ -120,6 +124,7 @@ public class UsernameOtpAuthenticationToken extends AbstractAuthenticationToken 
 
     @Override
     public void eraseCredentials() {
+
         super.eraseCredentials();
         this.otp = null;
         if (this.account != null) {

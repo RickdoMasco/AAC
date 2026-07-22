@@ -38,6 +38,7 @@ public class OtpLoginController {
 
     @RequestMapping(value = "/otp/verify/{token}", method = RequestMethod.GET)
     public String verify(@PathVariable String token, HttpServletRequest req) {
+
         // Delegate to authority which delegates to service
         return "redirect:/";
     }
@@ -50,6 +51,7 @@ public class OtpLoginController {
         HttpServletRequest req,
         HttpServletResponse res
     ) throws Exception {
+
         // resolve provider
         OtpIdentityProvider idp = internalAuthority.getProvider(providerId);
         model.addAttribute("providerId", providerId);
@@ -61,8 +63,7 @@ public class OtpLoginController {
         model.addAttribute("displayName", realm);
 
         InternalLoginProvider a = idp.getLoginProvider(null, null);
-        // make sure we show the form
-        // it should also point to login
+        
         String form = idp.getLoginForm();
         if (form == null) {
             throw new IllegalArgumentException("unsupported-operation");
@@ -71,10 +72,9 @@ public class OtpLoginController {
         a.setLoginUrl(idp.getLoginUrl());
         model.addAttribute("authorities", Collections.singleton(a));
 
-        // check errors
-        // we make sure we consume only internal exceptions.
         Exception error = (Exception) req.getSession().getAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
         if (error != null && error instanceof InternalAuthenticationException) {
+            
             LoginException le = LoginException.translate((InternalAuthenticationException) error);
 
             model.addAttribute("error", le.getError());

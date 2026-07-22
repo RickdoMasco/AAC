@@ -42,6 +42,7 @@ public class OtpFilterProvider implements FilterProvider {
 
     @Override
     public List<Filter> getAuthFilters() {
+        
         UsernameOtpAuthenticationFilter loginFilter = new UsernameOtpAuthenticationFilter(
                 userAccountService,
                 registrationRepository);

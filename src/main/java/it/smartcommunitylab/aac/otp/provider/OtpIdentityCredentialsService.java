@@ -31,6 +31,7 @@ public class OtpIdentityCredentialsService extends AbstractProvider<InternalUser
             UserAccountService<InternalUserAccount> accountService,
             OtpIdentityProviderConfig config,
             String realm) {
+
         super(SystemKeys.AUTHORITY_OTP, providerId, realm);
         this.accountService = accountService;
         this.repositoryId = config.getRepositoryId();
@@ -49,6 +50,7 @@ public class OtpIdentityCredentialsService extends AbstractProvider<InternalUser
     }
 
     public void sendMagicLink(String userId) throws Exception {
+        
         // Fetch user account to determine language
         InternalUserAccount account = accountService.findAccountById(repositoryId, userId);
         String lang = (account != null && org.springframework.util.StringUtils.hasText(account.getLang())) ? account.getLang() : "en";

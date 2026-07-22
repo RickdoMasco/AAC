@@ -58,8 +58,8 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
     public UsernameOtpAuthenticationFilter(
             UserAccountService<InternalUserAccount> userAccountService,
             ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
-        this(userAccountService, registrationRepository, DEFAULT_FILTER_URI, null);
 
+        this(userAccountService, registrationRepository, DEFAULT_FILTER_URI, null);
     }
 
     /**
@@ -77,6 +77,7 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
             ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository,
             String filterProcessingUrl,
             AuthenticationEntryPoint authenticationEntryPoint) {
+
         super(filterProcessingUrl);
         Assert.notNull(userAccountService, "user account service is required");
 
@@ -106,6 +107,7 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
         // use a custom failureHandler to return to login form
         setAuthenticationFailureHandler(
                 new AuthenticationFailureHandler() {
+
                     public void onAuthenticationFailure(
                             HttpServletRequest request,
                             HttpServletResponse response,
@@ -130,6 +132,7 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
 
     public Authentication attemptAuthenticationLink(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException, IOException, ServletException {
+
         if (!requestMatcher.matches(request))
             return null;
 
@@ -144,11 +147,9 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
         if (!StringUtils.hasText(username))
             throw new BadCredentialsException("invalid user");
 
-        // Crea token di autenticazione OTP con il codice fornito
         UsernameOtpAuthenticationToken authRequest = new UsernameOtpAuthenticationToken(username,
                 code != null ? code : "");
 
-        // Avvolge il token per l'integrazione con l'architettura core di AAC
         ProviderWrappedAuthenticationToken wrapped = new ProviderWrappedAuthenticationToken(
                 authRequest,
                 providerId,
@@ -165,11 +166,12 @@ public class UsernameOtpAuthenticationFilter extends AbstractAuthenticationProce
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
             throws AuthenticationException, IOException, ServletException {
+
         if (!requestMatcher.matches(request)) {
             return null;
         }
 
-        // Supporta solo richieste POST
+        // Support only POST requests for authentication
         if (!"POST".equalsIgnoreCase(request.getMethod())) {
             throw new HttpRequestMethodNotSupportedException(request.getMethod(), new String[] { "POST" });
         }

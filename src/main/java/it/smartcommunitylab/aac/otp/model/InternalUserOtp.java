@@ -11,6 +11,7 @@ import it.smartcommunitylab.aac.credentials.base.AbstractUserCredentials;
 @Valid
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class InternalUserOtp extends AbstractUserCredentials {
+    
     private static final long serialVersionUID = SystemKeys.AAC_INTERNAL_SERIAL_VERSION;
     public static final String RESOURCE_TYPE = SystemKeys.RESOURCE_CREDENTIALS + SystemKeys.ID_SEPARATOR
             + SystemKeys.AUTHORITY_OTP;

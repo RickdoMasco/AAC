@@ -41,6 +41,7 @@ public class OtpAuthenticationProvider
             OtpIdentityCredentialsService otpService,
             OtpIdentityProviderConfig providerConfig,
             String realm) {
+
         super(SystemKeys.AUTHORITY_OTP, providerId, realm);
 
         Assert.notNull(userAccountService, "account service is mandatory");
@@ -60,6 +61,7 @@ public class OtpAuthenticationProvider
 
     @Override
     public Authentication doAuthenticate(Authentication authentication) throws AuthenticationException {
+
         if (this.userNotFoundEncodedOtp == null) {
             this.userNotFoundEncodedOtp = this.otpEncoder.encode(ACCOUNT_NOT_FOUND_OTP);
         }
@@ -79,24 +81,26 @@ public class OtpAuthenticationProvider
                     username,
                     credentials,
                     "unknown",
-                    new BadCredentialsException("invalid user or password"));
+                    new BadCredentialsException("invalid user or otp"));
         }
         String subject = account.getUserId();
 
         // check whether confirmation is required and user is confirmed
         if (config.isRequireAccountConfirmation() && !account.isConfirmed()) {
             logger.debug("account is not verified and confirmation is required to login");
+
             // throw generic error to avoid account status leak
             AuthenticationException e = new BadCredentialsException("invalid request");
-            throw new InternalAuthenticationException(subject, username, credentials, "password", e, e.getMessage());
+            throw new InternalAuthenticationException(subject, username, credentials, "otp", e, e.getMessage());
         }
 
         // check whether account is locked
         if (account.isLocked()) {
             logger.debug("account is locked");
+
             // throw generic error to avoid account status leak
             AuthenticationException e = new BadCredentialsException("invalid request");
-            throw new InternalAuthenticationException(subject, username, credentials, "password", e, e.getMessage());
+            throw new InternalAuthenticationException(subject, username, credentials, "otp", e, e.getMessage());
         }
 
         if (authentication instanceof UsernameOtpAuthenticationToken) {
@@ -107,7 +111,7 @@ public class OtpAuthenticationProvider
                         subject,
                         username,
                         credentials,
-                        "password",
+                        "otp",
                         e,
                         e.getMessage());
             }
@@ -122,11 +126,13 @@ public class OtpAuthenticationProvider
 
     @Override
     public boolean supports(Class<?> authentication) {
+
         return UsernameOtpAuthenticationToken.class.isAssignableFrom(authentication);
     }
 
     @Override
     protected InternalOtpUserAuthenticatedPrincipal createUserPrincipal(Object account) {
+
         if (account == null) {
             return null;
         }
