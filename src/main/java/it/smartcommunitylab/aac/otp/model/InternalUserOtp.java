@@ -109,8 +109,13 @@ public class InternalUserOtp extends AbstractUserCredentials {
     }
 
     @Override
+    public String getId() {
+        return id;
+    }
+
+    @Override
     public String getUuid() {
-        return getId();
+        return super.getUserId();
     }
 
     @Override

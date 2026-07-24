@@ -6,6 +6,7 @@ import it.smartcommunitylab.aac.common.RegistrationException;
 import it.smartcommunitylab.aac.common.SystemException;
 import it.smartcommunitylab.aac.core.entrypoint.RealmAwareUriBuilder;
 import it.smartcommunitylab.aac.credentials.base.AbstractCredentialsService;
+import it.smartcommunitylab.aac.credentials.persistence.UserCredentialsService;
 import it.smartcommunitylab.aac.internal.model.InternalUserAccount;
 import it.smartcommunitylab.aac.internal.service.InternalJpaUserAccountService;
 import it.smartcommunitylab.aac.internal.service.InternalUserConfirmKeyService;
@@ -34,13 +35,14 @@ public class OtpCredentialsService
 
     public OtpCredentialsService(
         String providerId,
+        UserCredentialsService<InternalUserOtp> credentialsService,
         InternalUserConfirmKeyService confirmKeyService,
         InternalJpaUserAccountService accountService,
         String repositoryId,
         OtpCredentialsServiceConfig providerConfig,
         String realm
     ) {
-        super(SystemKeys.AUTHORITY_OTP, providerId, null, providerConfig, realm);
+        super(SystemKeys.AUTHORITY_OTP, providerId, credentialsService, providerConfig, realm);
         Assert.notNull(confirmKeyService, "confirmKeyService is mandatory");
         Assert.notNull(accountService, "accountService is mandatory");
         this.confirmKeyService = confirmKeyService;
@@ -77,20 +79,33 @@ public class OtpCredentialsService
         String code = UUID.randomUUID().toString();
         account.setConfirmationKey(code);
         account.setConfirmationDeadline(new Date(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(5)));
-        accountService.updateAccount(repositoryId, account.getUuid(), account);
+        accountService.updateAccount(repositoryId, account.getUsername(), account);
 
         try {
-            sendOtpMail(account.getEmail(), code, account.getLang());
+            sendOtpMail(account, code, account.getLang());
         } catch (MessagingException e) {
             throw new SystemException(e.getMessage());
         }
     }
 
-    private void sendOtpMail(String userId, String code, String lang) throws MessagingException {
+    private void sendOtpMail(InternalUserAccount account, String code, String lang) throws MessagingException {
         if (mailService != null) {
             Map<String, Object> vars = new HashMap<>();
             vars.put("code", code);
-            mailService.sendEmail(userId, "otp", lang, vars);
+            vars.put("user", account);
+
+            String link = "";
+            if (uriBuilder != null) {
+                link = uriBuilder.buildUrl(getRealm(), "/otp/verify/" + code);
+            }
+            vars.put("link", link);
+
+            Map<String, Object> action = new HashMap<>();
+            action.put("url", link);
+            action.put("text", "action.login");
+            vars.put("action", action);
+
+            mailService.sendEmail(account.getEmail(), "otp", lang, vars);
         }
     }
 

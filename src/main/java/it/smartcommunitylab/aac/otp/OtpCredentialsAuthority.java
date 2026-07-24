@@ -6,7 +6,10 @@ import it.smartcommunitylab.aac.core.provider.ProviderConfigRepository;
 import it.smartcommunitylab.aac.core.service.ResourceEntityService;
 import it.smartcommunitylab.aac.core.service.TranslatorProviderConfigRepository;
 import it.smartcommunitylab.aac.credentials.base.AbstractCredentialsAuthority;
+import it.smartcommunitylab.aac.credentials.persistence.UserCredentialsService;
 import it.smartcommunitylab.aac.credentials.provider.CredentialsServiceSettingsMap;
+import it.smartcommunitylab.aac.internal.service.InternalJpaUserAccountService;
+import it.smartcommunitylab.aac.internal.service.InternalUserConfirmKeyService;
 import it.smartcommunitylab.aac.otp.model.InternalEditableUserOtp;
 import it.smartcommunitylab.aac.otp.model.InternalUserOtp;
 import it.smartcommunitylab.aac.otp.provider.OtpCredentialsService;
@@ -17,6 +20,7 @@ import it.smartcommunitylab.aac.users.service.UserEntityService;
 import it.smartcommunitylab.aac.utils.MailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.Assert;
 
 @Service
 public class OtpCredentialsAuthority
@@ -32,9 +36,23 @@ public class OtpCredentialsAuthority
     private RealmAwareUriBuilder uriBuilder;
     private UserEntityService userService;
     private ResourceEntityService resourceService;
+    private final InternalUserConfirmKeyService confirmKeyService;
+    private final InternalJpaUserAccountService accountService;
+    private final UserCredentialsService<InternalUserOtp> credentialsService;
 
-    public OtpCredentialsAuthority(ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository) {
+    public OtpCredentialsAuthority(
+        ProviderConfigRepository<OtpIdentityProviderConfig> registrationRepository,
+        InternalUserConfirmKeyService confirmKeyService,
+        InternalJpaUserAccountService accountService,
+        UserCredentialsService<InternalUserOtp> credentialsService
+    ) {
         super(SystemKeys.AUTHORITY_OTP, new OtpConfigTranslatorRepository(registrationRepository));
+        Assert.notNull(confirmKeyService, "confirmKeyService is mandatory");
+        Assert.notNull(accountService, "accountService is mandatory");
+
+        this.confirmKeyService = confirmKeyService;
+        this.accountService = accountService;
+        this.credentialsService = credentialsService;
     }
 
     @Autowired
@@ -47,17 +65,13 @@ public class OtpCredentialsAuthority
         this.uriBuilder = uriBuilder;
     }
 
-    @Autowired
-    public void setUserService(UserEntityService userService) {
-        this.userService = userService;
-    }
-
     @Override
     public OtpCredentialsService buildProvider(OtpCredentialsServiceConfig config) {
         OtpCredentialsService service = new OtpCredentialsService(
             config.getProvider(),
-            null,
-            null,
+            this.credentialsService,
+            this.confirmKeyService,
+            this.accountService,
             config.getSettingsMap().getRepositoryId(),
             config,
             config.getRealm()
