@@ -1,25 +1,31 @@
-<!DOCTYPE html>
+<!doctype html>
 <html xmlns:th="http://www.thymeleaf.org">
+  <head th:fragment="header"> </head>
 
-<head th:fragment="header">
-</head>
-
-<body>
+  <body>
     <div th:fragment="message">
-        <p>
-            Cien. <span data-th-text="${user.name}">Mario</span> <span data-th-text="${user.surname}">Rosi</span>!
-            <br>
-            Jums ir ģenerēts jauns OTP kods sistēmā <b data-th-text="${realm.name}">AAC</b>
-            <br>
-            Lai pabeigtu pieteikšanos, izmantojiet šo kodu: <span data-th-text="${code}">Null</span>
-            Vai arī noklikšķiniet uz šīs saites, lai pabeigtu pieteikšanos:
-            <a th:href="${link}" data-th-text="${link}">Saite</a>
-        </p>
-        <p>
-            Ja jums rodas problēmas ar piekļuvi, lūdzu, sazinieties ar <a href="mailto:"
-                th:href="'mailto:'+${application.email}">atbalstu</a>.
-        </p>
+      <p>
+        Cienījamais <span data-th-text="${user.name}">Mario</span>
+        <span data-th-text="${user.surname}">Rossi</span>!
+        <br />
+        Jums ir ģenerēts jauns OTP kods sistēmā
+        <b data-th-text="${realm.name}">AAC</b>
+        <br />
+        <br />
+        Lai pabeigtu pieteikšanos, varat izmantot šo kodu:
+        <br />
+        <b><span data-th-text="${code}">Null</span></b>
+        <br />
+        <br />
+        Alternatīvi varat sekot tālāk norādītajai saitei vai noklikšķināt
+        <a href="#" th:href="${link}">šeit</a>
+      </p>
+      <p>
+        Lūdzu, sazinieties ar
+        <a href="mailto:" th:href="'mailto:'+${application.email}"
+          >atbalsta dienestu</a
+        >, ja rodas problēmas ar piekļuvi.
+      </p>
     </div>
-</body>
-
+  </body>
 </html>
